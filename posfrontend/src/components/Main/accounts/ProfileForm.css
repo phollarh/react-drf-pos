@@ -1,0 +1,13 @@
+
+.dark-mode div.special-label{
+    background-color:rgb(66, 61, 61)  !important;
+
+}
+
+.light-mode div.special-label{
+    background-color: white !important;
+
+}
+.MuiInputBase-input#email:disabled:hover{
+    cursor: not-allowed;
+}
