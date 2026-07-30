@@ -1,11 +1,10 @@
 import { AccountCircle } from "@mui/icons-material";
 
 import { Box, IconButton, Menu, MenuItem, Typography, useMediaQuery, useTheme } from "@mui/material";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation} from "react-router-dom";
 
 import React, { useState } from "react";
 import DarkModeSwitch from "./DarkModeSwitch";
-import useAxiosWithInterceptor from "../../helper/jwtinterceptor";
 import { useAuthServiceContext } from "../../context/AuthContext";
 
 interface accountProps {
@@ -16,7 +15,6 @@ interface accountProps {
     const menuPages = ["Home","Product", "About","Blog"]
 const AccountButton = ({handleFormClickOnBigScreen, showForm}:accountProps) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const jwtAxios = useAxiosWithInterceptor();
     const location = useLocation();
     const isMenuOpen = Boolean(anchorEl);
     const below750 = useMediaQuery("(max-width : 750px)")
@@ -27,7 +25,6 @@ const AccountButton = ({handleFormClickOnBigScreen, showForm}:accountProps) => {
     const isOnHome = location.pathname === "/login"
     const isOnHomeR = location.pathname === "/register"
     console.log("is below 750", below750 , isOnHome, isOnHomeR)
-    const navigate = useNavigate()
     const {logout , isLoggedIn}=useAuthServiceContext();
     console.log(above1200, "islogged" ,isLoggedIn)
     const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -105,7 +102,7 @@ const AccountButton = ({handleFormClickOnBigScreen, showForm}:accountProps) => {
                                 </Box>
                                 <Box  display="block" component="button" sx={{width:"100%",border:"none",textAlign:"left", p:0,m:0, cursor:"pointer", 
                                     backgroundColor:isDarkMode?theme.palette.primary.dark:theme.palette.primary.contrastText}} 
-                                    onClick={showForm}>
+                                    onClick={()=>{return}}>
                                                 <Typography
                                                  sx={{
                                                     ":hover":{backgroundColor:isDarkMode?theme.palette.primary.main:theme.palette.primary.light,},
@@ -137,27 +134,7 @@ const AccountButton = ({handleFormClickOnBigScreen, showForm}:accountProps) => {
         </>
        
     );
-    const renderMenuOnHome = (
-        <>
-         <Menu
-            anchorEl={anchorEl}
-            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-            open={isMenuOpen}
-            keepMounted
-            onClose={handleMenuClose}
-
-        >
-
-                <MenuItem 
-                onClick={async ()=>{ await logout()}}
-                >Logout</MenuItem>
-                
-            
-        </Menu>
-        
-        </>
-       
-    );
+    
     return (
         <>
             <Box  sx={{display:"flex" , justifyContent:"space-between"}}>

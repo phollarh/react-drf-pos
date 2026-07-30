@@ -10,8 +10,8 @@ import AccordionDetails, {
 import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Fade from '@mui/material/Fade';
-import { Link, useNavigate } from "react-router-dom";
-import { Box, Button, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Tooltip, useMediaQuery } from '@mui/material';
+import { useNavigate } from "react-router-dom";
+import { Box, Button,Tooltip, useMediaQuery } from '@mui/material';
 import { useTheme } from "@mui/material/styles";
 import PointOfSaleIcon from '@mui/icons-material/PointOfSale';
 
@@ -21,11 +21,6 @@ export default function SideMenuAccordionProduct({open}: { open: boolean }) {
   const below600 = useMediaQuery("(max-width:750px)")
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === "dark"
-  const InnerSales = [
-  { label: 'Products',link:"products" },
-  { label: 'Product In-stock',link:"sales_product" },
-  
-];
   
   const [expanded, setExpanded] = React.useState(false);
 

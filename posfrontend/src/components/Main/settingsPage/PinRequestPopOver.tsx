@@ -1,16 +1,13 @@
 import * as React from 'react';
 import Popover from '@mui/material/Popover';
-import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Switch from '@mui/material/Switch';
 import { Box, TextField } from '@mui/material';
 import useAxiosWithInterceptor from '../../../helper/jwtinterceptor';
-import axios from 'axios';
 import ProgressSign from '../../Progress';
-import { OutletNstaffService } from '../../../services/OutletNStaffService';
 import { outletsDataProps, outletStaffDataProps } from '../../../@types/outletsNstaff-service';
 import { UseoutletNstaffContext } from '../../../context/OutletNStaffsContext';
-import { Filter } from '@mui/icons-material';
+
 
 
 interface PinProp {
@@ -30,7 +27,6 @@ export default function PinRequestPopOver({fetchReceipt,Employee_id,outletStaff,
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
   const [errorHandling, setErrorHandling] = React.useState<string | null>(null)
   const [isLoading, setIsLoading] = React.useState(false)
-  const [logStaff, setLogStaffIn] = React.useState<boolean>(false)
   const [pinState, setPin] = React.useState("")
   const [username, setUsername] = React.useState<string|undefined >()
   const isOnSalesReceipt = location.pathname === "/sales_receipts"

@@ -1,8 +1,5 @@
 import {
-    List,
     ListItem,
-    ListItemButton,
-    ListItemIcon,
     ListItemText,
     Box,
     Typography,
@@ -10,17 +7,16 @@ import {
     Container,
     Grid,
     Card,
-    CardMedia,
     CardContent,
     Paper,
     SelectChangeEvent
 } from "@mui/material";
 import useCrud from "../../hooks/useCrud";
-import React, { useEffect } from "react";
+import React from "react";
 import Button from '@mui/material/Button';
 import CardActions from '@mui/material/CardActions';
 import AddShoppingCartOutlinedIcon from '@mui/icons-material/AddShoppingCartOutlined';
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import useAxiosWithInterceptor from "../../helper/jwtinterceptor"
 import OutletFilterSelection from "../OutletFilterSelection";
 
@@ -86,7 +82,7 @@ const MainSection = () => {
     
             return base;
         }, [filterOption]);
-    const { dataCRUD, fetchData, error } = useCrud<Server>([], url)
+    const { dataCRUD,  error } = useCrud<Server>([], url)
     console.log('this page is active')
     // useEffect(() => {
     //     fetchData();

@@ -1,4 +1,4 @@
-import * as React from 'react';
+
 import { LineChart } from '@mui/x-charts/LineChart';
 
 const margin = { right: 24 };

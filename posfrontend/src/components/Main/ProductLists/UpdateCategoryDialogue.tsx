@@ -1,15 +1,12 @@
 import * as React from 'react';
 import Button from '@mui/material/Button';
-import Dialog, { DialogProps } from '@mui/material/Dialog';
+import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import LinearIndeterminate from '../../progressSign/LinearIndeterminate';
 import CategoryUpdateForm from './CategoryUpdateForm';
-import { Chip } from '@mui/material';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import UpdateIcon from '@mui/icons-material/Update';
+
 
 
 interface Server {
@@ -30,9 +27,7 @@ interface UpdateProductDialogueProps {
 
 export default function UpdateCategoryDialogue({handleOrderDelete,onSuccess,dataObject,handleClose,open,scroll, dataCRUD}:UpdateProductDialogueProps) {
 
-  const [name ,setName] = React.useState("")
-  const [categoryId, setCategoryId] = React.useState<number>(0)
-const [isLoading, setIsloading] = React.useState<boolean>(false)
+  const [isLoading, setIsloading] = React.useState<boolean>(false)
   
 
     

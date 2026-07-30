@@ -3,12 +3,10 @@ import Button from '@mui/material/Button';
 import Dialog, { DialogProps } from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import MeasurementUpdateForm from './MeasurementUpdateForm';
 import LinearIndeterminate from '../../progressSign/LinearIndeterminate';
 import { Chip, useTheme } from '@mui/material';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import AddLinkIcon from '@mui/icons-material/AddLink';
 import UpdateIcon from '@mui/icons-material/Update';
 

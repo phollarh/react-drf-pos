@@ -338,9 +338,10 @@ class AccountViewSet(viewsets.ViewSet):
             user=request.user,
         )
         lag_time_check = request.data.get("lag_time_check")
-        print(lag_time_check)
+        print(lag_time_check, "yes what is lag time")
         pass_token = signing.dumps(
             {
+                "lag_time_check": lag_time_check,
                 "user_id": request.user.id,
                 "nonce": nonce,
                 "authorizer": authorizer,
@@ -613,10 +614,14 @@ class AccountViewSet(viewsets.ViewSet):
 
         try:
             user = User.objects.get(id=user_id)
-            print(user)
+            print(user, "userrrrrr")
         except User.DoesNotExist:
+            print("cautght upo hererefff")
             return Response({"error": "invalid user"}, status=status.HTTP_404_NOT_FOUND)
-
+        if user.email_verified:
+            return Response(
+                {"is_verified": "User already verified"}, status=status.HTTP_200_OK
+            )
         try:
             verification = EmailVerification.objects.get(user=user)
         except EmailVerification.DoesNotExist:
@@ -702,9 +707,10 @@ class OuletViewSet(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
 
         instance = self.get_object()
-        # token = request.headers.get("X-Pass-Token")
-        token = request.COOKIES.get("pass_token")
-
+        token = request.headers.get("X-Pass-Token")
+        if not token:
+            token = request.COOKIES.get("pass_token")
+            
         if not token:
             return Response(
                 {"error_token": "Admin/Supervisor Passcode required"},
@@ -736,29 +742,30 @@ class OuletViewSet(viewsets.ModelViewSet):
             )
             response.delete_cookie("pass_token")
             return response
-        # nonce = payload["nonce"]
+        nonce = payload["nonce"]
         # purpose = payload["purpose"]
         with transaction.atomic():
-            # try:
-            #     verify_nonce = AuthorizationNonce.objects.select_for_update().get(
-            #         object_id=str(instance.id),
-            #         purpose=purpose,
-            #         user=request.user,
-            #         nonce=nonce,
-            #     )
-            #     if verify_nonce.created_at < timezone.now() - timedelta(minutes=10):
-            #         verify_nonce.delete()
-            #         return Response(
-            #             {
-            #                 "error": "Authorization has expired. Please authenticate again."
-            #             },
-            #             status=status.HTTP_403_FORBIDDEN,
-            #         )
-            # except AuthorizationNonce.DoesNotExist:
-            #     return Response(
-            #         {"error": "Invalid or expired authorization token"},
-            #         status=status.HTTP_403_FORBIDDEN,
-            #     )
+            if not payload["lag_time_check"]:
+                try:
+                    verify_nonce = AuthorizationNonce.objects.select_for_update().get(
+                        object_id=str(instance.id),
+                        user=request.user,
+                        nonce=nonce,
+                    )
+                    if verify_nonce.created_at < timezone.now() - timedelta(minutes=3):
+                        verify_nonce.delete()
+                        return Response(
+                            {
+                                "error": "Authorization has expired. Please authenticate again."
+                            },
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
+                except AuthorizationNonce.DoesNotExist:
+                    return Response(
+                        {"error": "Invalid or expired authorization token"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+                verify_nonce.delete()
 
             serializer = self.get_serializer(instance, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
@@ -775,11 +782,10 @@ class OuletViewSet(viewsets.ModelViewSet):
         return qs.filter(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
-        token = request.COOKIES.get("pass_token")
-        # token = request.headers.get("X-Pass-Token")
-
+        token = request.headers.get("X-Pass-Token")
         if not token:
-
+            token = request.COOKIES.get("pass_token")
+        if not token:
             return Response(
                 {"error_token": "Admin/Supervisor Passcode required"},
                 status=status.HTTP_403_FORBIDDEN,
@@ -817,28 +823,30 @@ class OuletViewSet(viewsets.ModelViewSet):
             response.delete_cookie("pass_token")
             return response
 
-        # nonce = payload["nonce"]
+        nonce = payload["nonce"]
         # purpose = payload["purpose"]
         with transaction.atomic():
-            # try:
-            #     verify_nonce = AuthorizationNonce.objects.select_for_update().get(
-            #         user=request.user,
-            #         purpose=purpose,
-            #         nonce=nonce,
-            #     )
-            #     if verify_nonce.created_at < timezone.now() - timedelta(minutes=10):
-            #         verify_nonce.delete()
-            #         return Response(
-            #             {
-            #                 "error": "Authorization has expired. Please authenticate again."
-            #             },
-            #             status=status.HTTP_403_FORBIDDEN,
-            #         )
-            # except AuthorizationNonce.DoesNotExist:
-            #     return Response(
-            #         {"error": "Invalid or expired authorization token"},
-            #         status=status.HTTP_403_FORBIDDEN,
-            #     )
+            if not payload["lag_time_check"]:
+                try:
+                    verify_nonce = AuthorizationNonce.objects.select_for_update().get(
+                        user=request.user,
+                        # purpose=purpose,
+                        nonce=nonce,
+                    )
+                    if verify_nonce.created_at < timezone.now() - timedelta(minutes=3):
+                        verify_nonce.delete()
+                        return Response(
+                            {
+                                "error": "Authorization has expired. Please authenticate again."
+                            },
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
+                except AuthorizationNonce.DoesNotExist:
+                    return Response(
+                        {"error": "Invalid or expired authorization token"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+                verify_nonce.delete()
 
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -856,9 +864,11 @@ class OuletViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        # token = request.headers.get("X-Pass-Token")
-        token = request.COOKIES.get("pass_token")
+        token = request.headers.get("X-Pass-Token")
         if not token:
+            token = request.COOKIES.get("pass_token")
+        if not token:
+            print("here cant find token")
             return Response(
                 {"error_token": "Admin/Supervisor Passcode required"},
                 status=status.HTTP_403_FORBIDDEN,
@@ -889,30 +899,32 @@ class OuletViewSet(viewsets.ModelViewSet):
             response.delete_cookie("pass_token")
             return response
 
-        # nonce = payload["nonce"]
+        nonce = payload["nonce"]
         # purpose = payload["purpose"]
         with transaction.atomic():
-            # try:
-            #     verify_nonce = AuthorizationNonce.objects.select_for_update().get(
-            #         user=request.user,
-            #         object_id=str(instance.id),
-            #         purpose=purpose,
-            #         nonce=nonce,
-            #     )
-            #     if verify_nonce.created_at < timezone.now() - timedelta(minutes=10):
-            #         verify_nonce.delete()
-            #         return Response(
-            #             {
-            #                 "error": "Authorization has expired. Please authenticate again."
-            #             },
-            #             status=status.HTTP_403_FORBIDDEN,
-            #         )
+            if not payload["lag_time_check"]:
+                try:
+                    verify_nonce = AuthorizationNonce.objects.select_for_update().get(
+                        user=request.user,
+                        object_id=str(instance.id),
+                        # purpose=purpose,
+                        nonce=nonce,
+                    )
+                    if verify_nonce.created_at < timezone.now() - timedelta(minutes=3):
+                        verify_nonce.delete()
+                        return Response(
+                            {
+                                "error": "Authorization has expired. Please authenticate again."
+                            },
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
 
-            # except AuthorizationNonce.DoesNotExist:
-            #     return Response(
-            #         {"error": "Invalid or expired authorization token"},
-            #         status=status.HTTP_403_FORBIDDEN,
-            #     )
+                except AuthorizationNonce.DoesNotExist:
+                    return Response(
+                        {"error": "Invalid or expired authorization token"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+                verify_nonce.delete()
 
             self.perform_destroy(instance)
             # verify_nonce.delete()
@@ -928,40 +940,34 @@ class OuletStaffViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         outlet_id = self.request.query_params.get("outlet_id")
-
-        qs = super().get_queryset().filter(outlet__user=self.request.user)
-        if outlet_id:
-            qs = qs = qs.filter(outlet_id=outlet_id)
+        if not outlet_id:
+            raise ValidationError({"error": "Outlet Details are required"})
+        qs = super().get_queryset().filter(outlet__user=self.request.user, outlet__id = outlet_id)
+            
         return qs
+    
+    def list(self, request, *args, **kwargs):
+        outlet_id = self.request.query_params.get("outlet_id")
+        if not outlet_id:
+            return Response({"error":"Please Add/Activate and Outlet to use services"}, status=status.HTTP_403_FORBIDDEN)
+        return super().list(request, *args, **kwargs)
 
-    # def perform_create(self, serializer):
-    #     outlet_id = self.request.query_params.get("outlet_id")
-
-    #     if not outlet_id:
-    #         raise ValidationError(
-    #             {"error": "Please activate an outlet"},
-    #             status=400,
-    #         )
-    #     try:
-    #         outlet_instance = Outlets.objects.get(id=outlet_id, user=self.request.user)
-    #     except Outlets.DoesNotExist:
-    #         raise ValidationError({"error": "Please activate an outlet"})
-
-    #     serializer.save(outlet=outlet_instance)
     def create(self, request, *args, **kwargs):
-        # token = request.headers.get("X-Pass-Token")
-        token = request.COOKIES.get("pass_token")
+        token = request.headers.get("X-Pass-Token")
+        if not token:
+            token = request.COOKIES.get("pass_token")
+        
         outlet_id = self.request.query_params.get("outlet_id")
 
         if not outlet_id:
-            raise ValidationError(
+            return Response(
                 {"error": "Please activate an outlet"},
-                status=400,
+                status=status.HTTP_400_BAD_REQUEST,
             )
         try:
             outlet_instance = Outlets.objects.get(id=outlet_id, user=self.request.user)
         except Outlets.DoesNotExist:
-            raise ValidationError({"error": "Please activate an outlet"})
+            return Response({"error": "Please activate an outlet"}, status=status.HTTP_404_NOT_FOUND)
 
         if not token:
             return Response(
@@ -996,29 +1002,31 @@ class OuletStaffViewSet(viewsets.ModelViewSet):
         #         {"error": "Error, Please Enter admin Passcode"},
         #         status=status.HTTP_403_FORBIDDEN,
         #     )
-        # nonce = payload["nonce"]
+        nonce = payload["nonce"]
         # purpose = payload["purpose"]
         with transaction.atomic():
-            # try:
-            #     verify_nonce = AuthorizationNonce.objects.select_for_update().get(
-            #         user=request.user,
-            #         purpose=purpose,
-            #         nonce=nonce,
-            #     )
-            #     if verify_nonce.created_at < timezone.now() - timedelta(minutes=10):
-            #         verify_nonce.delete()
-            #         return Response(
-            #             {
-            #                 "error": "Authorization has expired. Please authenticate again."
-            #             },
-            #             status=status.HTTP_403_FORBIDDEN,
-            #         )
-            # except AuthorizationNonce.DoesNotExist:
-            #     return Response(
-            #         {"error": "Invalid or expired authorization token"},
-            #         status=status.HTTP_403_FORBIDDEN,
-            #     )
-
+            if not payload["lag_time_check"]:
+                try:
+                    verify_nonce = AuthorizationNonce.objects.select_for_update().get(
+                        user=request.user,
+                        # purpose=purpose,
+                        nonce=nonce,
+                    )
+                    if verify_nonce.created_at < timezone.now() - timedelta(minutes=3):
+                        verify_nonce.delete()
+                        return Response(
+                            {
+                                "error": "Authorization has expired. Please authenticate again."
+                            },
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
+                except AuthorizationNonce.DoesNotExist:
+                    return Response(
+                        {"error": "Invalid or expired authorization token"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+                verify_nonce.delete()
+                
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save(outlet=outlet_instance)
@@ -1046,8 +1054,10 @@ class OuletStaffViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        token = request.COOKIES.get("pass_token")
-
+        token = request.headers.get("X-Pass-Token")
+        if not token:
+            token = request.COOKIES.get("pass_token")
+        
         if not token:
             return Response(
                 {"error_token": "Admin/Supervisor Passcode required"},
@@ -1071,29 +1081,31 @@ class OuletStaffViewSet(viewsets.ModelViewSet):
                 {"error": "Invalid token"},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        # nonce = payload["nonce"]
+        nonce = payload["nonce"]
         # purpose = payload["purpose"]
         with transaction.atomic():
-            # try:
-            #     verify_nonce = AuthorizationNonce.objects.select_for_update().get(
-            #         object_id=str(instance.Employee_id),
-            #         purpose=purpose,
-            #         user=request.user,
-            #         nonce=nonce,
-            #     )
-            #     if verify_nonce.created_at < timezone.now() - timedelta(minutes=10):
-            #         verify_nonce.delete()
-            #         return Response(
-            #             {
-            #                 "error": "Authorization has expired. Please authenticate again."
-            #             },
-            #             status=status.HTTP_403_FORBIDDEN,
-            #         )
-            # except AuthorizationNonce.DoesNotExist:
-            #     return Response(
-            #         {"error": "Invalid or expired authorization token"},
-            #         status=status.HTTP_403_FORBIDDEN,
-            #     )
+            if not payload["lag_time_check"]:
+                try:
+                    verify_nonce = AuthorizationNonce.objects.select_for_update().get(
+                        object_id=str(instance.Employee_id),
+                        # purpose=purpose,
+                        user=request.user,
+                        nonce=nonce,
+                    )
+                    if verify_nonce.created_at < timezone.now() - timedelta(minutes=3):
+                        verify_nonce.delete()
+                        return Response(
+                            {
+                                "error": "Authorization has expired. Please authenticate again."
+                            },
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
+                except AuthorizationNonce.DoesNotExist:
+                    return Response(
+                        {"error": "Invalid or expired authorization token"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+                verify_nonce.delete()
 
             # login = (
             #     OutletStaffLogin.objects.filter(outlet_staff=instance, is_active=True)
@@ -1124,8 +1136,11 @@ class OuletStaffViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        token = request.COOKIES.get("pass_token")
-
+        
+        token = request.headers.get("X-Pass-Token")
+        if not token:
+            token = request.COOKIES.get("pass_token")
+        
         if not token:
             return Response(
                 {"error_token": "Admin/Supervisor Passcode required"},
@@ -1149,31 +1164,32 @@ class OuletStaffViewSet(viewsets.ModelViewSet):
                 {"error": "Invalid delete token"},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        # nonce = payload["nonce"]
+        nonce = payload["nonce"]
         # purpose = payload["purpose"]
         with transaction.atomic():
-            # try:
-            #     verify_nonce = AuthorizationNonce.objects.select_for_update().get(
-            #         user=request.user,
-            #         object_id=str(instance.Employee_id),
-            #         purpose=purpose,
-            #         nonce=nonce,
-            #     )
-            #     if verify_nonce.created_at < timezone.now() - timedelta(minutes=10):
-            #         verify_nonce.delete()
-            #         return Response(
-            #             {
-            #                 "error": "Authorization has expired. Please authenticate again."
-            #             },
-            #             status=status.HTTP_403_FORBIDDEN,
-            #         )
+            if not payload["lag_time_check"]:
+                try:
+                    verify_nonce = AuthorizationNonce.objects.select_for_update().get(
+                        user=request.user,
+                        object_id=str(instance.Employee_id),
+                        # purpose=purpose,
+                        nonce=nonce,
+                    )
+                    if verify_nonce.created_at < timezone.now() - timedelta(minutes=10):
+                        verify_nonce.delete()
+                        return Response(
+                            {
+                                "error": "Authorization has expired. Please authenticate again."
+                            },
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
 
-            # except AuthorizationNonce.DoesNotExist:
-            #     return Response(
-            #         {"error": "Invalid or expired authorization token"},
-            #         status=status.HTTP_403_FORBIDDEN,
-            #     )
-            # verify_nonce.delete()
+                except AuthorizationNonce.DoesNotExist:
+                    return Response(
+                        {"error": "Invalid or expired authorization token"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+                verify_nonce.delete()
             self.perform_destroy(instance)
             return Response(
                 {"message": "deleted successfully"}, status=status.HTTP_200_OK
@@ -1331,7 +1347,7 @@ class StaffLoginViewSet(viewsets.ModelViewSet):
                 samesite="Lax",
             )
             return response
-        newLoghistory=OutletStaffLogin.objects.create(
+        newLoghistory = OutletStaffLogin.objects.create(
             outlet_staff=staff,
             assigned_at=timezone.now(),
             assigned=True,
@@ -1341,7 +1357,7 @@ class StaffLoginViewSet(viewsets.ModelViewSet):
             {
                 "message": "assigned success, always unassigned when session end",
                 "employee_id": staff.Employee_id,
-                "assigned_status": newLoghistory.assigned
+                "assigned_status": newLoghistory.assigned,
             },
             status=status.HTTP_200_OK,
         )

@@ -1,7 +1,5 @@
 import { useFormik } from "formik"
-import { useNavigate } from "react-router-dom"
 import { Box, Button, Container, Paper, TextField, Typography, useTheme } from "@mui/material";
-import axios from "axios";
 import "../accounts/ProfileForm.css"
 import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
 import { useEffect, useRef, useState } from "react";
@@ -26,16 +24,6 @@ interface dataPropsB{
     setCreateOutletObject:React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-  type apiValuesProps = {
-    "name":string;
-    "pin"?:string;
-    passToken?:string;
-    "city": string;
-    "email_address": string;
-    "address":string;
-    "Instagram":string;
-    "Facebook":string;
-    }
 
 
 const CreateOutletForm = ({ getOutlets,handleOutletCreated,setCreateOutletObject}:dataPropsB) => {
@@ -46,7 +34,6 @@ const CreateOutletForm = ({ getOutlets,handleOutletCreated,setCreateOutletObject
     const passTokenRef = useRef<string | null>(null);
     const [errMessage,setErrMessage] = useState(null)
     const RefCreate = useRef<HTMLDivElement | null>(null);
-    const navigate = useNavigate();
     const [requestId, setRequestId] = useState<requestIdProps | null>(null)
      const createIdRef = useRef(crypto.randomUUID());
     console.log(errMessage)
@@ -105,20 +92,21 @@ const CreateOutletForm = ({ getOutlets,handleOutletCreated,setCreateOutletObject
                 "Instagram":Instagram,
                 "Facebook":Facebook
                 }
-                console.log(apiValues)
+                console.log(apiValues, passTokenRef.current)
             try{
                 const response = await jwtAxios.post(`http://127.0.0.1:8000/accounts/api/outlets/`,
                     apiValues,
                     {
-                    //     headers: {
-                    // "X-Pass-Token": passTokenRef.current
-                    // }
-                    // ,
+                        headers: {
+                    "X-Pass-Token": passTokenRef.current
+                    }
+                    ,
                     withCredentials:true}
                 
                 )
                 console.log(response.data, response.status)
                 if(response.status === 200){
+                    passTokenRef.current=null
                     setCreateOutletObject(false)
                     await getOutlets()
                     handleOutletCreated(response.data["data"])
@@ -126,7 +114,8 @@ const CreateOutletForm = ({ getOutlets,handleOutletCreated,setCreateOutletObject
                 return (response.data["data"])
             }catch(err:any){
                 if(err.response?.status === 403 && err.response?.data.error_token){
-                setOpen(true)
+                    passTokenRef.current=null
+                    setOpen(true)
                 }
                 if(err.response?.status === 403 && err.response?.data.error_admin){
                     setOpen(true)
@@ -150,11 +139,7 @@ const CreateOutletForm = ({ getOutlets,handleOutletCreated,setCreateOutletObject
                 },8000);
                 console.log(err)
             }
-            // const status = await login(email, password);
-          
-            // if (status) {
-            //     navigate("/testlogin")
-            // }
+
         },
     })
     return (

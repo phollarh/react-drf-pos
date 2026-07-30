@@ -6,10 +6,9 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 // import ProductUpdateForm from './ProductUpdateForm';
 
-import { Box, Chip, Divider, List, ListItem, ListItemButton, ListItemText, SelectChangeEvent, Toolbar, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Box,Divider, List, ListItem, ListItemButton, ListItemText, SelectChangeEvent, Toolbar, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { format } from 'date-fns';
 import ReceiptDetailView from './ReceiptDetailView';
-import { Key, Receipt } from '@mui/icons-material';
 import ReceiptSearch from './ReceiptSearch';
 import FilterDateForm from '../../FilterDateForm';
 import DialogForCustomDate from '../salesByProductInfo/DialogForCustomDate';

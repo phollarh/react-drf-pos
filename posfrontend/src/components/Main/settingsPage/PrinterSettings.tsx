@@ -1,20 +1,11 @@
-import Paper from '@mui/material/Paper';
-import InputBase from '@mui/material/InputBase';
-import Divider from '@mui/material/Divider';
-import IconButton from '@mui/material/IconButton';
-import SearchIcon from '@mui/icons-material/Search';
+
 import React, { useEffect, useState } from 'react';
 import { Box, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import qz from "qz-tray";
 
-type handleSearchClickProps={
-    // handleSearchClick : (id :number | null)=>void
-    inputValue:string
-    handleChange:(event:React.ChangeEvent<HTMLInputElement>)=>void
-}
+
 
 export default function PrinterSettings() {
-    const isMobile = useMediaQuery("(max-width:500px)")
     const isBelow750 = useMediaQuery("(max-width: 750px)") 
     const [printerList, setPrinterList]  = React.useState<string[]>([]);
     const [selectedPrinter, setSelectedPrinter] = useState("")
@@ -35,7 +26,13 @@ export default function PrinterSettings() {
     }
     const searchPrinter = async ()=>{
        const printers = await qz.printers.find()
-       setPrinterList(printers)
+       if(Array.isArray(printers)){
+            setPrinterList(printers)
+       }else{
+        setPrinterList([printers])
+       }
+
+       
     }
 
   return (
@@ -74,7 +71,7 @@ export default function PrinterSettings() {
                                 <MenuItem value="">
                                   <em>None</em>
                                 </MenuItem>
-                                 {printerList?.map((item, index)=>{
+                                  { printerList?.map((item, index)=>{
                                     return(<MenuItem key={index}  value={item}>{item}</MenuItem>)
                                 })}
                               </Select>

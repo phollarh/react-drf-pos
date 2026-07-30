@@ -1,12 +1,8 @@
 import { useFormik } from "formik"
-import { useNavigate } from "react-router-dom"
-import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
-import { Box, Button, Container, Paper, TextField, Typography, useTheme } from "@mui/material";
-import axios from "axios";
+import { Box, Button,Paper, TextField, Typography, useTheme } from "@mui/material";
 import "../components/Main/accounts/ProfileForm.css"
 import { useState } from "react";
-import useAxiosWithInterceptor from "../helper/jwtinterceptor";
 import { useAuthServiceContext } from "../context/AuthContext";
 import { requestIdProps } from "../@types/auth-service";
 
@@ -22,35 +18,13 @@ interface passwordProps {
 }
 
 
-// function ControlledCheckbox() {
-//   const [checked, setChecked] = React.useState(false);
-//     console.log(checked)
-//   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-//     setChecked(event.target.checked);
-//   };
-
-//   return (
-//     <Checkbox
-//     size="small"
-//       checked={checked}
-//       onChange={handleChange}
-//       slotProps={{
-//         input: { 'aria-label': 'controlled' },
-//       }}
-//     />
-//   );
-// }
-
 
 
 const PassCodeForm = ({handleClose,purpose,requestId,formikS,passTokenRef}:passwordProps) => {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === "dark"
-    const jwtAxios = useAxiosWithInterceptor();
     const [sucessMessage, setSucessMessage] = useState<null | string>(null)
-    const [errMessage, setErrMessage] = useState<null | string>(null)
-    const navigate = useNavigate();
-    const {logout,AuthenticateUserPass, authError} = useAuthServiceContext()
+    const {AuthenticateUserPass, authError} = useAuthServiceContext()
     const [checked, setChecked] = React.useState(false);
     console.log(checked)
     const handleCheckedChange = (event: React.ChangeEvent<HTMLInputElement>) => {

@@ -37,6 +37,7 @@ const HomeMainSection = () => {
     const outlet_id:string  = localStorage.getItem("outlet_id") || ""
     const [noOutletError , setNoOutletError] = useState<null | string>(null)
     React.useEffect(() => {
+        console.log(drawerOpen)
                 const handleDrawerToggle = (e: Event) => {
                 const customEvent = e as CustomEvent;
                 setDrawerOpen(customEvent.detail);
@@ -45,7 +46,6 @@ const HomeMainSection = () => {
                 return () => window.removeEventListener("drawer-toggle", handleDrawerToggle);
     }, []);
     
-    const drawerWidth = drawerOpen ? theme.primaryDraw.width : theme.primaryDraw.closed;
 
    const getSalestData = async ()=>{
         
@@ -83,7 +83,7 @@ const HomeMainSection = () => {
         
         const dailyLablesData :number[]= []
         const dailyLables:string[] = []
-        const salesDat :SaleRecord[]= [];
+
         for(let x in dailysalesData){
             dailyLables.push(dailysalesData[x]['daily'])
             dailyLablesData.push(dailysalesData[x]['total_daily'] ?? 0)
@@ -104,9 +104,6 @@ const HomeMainSection = () => {
         }
         SetxLabelsMonthlySales(MonthlyLables)
         SetlabelsDataMonthlySales(MonthlyLablesData)
-        // salesDat.push({"net_sales":response.data["net_sales"]}, {"gross_sales":response.data["gross_sales"][0]["sales"]})
-        // SetSalesData(salesDat)
-        // console.log(response.data)
         return response.data
     }catch(err:any){
         if (err.response?.status === 400) {
@@ -125,22 +122,8 @@ const HomeMainSection = () => {
         getSalestData();
     }, []);
 
-     useEffect(() => {
-       
-        console.log(salesData)
-    }, [salesData]);
 
-    // useEffect(() => {    
-    //     console.log(xLabelsMonthlySales)
-    //     console.log(xLabelsDailySales)
-    // }, [xLabelsMonthlySales, xLabelsDailySales]);
     
-    // useEffect(() => {    
-    //     console.log(SalesData);
-        
-    // }, [SalesData]);
-    
-  
 
 
     return (

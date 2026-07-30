@@ -1,4 +1,4 @@
-import {Box, CssBaseline, Divider, Paper, SelectChangeEvent, Tooltip, Typography, useMediaQuery, useTheme} from "@mui/material"
+import {Box, CssBaseline, Divider, Paper,Tooltip, Typography, useMediaQuery, useTheme} from "@mui/material"
 
 import CreateSales from "../components/Main/sales/CreateSales";
 import SalesReceipt from "../components/Main/sales/SalesReceipt";
@@ -10,9 +10,7 @@ import SideMenu from "../components/PrimaryDraw/SideMenu";
 import SecondaryDraw from "./templates/SecondaryDraw";
 import Main from "./templates/Main";
 import useCrud from "../hooks/useCrud";
-import ReceiptDialogue from "../components/Main/sales/ReceiptDialogue";
-import { useLocation } from "react-router-dom";
-import { Receipt } from "@mui/icons-material";
+
 import MenuIcon from '@mui/icons-material/Menu';
 import Alert from "../components/Alert";
 import { Server } from "../@types/server";
@@ -20,33 +18,8 @@ import OutletStaffSession from "../components/Main/accounts/outletStaffSession/O
 import { UseoutletNstaffContext } from "../context/OutletNStaffsContext";
 import { outletStaffDataProps } from "../@types/outletsNstaff-service";
 import qz from "qz-tray";
-import axios from "axios";
 
 
-
-
-interface receiptData {
-    id: number;
-    product_name: string;
-    sold_In: string;
-    selling_price: number;
-    stock_inventory: number
-    category: string
-    cost_price?:string
-    user?:number
-    
-
-}
-// interface Server {
-//     id: number;
-//     product_name: string;
-//     sold_In: string;
-//     selling_price: number;
-//     stock_inventory: number
-//     category: string
-//     cost_price?:string
-//     user?:number
-    //}
 
 interface productType{
     id?:number;
@@ -90,17 +63,14 @@ interface receiptStatusDataProps{
 const SalesNReceipt = () => {
   const theme=useTheme()
   const jwtAxios = useAxiosWithInterceptor();
-  const location = useLocation();
   const [loading, setLoading] = useState(false);
-  const isOnSalesReceipt = location.pathname === "/sales_receipt";
   const below850 = useMediaQuery("(max-width:1000px)");
   const below720 = useMediaQuery("(max-width:720px)");
-  const [drawerOpen, setDrawerOpen] = React.useState(true);
-  const [productClicked, setProductClicked] = React.useState(false);
+  const [, setDrawerOpen] = React.useState(true);
   const [receiptStatusData, setReceiptStatusData] = React.useState<null | receiptStatusDataProps[]>(null)
   const [receiptStatus, setReceiptStatus] = React.useState<null | boolean>(null)
-  const [receiptId, setReceiptId] = React.useState<number| null>(null)
-  const [open, setOpen] = React.useState(false);
+  const [, setReceiptId] = React.useState<number| null>(null)
+  const [, setOpen] = React.useState(false);
   const [errorOrder,setErrorOrder] = React.useState<null|string>(null);
   const outlet_id =localStorage.getItem("outlet_id") || "" 
   const [paymentOption, setPaymentOption] = React.useState('');
@@ -110,12 +80,10 @@ const SalesNReceipt = () => {
   const [assignMess, setAssignMess] = useState<null|string>(null)
   const [printerMess, setPrinterMess] = useState<null|string>(null)
   const [assignedStaff, setAssignedStaff]  = React.useState<outletStaffDataProps | null >(null)
-  const {LogStaffOut,getStaffStatus,employeeId, staffStatus,staffData} = UseoutletNstaffContext();
+  const {getStaffStatus,staffData} = UseoutletNstaffContext();
   const [searchByproductName, setSearchByproductName] = React.useState<string>("");
   
-//   const jwtAxios = useAxiosWithInterceptor()
-    
-  const isDarkMode = theme.palette.mode === "dark"
+
 
     useEffect(()=>{
         if (!staffData.length) return;
@@ -157,10 +125,8 @@ const SalesNReceipt = () => {
        
     },[staffData])
     
-    const handleClose = () => {
-    setOpen(false);
-  };
-  const [filterOption, setFilterOption] = React.useState(() => localStorage.getItem("outlet_id") || "" );
+
+  const [filterOption] = React.useState(() => localStorage.getItem("outlet_id") || "" );
   React.useEffect(() => {
                 const handleDrawerToggle = (e: Event) => {
                 const customEvent = e as CustomEvent;
@@ -218,7 +184,7 @@ const SalesNReceipt = () => {
 
       const handleReceiptSubmit = async (hold:boolean, receipt_id:number)=>{
         
-            const orderId = localStorage.getItem("receipt_id")
+            
            const payload ={
                     "id":receipt_id,
                     "orders": 
@@ -258,7 +224,7 @@ const SalesNReceipt = () => {
                                 type: "pdf",
                                 data:  response.data.pdf_url
                             },
-                        ]);
+                        ] as any);
                     }else{
                         setPrinterMess("for a more robust printing experience, please setup Printer in setting");
                         window.open(response.data.pdf_url, "_blank")
@@ -394,33 +360,9 @@ const SalesNReceipt = () => {
        getReceiptStatus()
     },[receiptStatus, receiptData])
 
-    //  React.useEffect(()=>{
-    //    const getActive = localStorage.getItem("receipt_id")
-    //    if(!getActive){
-    //     const getId=receiptStatusData?.find(item=>item.hold === false)
-    //     console.log(getId, "id is")
-    //     localStorage.setItem("receipt_id", getId?.id || "")
-    //    }
-    // },[receiptStatusData])
 
-    console.log(receiptData,"jjjjjjjjj")
     const handleClick = async (id:number )=>{
-
         setErrorOrder(null);
-        //const disabled=receiptStatusData?.find((item)=>item.hold === false)
-        // if (disabled){
-        //     console.log(disabled)
-        //     setErrorOrder("hold the active Receipt, before switching to another")
-        //     return
-        // } 
-        // const isActiveReceipt = receiptStatusData?.some((item)=>
-        //     String(item.id) === localStorage.getItem("receipt_id") && item.hold === false
-        // )
-
-        //     if (receiptStatusData && !isActiveReceipt && receiptStatusData?.length > 2){
-        //     setErrorOrder('maximum amount of held Receipt reached, issue receipts on hold to continue');
-        //     return
-        // }
         const receipt_id =localStorage.getItem("receipt_id") || ""
         console.log(receipt_id)
         if(below720){
@@ -454,7 +396,6 @@ const SalesNReceipt = () => {
                 setErrorOrder(null)
                 setOpen(true);
                 if(receiptData.length != 0){
-                    console.log("hiiiiiiiiiiiiiiiiiiiiiiiiiii")
                     setDataCRUDReceipt(
                         receiptData.map(item => ({
                             ...item,
@@ -475,11 +416,6 @@ const SalesNReceipt = () => {
                 setReceiptId(response.data["receipt_id"])
                 localStorage.setItem("receipt_id", response.data["receipt_id"])
             }
-
-            // const { fetchData } = useCrud<Server>([], url_receipt)
-            // fetchData()
-            // navigate('/sales')
-            
             return data;
         } catch (error: any) {
             if (error.response?.data.error_len) {
@@ -684,10 +620,10 @@ const SalesNReceipt = () => {
                                     }  
                                     <Box flexGrow={1} sx={{height:"95%",m:0.5, overflowY:"auto", overflowX:"hidden"}}>
                                         <SalesReceipt 
-                                            setAmountTendered={setAmountTendered} amountTendered={amountTendered}
-                                            paymentOption={paymentOption} setPaymentOption={setPaymentOption}
-                                            remarks={remarks} setRemarks={setRemarks}
-                                            handleReceiptSubmit={handleReceiptSubmit}  handleClick={handleClick} dataCRUD={receiptData} setDataCRUDReceipt={setDataCRUDReceipt}/>
+                                      setAmountTendered={setAmountTendered} amountTendered={amountTendered}
+                                      paymentOption={paymentOption} setPaymentOption={setPaymentOption}
+                                      remarks={remarks} setRemarks={setRemarks}
+                                      handleReceiptSubmit={handleReceiptSubmit} handleClick={handleClick} dataCRUD={receiptData} setDataCRUDReceipt={setDataCRUDReceipt} showReceiptDetaills={false}/>
                             </Box>
                                 <Box display={showReceiptDetaills?"none":"block"} component="button" onClick={onSmallScreenClick}
                                     sx={{

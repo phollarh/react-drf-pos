@@ -2,12 +2,6 @@ import {
     Box,
     Typography,
     useTheme,
-    Container,
-    AppBar,
-    Toolbar,
-    IconButton,
-    TextField,
-    Paper,
     FormControl,
     Select,
     MenuItem,
@@ -16,12 +10,8 @@ import {
     Divider,
     useMediaQuery,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
-
-import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
 import SettingsIcon from '@mui/icons-material/Settings';
 import { outletsDataProps, outletStaffDataProps } from "../../../@types/outletsNstaff-service";
-import { AddBox } from "@mui/icons-material";
 import PrinterSettings from "./PrinterSettings";
 
 
@@ -47,20 +37,12 @@ const SettingSecondary = (
     {
         isMainHidden,
         
-        outlets:{outletsData ,handleClick,outletId,handleCreate},
+        outlets:{outletsData ,handleClick,outletId},
         outletStaff:{outletStaffData,selectedEmployeeId,handleOutletStaffClick}
     }:settingsProps) => {
     const isBelow750 = useMediaQuery("(max-width: 750px)")   
     const theme = useTheme();
     console.log(isMainHidden)
-
-
-
-    // React.useEffect(()=>{
-    //     console.log(data)
-    // },[data])
-
-
 
     return (
         <>

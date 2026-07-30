@@ -109,8 +109,10 @@ class ProductListViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
 
-        # token = request.headers.get("X-Pass-Token")
-        token = request.COOKIES.get("pass_token")
+        token = request.headers.get("X-Pass-Token")
+        print(token)
+        if not token:
+            token = request.COOKIES.get("pass_token")
 
         if not token:
             return Response(
@@ -135,29 +137,31 @@ class ProductListViewSet(viewsets.ModelViewSet):
                 {"error": "Invalid  token"},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        # nonce = payload["nonce"]
+        nonce = payload["nonce"]
         # purpose = payload["purpose"]
         authorizer = payload["authorizer"]
         with transaction.atomic():
-            # try:
-            #     verify_nonce = AuthorizationNonce.objects.select_for_update().get(
-            #         user=request.user,
-            #         purpose=purpose,
-            #         nonce=nonce,
-            #     )
-            #     if verify_nonce.created_at < timezone.now() - timedelta(minutes=10):
-            #         verify_nonce.delete()
-            #         return Response(
-            #             {
-            #                 "error": "Authorization has expired. Please authenticate again."
-            #             },
-            #             status=status.HTTP_403_FORBIDDEN,
-            #         )
-            # except AuthorizationNonce.DoesNotExist:
-            #     return Response(
-            #         {"error": "Invalid or expired authorization token"},
-            #         status=status.HTTP_403_FORBIDDEN,
-            #     )
+            if not payload["lag_time_check"]:
+                try:
+                    verify_nonce = AuthorizationNonce.objects.select_for_update().get(
+                        user=request.user,
+                        # purpose=purpose,
+                        nonce=nonce,
+                    )
+                    if verify_nonce.created_at < timezone.now() - timedelta(minutes=3):
+                        verify_nonce.delete()
+                        return Response(
+                            {
+                                "error": "Authorization has expired. Please authenticate again."
+                            },
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
+                except AuthorizationNonce.DoesNotExist:
+                    return Response(
+                        {"error": "Invalid or expired authorization token"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+                verify_nonce.delete()
 
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -192,14 +196,14 @@ class ProductListViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        token = request.COOKIES.get("pass_token")
-
+        token = request.headers.get("X-Pass-Token")
+        if not token:
+            token = request.COOKIES.get("pass_token")
         if not token:
             return Response(
                 {"error_token": "Admin/Supervisor Passcode required"},
                 status=status.HTTP_403_FORBIDDEN,
             )
-
         try:
             payload = signing.loads(
                 token,
@@ -222,31 +226,33 @@ class ProductListViewSet(viewsets.ModelViewSet):
                 {"error": "Invalid  token"},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        # nonce = payload["nonce"]
+        nonce = payload["nonce"]
         # purpose = payload["purpose"]
         authorizer = payload["authorizer"]
 
         with transaction.atomic():
-            # try:
-            #     verify_nonce = AuthorizationNonce.objects.select_for_update().get(
-            #         object_id=str(instance.id),
-            #         purpose=purpose,
-            #         user=request.user,
-            #         nonce=nonce,
-            #     )
-            #     if verify_nonce.created_at < timezone.now() - timedelta(minutes=15):
-            #         verify_nonce.delete()
-            #         return Response(
-            #             {
-            #                 "error": "Authorization has expired. Please authenticate again."
-            #             },
-            #             status=status.HTTP_403_FORBIDDEN,
-            #         )
-            # except AuthorizationNonce.DoesNotExist:
-            #     return Response(
-            #         {"error": "Invalid or expired authorization token"},
-            #         status=status.HTTP_403_FORBIDDEN,
-            #     )
+            if not payload["lag_time_check"]:
+                try:
+                    verify_nonce = AuthorizationNonce.objects.select_for_update().get(
+                        object_id=str(instance.id),
+                        # purpose=purpose,
+                        user=request.user,
+                        nonce=nonce,
+                    )
+                    if verify_nonce.created_at < timezone.now() - timedelta(minutes=3):
+                        verify_nonce.delete()
+                        return Response(
+                            {
+                                "error": "Authorization has expired. Please authenticate again."
+                            },
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
+                except AuthorizationNonce.DoesNotExist:
+                    return Response(
+                        {"error": "Invalid or expired authorization token"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+                verify_nonce.delete()
 
             serializer = self.get_serializer(instance, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
@@ -270,8 +276,9 @@ class ProductListViewSet(viewsets.ModelViewSet):
         return super().get_serializer_class()
 
     def destroy(self, request, *args, **kwargs):
-        # token = request.headers.get("X-Pass-Token")
-        token = request.COOKIES.get("pass_token")
+        token = request.headers.get("X-Pass-Token")
+        if not token:
+            token = request.COOKIES.get("pass_token")
 
         if not token:
             return Response(
@@ -304,8 +311,34 @@ class ProductListViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
         except Http404:
             return Response({"error": "No Product matches the given query"}, status=404)
-        self.perform_destroy(instance)
-        return Response({"message": "Product deleted"}, status=status.HTTP_200_OK)
+        nonce = payload["nonce"]
+        # purpose = payload["purpose"]
+        with transaction.atomic():
+            if not payload["lag_time_check"]:
+                try:
+                    verify_nonce = AuthorizationNonce.objects.select_for_update().get(
+                        user=request.user,
+                        object_id=str(instance.id),
+                        # purpose=purpose,
+                        nonce=nonce,
+                    )
+                    if verify_nonce.created_at < timezone.now() - timedelta(minutes=3):
+                        verify_nonce.delete()
+                        return Response(
+                            {
+                                "error": "Authorization has expired. Please authenticate again."
+                            },
+                                status=status.HTTP_403_FORBIDDEN,
+                        )
+        
+                except AuthorizationNonce.DoesNotExist:
+                    return Response(
+                        {"error": "Invalid or expired authorization token"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+                verify_nonce.delete()
+            self.perform_destroy(instance)
+            return Response({"message": "Product deleted"}, status=status.HTTP_200_OK)
 
 
 def create_inventory_log(authorizer, product, quantity, action):

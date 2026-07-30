@@ -1,4 +1,4 @@
-import { Box, Container, useMediaQuery } from "@mui/material";
+import { Box, useMediaQuery } from "@mui/material";
 import frontPageImage from "../../assets/frontPageImage.png"
 import frontpageMobileView from "../../assets/frontpageMobileView.png"
 

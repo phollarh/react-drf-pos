@@ -1,8 +1,7 @@
 import { useFormik } from "formik"
-import { useNavigate } from "react-router-dom"
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
-import { Box, Button, Container, Paper, TextField, Typography, useTheme } from "@mui/material";
+import { Box, Button, Container, Paper, TextField,useTheme } from "@mui/material";
 import axios from "axios";
 import './ProfileForm.css'
 
@@ -21,7 +20,6 @@ interface dataPropsB{
 const ProfileForm = ({data}:dataPropsB) => {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === "dark"
-    const navigate = useNavigate();
     const formik = useFormik({
         enableReinitialize: true,
         initialValues: {

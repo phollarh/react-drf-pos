@@ -1,4 +1,4 @@
-import { Box, Typography, useMediaQuery } from "@mui/material";
+import { Box, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
 
@@ -8,9 +8,7 @@ type SecondaryDrawProps = {
 };
 const SecondaryDraw = ({ children,showReceiptDetaills }: SecondaryDrawProps) => {
     const theme = useTheme()
-    const isDarkMode = theme.palette.mode === "dark"
     const below720 = useMediaQuery("(max-width: 720px)")
-    const above720 = useMediaQuery("(min-width: 720px)")
     const isBelow750 = useMediaQuery("(max-width : 750px)")
     const isOnSalesReceipt = location.pathname === "/sales_receipts";
     const isOnsettings = location.pathname === "/settings";

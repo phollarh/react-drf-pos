@@ -16,6 +16,9 @@ export const OutletNstaffService = () =>{
     const [staffStatus, setStaffStatus]  = React.useState<staffStatusProps | undefined>(undefined)
     const[employeeId, setEmployeeId] = React.useState<string>("")
     const [filterOption, setFilterOption] = React.useState<string>(() => localStorage.getItem("outlet_id") || "" );
+    const outlet_id = localStorage.getItem("outlet_id") || ""
+    const assigendStaff=Cookies.get("assigned_staff")
+    console.log(outlet_id, assigendStaff)
     
         const createOutlet =async (
                  name: string,
@@ -66,18 +69,24 @@ export const OutletNstaffService = () =>{
 //
 //get staffs details
          const getOutletStaff =async ()=>{
+           const outlet_id = localStorage.getItem("outlet_id") || ""
           try{
-               const response= await jwtAxios.get(`http://127.0.0.1:8000/accounts/api/outletstaffs/?outlet_id=${localStorage.getItem("outlet_id")}`, {withCredentials:true})
+               const response= await jwtAxios.get(`http://127.0.0.1:8000/accounts/api/outletstaffs/?outlet_id=${outlet_id}`, {withCredentials:true})
                setStaffData(response.data)
-          
+               console.log(response.data)
                return response.data
           }catch(err:any){
-              console.log(err)
+            if( err.response.status === 403 && err.response.data?.error){
+                setStaffData([])
+            }
+              console.log(err.response.data)
+              throw err
           }
+          
       }
       React.useEffect(()=>{ 
             getOutletStaff()
-      },[localStorage.getItem("outlet_id"),Cookies.get("assigned_staff")])
+      },[outlet_id])
 //get staff individual staff-status 
         const getStaffStatus = async (found:string)=>{
          try{

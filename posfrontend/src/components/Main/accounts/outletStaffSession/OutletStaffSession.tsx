@@ -1,9 +1,8 @@
 import { AppBar, Box, Toolbar, Typography, useTheme } from "@mui/material";
 
  import { UseoutletNstaffContext } from "../../../../context/OutletNStaffsContext"
-import UploadAvatars from "../../settingsPage/UploadAvater";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { outletStaffDataProps } from "../../../../@types/outletsNstaff-service";
 import ControlledSwitches from "../../settingsPage/LogControllSwitches";
 
@@ -50,7 +49,7 @@ interface SessionProps {
     assignMess :string | null;
 }
  
- export default function OutletStaffSession({setDataCRUDReceipt,fetchReceipt,staffData, assignMess,setAssignMess,setAssignedStaff,assignedStaff}:SessionProps) {
+ export default function OutletStaffSession({setDataCRUDReceipt,fetchReceipt, assignMess,setAssignMess,setAssignedStaff,assignedStaff}:SessionProps) {
         console.log(assignedStaff)
         const theme = useTheme()
         const {staffStatus} = UseoutletNstaffContext()

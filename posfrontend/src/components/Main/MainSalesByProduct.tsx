@@ -1,15 +1,10 @@
 import {
-    Box,
-    Typography,
     useTheme,
     Container,
     useMediaQuery,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import BarChartMain from "./SalesInfo/BarCharts";
-import LineChartHome from "./SalesInfo/LineChart";
 import useAxiosWithInterceptor from "../../helper/jwtinterceptor";
-import SalesInfo from "./SalesInfo/SalesInfo"
 import SalesByProductInfo from "./salesByProductInfo/SalesByProductInfo";
 
 interface productDetailsProps{

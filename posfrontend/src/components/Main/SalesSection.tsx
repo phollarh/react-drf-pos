@@ -3,11 +3,8 @@ import {
     Typography,
     useTheme,
     Container,
-    Grid,
     Card,
-    CardMedia,
     CardContent,
-    Toolbar,
     Input,
     SelectChangeEvent,
     TextField
@@ -127,24 +124,6 @@ const MainSection = () => {
     
     const drawerWidth = drawerOpen ? theme.primaryDraw.width : theme.primaryDraw.closed;
  
-    
-    console.log('this page is active')
-    // useEffect(() => {
-    //     fetchData();
-
-    // }, []);
-
-    // const [data, setData] = React.useState<Server[]>([])
-    // useEffect(() => {
-    //     setData(dataCRUD)
-
-    // }, [dataCRUD]);
-
-    //     useEffect(() => {
-    //     console.log(dataCRUD)
-
-    // }, [dataCRUD]);
-
     const ordersLenght = dataCRUD.reduce((acc, num)=>
         acc + num.orders.length
     ,0)

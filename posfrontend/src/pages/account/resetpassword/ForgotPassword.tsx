@@ -1,21 +1,17 @@
 import { useFormik } from "formik"
-import { useNavigate } from "react-router-dom"
-import PhoneInput from "react-phone-input-2";
+
 import "react-phone-input-2/lib/material.css";
 import { Box, Button, Container, Input, Paper, Stack, styled, TextField, Typography, useTheme } from "@mui/material";
-import axios from "axios";
 import '../../../components/Main/accounts/ProfileForm.css'
 import { useRef, useState } from "react";
-import { useAuthServiceContext } from "../../../context/AuthContext";
+
 import ProgressSign from "../../../components/Progress";
 import ResetPasswordDiag from "../../../components/Main/accounts/resetPassword/ResetPasswordDaig";
 import React from "react";
 import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
 
 
-interface passwordProps {
-    handleClose: () => void
-}
+
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: '#fff',
@@ -29,7 +25,7 @@ const Item = styled(Paper)(({ theme }) => ({
 }));
 
 
-const ForgotPassword = ({handleClose}:passwordProps) => {
+const ForgotPassword = () => {
     const theme = useTheme();
     const [open, setOpen] = React.useState(false);
     const [errorA, setErrorA] = React.useState<null|string>(null)
@@ -41,8 +37,6 @@ const ForgotPassword = ({handleClose}:passwordProps) => {
     const [showOTPForm,setShowOTPForm] = useState(false)
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const jwtAxios = useAxiosWithInterceptor()
-    const navigate = useNavigate();
-    const {logout} = useAuthServiceContext()
       const handleCloseDiag = () => {
     setOpen(false);
   };

@@ -7,12 +7,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
-import useAxiosWithInterceptor from '../../../helper/jwtinterceptor';
-import dayjs, { Dayjs } from "dayjs";
-
 import { Box, DialogProps, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
-;
-import UpdateProductDialogue from './UpdateProductDialogue';
 import UpdateCategoryDialogue from '../ProductLists/UpdateCategoryDialogue';
 
 interface catProps {
@@ -34,20 +29,6 @@ interface dataCRUDProps{
 }
 
 
-interface productDetailsProps{
-    id:number;
-    product_name:string;
-    total_qty:number;
-}
-
-interface SalesByProductProps {
-    salesProductData :Record<string , productDetailsProps[]>
-    filterOption:string;
-    showDialogForCustom:boolean;
-    handleCloseDialog:()=>void
-    
-           
-}
 
 interface ColumnProps {
   id: 'category_name' | 'code';
@@ -86,7 +67,7 @@ export default function CatListTable({setOpen,dataObject,setDataObject,onSuccess
   const below1200 = useMediaQuery("(max-width:1200px)")
   const below720 = useMediaQuery("(max-width:720px)")
   const below550 = useMediaQuery("(max-width:550px)")
-  const jwtAxios = useAxiosWithInterceptor();
+  
 
 
   
@@ -96,7 +77,7 @@ export default function CatListTable({setOpen,dataObject,setDataObject,onSuccess
   )
   console.log(dataCRUD)
 
-  const handleChangePage = (event: unknown, newPage: number) => {
+  const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
   };
 

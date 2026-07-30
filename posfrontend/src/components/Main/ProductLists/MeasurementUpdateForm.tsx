@@ -1,11 +1,8 @@
 import { useFormik } from "formik"
-import { useNavigate } from "react-router-dom"
-import { useAuthServiceContext } from "../../../context/AuthContext";
-import { Box, Button, Container, MenuItem, TextField, Typography } from "@mui/material";
-import { useEffect } from "react";
+import { Box, Button, Container, MenuItem, TextField } from "@mui/material";
 import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
 import React from "react";
-import LinearIndeterminate from "../../progressSign/LinearIndeterminate";
+
 
 interface Server {
     id: number;
@@ -29,7 +26,6 @@ interface UpdateMeasureFormProps {
 
 const MeasurementUpdateForm = ({
     outlet_id,
-    dataCRUD,
     measurementId,
     measurementType,
     ItemValue,

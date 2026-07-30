@@ -11,15 +11,12 @@ import { useTheme } from "@mui/material/styles";
 
 import LaptopWindowsIcon from '@mui/icons-material/LaptopWindows';
 import SideMenuItems from "../SideMenuItems";
-import HomeIcon from '@mui/icons-material/Home';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import PointOfSaleIcon from '@mui/icons-material/PointOfSale';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import SettingsIcon from '@mui/icons-material/Settings';
 import HistoryIcon from '@mui/icons-material/History';
 import InfoIcon from '@mui/icons-material/Info';
 import FeedbackIcon from '@mui/icons-material/Feedback';
-import SideMenuAccordion from "../sideMenuAccord/SideMenuDrop";
 import React from "react";
 
 

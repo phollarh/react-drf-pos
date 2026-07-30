@@ -1,7 +1,5 @@
 import { useFormik } from "formik"
-import { useNavigate } from "react-router-dom"
 import { Box, Button, Container, Paper, TextField, Typography, useTheme } from "@mui/material";
-import axios from "axios";
 import "../accounts/ProfileForm.css"
 import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
 import { useEffect, useRef, useState } from "react";
@@ -53,7 +51,6 @@ const OutletUpdateForm = ({data, getOutlets,setSelectedOutletObject}:dataPropsB)
     const passTokenRef = useRef<string | null>(null);
     const [openDel, setOpenDel] = useState(false);
     const [requestId, setRequestId] = useState<requestIdProps | null>(null)
-    const navigate = useNavigate();
       const [open, setOpen] = useState(false);
     
     useEffect(()=>{
@@ -79,13 +76,14 @@ const OutletUpdateForm = ({data, getOutlets,setSelectedOutletObject}:dataPropsB)
             const response = await jwtAxios.delete(`http://127.0.0.1:8000/accounts/api/outlets/${data?.id}/`,
 
                 {
-                //    headers: {
-                //     "X-Pass-Token": token
-                // },
+                   headers: {
+                    "X-Pass-Token": passTokenRef.current
+                },
                     withCredentials:true
                 }
                 )
                 if(response.status === 200){
+                    passTokenRef.current=null
                     setTimeout(()=>{
                         setSelectedOutletObject(null)
                          getOutlets()
@@ -154,18 +152,18 @@ const OutletUpdateForm = ({data, getOutlets,setSelectedOutletObject}:dataPropsB)
                 if(apiValues.pin === ""){
                     delete apiValues.pin
                 }
-                
+                console.log(passTokenRef.current)
                 const response = await jwtAxios.patch(`http://127.0.0.1:8000/accounts/api/outlets/${id}/`,
                     apiValues,
                     {
-                    //      headers: {
-                    // "X-Pass-Token": passTokenRef.current
-                    // },
+                         headers: {
+                    "X-Pass-Token": passTokenRef?.current
+                    },
                         withCredentials:true}
                 
                 )
                 if(response.status === 200){
-                    
+                    passTokenRef.current = null
                     setMess(response.data.message)
                      setTimeout(() => {
                         setMess(null)
@@ -175,6 +173,7 @@ const OutletUpdateForm = ({data, getOutlets,setSelectedOutletObject}:dataPropsB)
                 return (response.data)
             }catch(err:any){
                 if(err.response?.status === 403 && err.response?.data.error_token){
+                    console.log(err.response?.data.error_token)
                     setOpen(true)
                 }
                  if(err.response?.status === 403 && err.response?.data.error_admin){
@@ -367,7 +366,8 @@ const OutletUpdateForm = ({data, getOutlets,setSelectedOutletObject}:dataPropsB)
                         </Button> */}
                         <Button variant="contained" disableElevation sx={{m:1, textAlign:"center", textTransform:"none" }} type="submit">Update</Button>
                         <Button onClick={handleDelete}  size="small" color="error" variant="contained" disableElevation sx={{textTransform:"none",p:1, alignSelf: "center" }} >Delete</Button>
-                        <PassCodeDiag   
+                        <PassCodeDiag 
+                        passTokenRef={passTokenRef}  
                         open={openDel} 
                         handleClose={()=>{setOpenDel(false)}}
                         requestId={requestId}

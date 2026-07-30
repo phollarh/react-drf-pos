@@ -1,33 +1,16 @@
 import {
-    List,
-    ListItem,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
     Box,
     Typography,
     useTheme,
     Container,
-    Grid,
-    Card,
-    CardMedia,
-    CardContent,
-    Button,
     Paper,
     SelectChangeEvent
 } from "@mui/material";
 import useCrud from "../../hooks/useCrud";
 import React, { useEffect } from "react";
-import useAxiosWithInterceptor from "../../helper/jwtinterceptor";
-import { format } from "date-fns";
-import Divider from '@mui/material/Divider';
-import Dialog, { DialogProps } from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
 import PastReceiptView from "./sales/PastReceiptView";
 import PaginationControlled from "../pagination/Pagination";
 import PaginationSizeForm from "../pagination/PaginationSizeForm";
-import FilterDateForm from "../FilterDateForm";
 import { Dayjs } from "dayjs";
 
 
@@ -64,21 +47,10 @@ interface Server {
     total: number
 }
 
-interface DataCrudProps {
-    count : number;
-    next:string
-    previous:string | null;
-    results: Server[]
-}
-
-
 const MainPastReceipts = () => {
     const theme = useTheme();
-    const [drawerOpen, setDrawerOpen] = React.useState(true);
+    const [, setDrawerOpen] = React.useState(true);
     const [filterOption, setFilterOption] = React.useState("today")
-    const jwtAxios = useAxiosWithInterceptor();
-    const [open, setOpen] = React.useState(false);
-    const [scroll, setScroll] = React.useState<DialogProps['scroll']>('paper');
     const [showDialogForCustom, setShowDialogForCustom] = React.useState(false);
     React.useEffect(() => {
                 const handleDrawerToggle = (e: Event) => {
@@ -89,7 +61,6 @@ const MainPastReceipts = () => {
                 return () => window.removeEventListener("drawer-toggle", handleDrawerToggle);
     }, []);
     
-    const drawerWidth = drawerOpen ? theme.primaryDraw.width : theme.primaryDraw.closed;
     const [page, setPage] = React.useState(1);
     const [size, setSize] = React.useState<number|null>(null);
     const [startDate, setStartDate] = React.useState<Dayjs | null>(null);
@@ -143,10 +114,10 @@ const MainPastReceipts = () => {
         }, [url]);
 
     
-    const handleChangePagination =(event: React.ChangeEvent<unknown>, value: number) => {
+    const handleChangePagination =(_event: React.ChangeEvent<unknown>, value: number) => {
         setPage(value);      
       };
-    const handlePaginationSize =(event: SelectChangeEvent<string>) => {
+    const handlePaginationSize =(event: SelectChangeEvent<string | number>) => {
         const value = event.target.value
         setSize( value === ""?  null: Number(value));    
         
@@ -191,28 +162,6 @@ const MainPastReceipts = () => {
     const handleCloseDialog = () => {
           setShowDialogForCustom(false);
         };
-
-    function formatDate(dateString: string) {
-            const date = new Date(dateString);
-            // const time=date.toTimeString()
-      
-               const h1=format(date,'HH');
-                const m=format(date,'mm');
-                const s1=format(date,'ss');
-                const period=format(date,'a')
-                
-               
-            return {
-                hour:h1,
-                minutes:m,
-                seconds:s1,
-                period:period,
-                fullDate: format(date, "PPP")
-                
-                
-            };
-        }
-   
     
 
     return (

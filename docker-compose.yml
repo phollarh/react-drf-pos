@@ -1,0 +1,61 @@
+version: "3.9"
+services:
+
+  db:
+    image : postgres:17
+    container_name : pos-db
+    restart: unless-stopped
+    env_file:
+      - ./bukkofpos/.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pos-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+
+
+  backend:
+    container_name : pos-backend
+    volumes:
+      - ./bukkofpos:/app
+    build: ./bukkofpos
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./bukkofpos/.env
+    networks : 
+      - pos-network
+    depends_on:
+      - db
+      
+
+  frontend:
+    networks:
+    - pos-network
+    container_name : pos-frontend
+    volumes:
+      - ./posfrontend:/app
+      - /app/node_modules
+    build: ./posfrontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://backend:8000
+
+volumes:
+  postgres_data:
+# logging:
+#   options:
+#     max-size: "10m"
+#     max-file: "3"
+networks:
+    pos-network:
+

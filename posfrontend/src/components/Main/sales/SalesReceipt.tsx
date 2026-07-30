@@ -1,32 +1,22 @@
 import {
-    ListItem,
-    ListItemIcon,
-    ListItemText,
     Box,
     Typography,
     useTheme,
-    Container,
-    Grid,
     Card,
     CardContent,
     Button,
-    Toolbar,
-    Paper,
     SelectChangeEvent,
     Input,
     CardActions,
     TextField,
     Tooltip,
-    useMediaQuery
 } from "@mui/material";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect,useState } from "react";
 import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
-import useCrud from "../../../hooks/useCrud";
 import PaymentMethodOption from "../../salesSectionComp/PaymentMethodOption";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import ReceiptDialogue from "./ReceiptDialogue";
 import NumberInput from "./NumberInput";
-// import { Server } from "../../../@types/server";
+
 
 
 interface productType{
@@ -41,21 +31,18 @@ interface productType{
     category:string
 
 }
-interface receiptStatusDataProps{
-    id:string;
-    hold:boolean
-}
+
 interface orderType  {
 
     id:number;
     product:productType;
-    quantityInput: string;
+    quantityInput?: string;
     quantity:number;
     description?:string
     date:string;
     paid:boolean;
     sub_total:number
-    sub_totalInput:string
+    sub_totalInput?:string
 
 }
 
@@ -74,36 +61,23 @@ interface SalesProps{
     handleClick : (id:number)=>void;
     dataCRUD:ServerReceipt[];
     setDataCRUDReceipt: React.Dispatch<React.SetStateAction<ServerReceipt[]>>
-    handleReceiptSubmit:(hold:boolean, receipt_id:number)=>Promise<void>;
+    handleReceiptSubmit?:(hold:boolean, receipt_id:number)=>Promise<void>;
     paymentOption:string;
-    remarks:string;
-    amountTendered:number;
-    setAmountTendered: React.Dispatch<React.SetStateAction<number>>;
-    setRemarks: React.Dispatch<React.SetStateAction<string>>;
-    setPaymentOption: React.Dispatch<React.SetStateAction<string>>;
-    showReceiptDetaills:boolean;
-    
-    // receiptStatusData:receiptStatusDataProps;
+    remarks?:string;
+    amountTendered?:number;
+    setAmountTendered?: React.Dispatch<React.SetStateAction<number>>;
+    setRemarks?: React.Dispatch<React.SetStateAction<string>>;
+    setPaymentOption?: React.Dispatch<React.SetStateAction<string>>;
+    showReceiptDetaills: boolean
 
 }
 
-const SalesReceipt = ({dataCRUD,paymentOption,setPaymentOption,amountTendered,setAmountTendered,remarks,setRemarks,setDataCRUDReceipt, handleReceiptSubmit,showReceiptDetaills}:SalesProps) => {
+const SalesReceipt = ({dataCRUD,paymentOption,setPaymentOption,amountTendered,setAmountTendered,remarks,setRemarks,setDataCRUDReceipt, handleReceiptSubmit}:SalesProps) => {
     const theme = useTheme();
     const jwtAxios = useAxiosWithInterceptor();
     const [editingField, setEditingField] = useState<"quantity" | "subtotal">("quantity");
-    // const [paymentOption, setPaymentOption] = React.useState('');
-    const [inputqua, setInputqua] = React.useState('');
     const [balance, setBalance] = React.useState<number>(0)
 
-
-    // const handleClose = () => {
-    // setOpen(false);
-    // };
-     
-   
-  
-   
-    
 useEffect(() => {
     const needsInitialization = dataCRUD.some(item =>
         item.orders.some(order => order.quantityInput === undefined)
@@ -142,10 +116,10 @@ useEffect(() => {
    
 
     const handleChange = (event: SelectChangeEvent) => {
-        setPaymentOption(event.target.value);
+        setPaymentOption?.(event.target.value);
     };
     const handleRemarksChange = (e:React.ChangeEvent<HTMLInputElement| HTMLTextAreaElement>) => {
-        setRemarks(e.target.value);
+        setRemarks?.(e.target.value);
     };
     const handleOrderDelete = async (orderId:number) =>{
     const id=orderId
@@ -184,7 +158,6 @@ useEffect(() => {
             const quantity = value === "" ? 0 : parseFloat(value);
             const subTotalVal = quantity * sellingPrice
             
-            // if(e.currentTarget.value){
                 setDataCRUDReceipt((prevData)=>
                     prevData.map((item)=>
                     ({
@@ -254,7 +227,7 @@ useEffect(() => {
         
         }, [dataCRUD])
             useEffect(() => {
-                setAmountTendered(TotalPrice);
+                setAmountTendered?.(TotalPrice);
             }, [TotalPrice]);
         
         
@@ -263,21 +236,9 @@ useEffect(() => {
             const tenderedAmount = Number(e.target.value)
             const bal = Number(e.target.value) - TotalPrice
             setBalance(bal)
-            setAmountTendered(tenderedAmount)
+            setAmountTendered?.(tenderedAmount)
         }
       
-
-    const style = {
-                p:1,
-                width: 'auto',
-                m:1,
-                // maxWidth: 360,
-                borderRadius: 4,
-                border: '1px solid',
-                borderColor: 'divider',
-                backgroundColor: 'background.paper',
-                };
-    console.log(dataCRUD)
     
     return (
         <>
@@ -341,7 +302,7 @@ useEffect(() => {
                                                                          }}>
                                                                         <NumberInput
                                                                         setEditingField={setEditingField}
-                                                                        value={orderItem.quantityInput}
+                                                                        value={orderItem.quantityInput ?? ""}
                                                                         onChange={(value) =>
                                                                             handleInputValue(
                                                                                 value,
@@ -492,11 +453,6 @@ useEffect(() => {
                                 <Box sx={{m:0, p:1, textAlign:'center', borderTop:`1px solid ${theme.palette.divider}`}}>
                                      <Tooltip title='Amount Tendered' arrow placement="top-start">
                                         <TextField
-                                                
-                                                // fullWidth
-                                                // multiline
-                                                // minRows={1}
-                                                // maxRows={4}
                                                 size="small"
                                                 type="number"
                                                 label='Amount Tendered'
@@ -558,8 +514,8 @@ useEffect(() => {
                                                 }} />
                                 </Box>
                                 <Box sx={{m:0, p:2, textAlign:'center', borderTop:`1px solid ${theme.palette.divider}`}}>
-                                    <Button sx={{textTransform:"none"}} onClick={()=>{handleReceiptSubmit(false,dataCRUD?.[0].id)}} color="success" variant="contained">Issue Receipt</Button>
-                                   {!dataCRUD?.[0].hold&&<Button sx={{m:1, textTransform:"none"}} onClick={()=>{handleReceiptSubmit(true, dataCRUD?.[0].id)}} color="error" variant="contained">hold Receipt</Button>} 
+                                    <Button sx={{textTransform:"none"}} onClick={()=>{handleReceiptSubmit?.(false,dataCRUD?.[0].id)}} color="success" variant="contained">Issue Receipt</Button>
+                                   {!dataCRUD?.[0].hold&&<Button sx={{m:1, textTransform:"none"}} onClick={()=>{handleReceiptSubmit?.(true, dataCRUD?.[0].id)}} color="error" variant="contained">hold Receipt</Button>} 
                                 </Box>
             
                             </>

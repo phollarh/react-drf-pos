@@ -1,26 +1,28 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import { ListItem, ListItemIcon, ListItemText, Paper, SelectChangeEvent, useTheme } from '@mui/material';
+import { SelectChangeEvent, useTheme } from '@mui/material';
 import FilterSalesByProduct from './FilterSalesByProduct';
 import SalesByProductInfoTable from './SalesByProductInfoTable';
-import PieChartSalesByProduct from './PieChartSalesByProduct';
-import DateRangePicker from './DateRangePicker';
+
 
 interface productDetailsProps{
     id:number;
     product_name:string;
     total_qty:number;
 }
-interface SaleRecordProps { 
-    today:productDetailsProps[];
-    yesterday:productDetailsProps[];
-    this_week:productDetailsProps[];
-    last_month:productDetailsProps[];
-    this_month:productDetailsProps[];
-    last_week:productDetailsProps[];
- };
+
+interface SalesByProductProp {
+        date_range:productDetailsProps[];
+        today:productDetailsProps[];
+        yesterday:productDetailsProps[];
+        this_week:productDetailsProps[];
+        this_month:productDetailsProps[];
+        last_week:productDetailsProps[];
+        last_month:productDetailsProps[]   
+}
+
 interface SalesByProductProps {
-    salesProductData :Record<string , productDetailsProps[]>        
+    salesProductData : SalesByProductProp | null      
 }
 
 
@@ -74,21 +76,7 @@ export default function SalesByProductInfo({salesProductData}:SalesByProductProp
               </Box>
             
             </Box>
-            {/* <Box 
-        sx={{
-          height:"500px",
-          borderRadius: "5px",
-          p:2,
-          backgroundColor:theme.palette.primary.light,
-          mb:1
-          //  justifyContent:"space-between"
-           }}>
-               
-                <PieChartSalesByProduct/>
-        </Box>    */}
-            
-            
-   
+        
                 <SalesByProductInfoTable 
                     salesProductData={salesProductData}
                     filterOption={filterOption}

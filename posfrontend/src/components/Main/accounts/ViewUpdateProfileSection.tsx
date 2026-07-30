@@ -1,24 +1,12 @@
 import {
-    ListItem,
-    ListItemIcon,
-    ListItemText,
     Box,
     Typography,
     useTheme,
     Container,
-    Grid,
-    Card,
-    CardContent,
-    Button,
-    Toolbar,
     Paper
 } from "@mui/material";
-import useCrud from "../../../hooks/useCrud";
-import React, { useCallback, useEffect, useState } from "react";
-import ProductionQuantityLimitsOutlinedIcon from '@mui/icons-material/ProductionQuantityLimitsOutlined';
-import UpdateProductDialogue from "../ProductLists/UpdateProductDialogue";
+import React, {useEffect} from "react";
 import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
-import ProductSearchForm from "../ProductLists/ProductSearchForm";
 import ProfileForm from "./ProfileForm";
 import ProfilePicMenu from "./ProfilePicMenu";
 import ChangePasswordDiag from "./ChangePasswordDiag";

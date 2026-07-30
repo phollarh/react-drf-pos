@@ -1,14 +1,8 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
-import CardContent from '@mui/material/CardContent';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import { ListItem, ListItemIcon, ListItemText, Paper, SelectChangeEvent, useTheme } from '@mui/material';
+import { Paper, SelectChangeEvent, useTheme } from '@mui/material';
 import { Grid } from '@mui/material';
-import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
-import FilterSales from './FilterSalesC';
 import FilterSalesByProduct from '../salesByProductInfo/FilterSalesByProduct';
 import useAxiosWithInterceptor from '../../../helper/jwtinterceptor';
 import { Dayjs } from 'dayjs';
@@ -20,14 +14,6 @@ type salesDataType={
 
 interface salesDataProps{
   salesData : Record<string, salesDataType> 
-  // {
-  //   today:salesDataType;
-  //   yesterday:salesDataType;
-  //   this_week:salesDataType;
-  //   this_month:salesDataType;
-  //   last_week:salesDataType;
-  //   last_month:salesDataType;
-  // }
     
 }
 
@@ -42,12 +28,6 @@ export default function SalesInfo({salesData}:salesDataProps) {
   const [endDate, setEndDate] = React.useState<Dayjs | null>(null);
   const outlet_id = localStorage.getItem("outlet_id") || ""
   
-
-  // const handleChange=(event: SelectChangeEvent)=>{
-    
-  //   setFilterOption(event.target.value);
-  // }
-
     const handleChange=(event: SelectChangeEvent)=>{
       const newValue = event.target.value as string
       console.log(newValue)

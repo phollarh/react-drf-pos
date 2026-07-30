@@ -1,29 +1,9 @@
 import {
-    List,
-    ListItem,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
     Box,
-    Typography,
     useTheme,
-    Container,
-    Grid,
-    Card,
-    CardMedia,
-    CardContent,
-    Paper,
-    SelectChangeEvent
 } from "@mui/material";
-import useCrud from "../../hooks/useCrud";
-import React, { SetStateAction, useEffect } from "react";
-import Button from '@mui/material/Button';
-import CardActions from '@mui/material/CardActions';
-import AddShoppingCartOutlinedIcon from '@mui/icons-material/AddShoppingCartOutlined';
-import { Link, useNavigate, useParams } from "react-router-dom";
 
-import OutletFilterSelection from "../OutletFilterSelection";
-import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
+import React from "react";
 import CreateSalesTable from "./CreateSalesTable";
 import { Server } from "../../../@types/server";
 

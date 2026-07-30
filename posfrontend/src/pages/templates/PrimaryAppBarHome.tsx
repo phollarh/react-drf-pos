@@ -4,9 +4,8 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import AccountButton from '../../components/PrimaryAppBar/AccountButton';
-import { Box, Drawer, IconButton, Menu, MenuItem, useMediaQuery } from '@mui/material';
+import { Box, Drawer, IconButton,useMediaQuery } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import SideMenu from '../../components/PrimaryDraw/SideMenu';
 import { useLocation } from "react-router-dom";
 import SideMenuHome from '../../components/PrimaryDraw/sideMenuHome';
 
@@ -24,14 +23,13 @@ const PrimaryAppBarHome = ({ handleFormClickOnBigScreen,showForm,sideMenu,Setsid
     const theme = useTheme();
     const isSmallScreen =  useMediaQuery("(max-width:750px)")
 
-    console.log(sideMenu, isSmallScreen)
     React.useEffect(() => {
         if (isSmallScreen && sideMenu) {
             SetsideMenu(false)
         }
     }, [isSmallScreen])
     const toggleDrawer = (open: boolean) =>
-        (event: React.MouseEvent) => {
+        (_event: React.MouseEvent) => {
             SetsideMenu(open)
 
         }

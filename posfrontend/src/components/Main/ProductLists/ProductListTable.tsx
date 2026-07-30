@@ -7,9 +7,6 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
-import useAxiosWithInterceptor from '../../../helper/jwtinterceptor';
-import dayjs, { Dayjs } from "dayjs";
-
 import { Box, DialogProps, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { Server } from '../../../@types/server';
 import UpdateProductDialogue from './UpdateProductDialogue';
@@ -27,20 +24,7 @@ interface dataCRUDProps{
 }
 
 
-interface productDetailsProps{
-    id:number;
-    product_name:string;
-    total_qty:number;
-}
 
-interface SalesByProductProps {
-    salesProductData :Record<string , productDetailsProps[]>
-    filterOption:string;
-    showDialogForCustom:boolean;
-    handleCloseDialog:()=>void
-    
-           
-}
 
 interface ColumnProps {
   id: 'product_name' | 'code'|'selling_price' | 'category' | 'stock_inventory';
@@ -83,12 +67,6 @@ export default function ProductListTable({setOpen,dataObject,setDataObject,onSuc
   const below1200 = useMediaQuery("(max-width:1200px)")
   const below720 = useMediaQuery("(max-width:720px)")
   const below550 = useMediaQuery("(max-width:550px)")
-  
-  const[outputedSalesDataState, setOutputedSalesData] = React.useState<productDetailsProps[]>([])
-//   const [showDialogForCustom, setShowDialogForCustom] = React.useState(false);
-  const jwtAxios = useAxiosWithInterceptor();
-  const [startDate, setStartDate] = React.useState<Dayjs | null>(null);
-  const [endDate, setEndDate] = React.useState<Dayjs | null>(null);
 
   
 
@@ -110,10 +88,10 @@ export default function ProductListTable({setOpen,dataObject,setDataObject,onSuc
   return true;
   });
   console.log(columns)
-  const handleChangePage = (event: unknown, newPage: number) => {
+  const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
   };
-
+  
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(+event.target.value);
     setPage(0);

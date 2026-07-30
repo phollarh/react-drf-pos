@@ -79,13 +79,23 @@ WSGI_APPLICATION = "bukkofpos.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("DB_NAME"),
+        "USER": os.environ.get("DB_USER"),
+        "PASSWORD": os.environ.get("DB_PASSWORD"),
+        "HOST": os.environ.get("DB_HOST"),
+        "PORT": os.environ.get("DB_PORT"),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -133,19 +143,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
-# Email settings
-# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-# EMAIL_HOST = "smtp.gmail.com"
-# EMAIL_FROM = "folarin.akinbobola11@gmail.com"
-# EMAIL_HOST_USER = "folarin.akinbobola11@gmail.com"
-# EMAIL_HOST_PASSWORD = "uwbccsgsglpuyytb"
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# PASSWORD_RESET_TIMEOUT = 14400
 
 EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
-EMAIL_HOST_USER = '369321600f2f8a'
-EMAIL_HOST_PASSWORD = '846659396ca103'
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 EMAIL_PORT = '2525'
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

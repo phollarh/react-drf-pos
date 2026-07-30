@@ -1,9 +1,5 @@
-import { AccountCircle } from "@mui/icons-material";
-import { useFormik } from "formik"
-import { Box, Button, IconButton, Menu, MenuItem, useTheme } from "@mui/material";
-
+import { Box,IconButton, Menu, MenuItem, useTheme } from "@mui/material";
 import React, { useState } from "react";
-import DarkModeSwitch from "./DarkModeSwitch";
 import ProfilePicDiaglogue from "./ProfilePicDiaglogue";
 
 interface dataProps{

@@ -7,7 +7,6 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
-import useAxiosWithInterceptor from '../../../helper/jwtinterceptor';
 import { Server } from '../../../@types/server';
 import { Box, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
 import ProductSearchForm from '../ProductLists/ProductSearchForm';
@@ -17,13 +16,6 @@ interface dataCRUDProps{
     handleClick:(id:number)=>void;
     handleSearchClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
     searchByproduct: string
-}
-
-
-interface productDetailsProps{
-    id:number;
-    product_name:string;
-    total_qty:number;
 }
 
 
@@ -87,7 +79,7 @@ export default function CreateSalesTable({dataCRUD,handleClick,handleSearchClick
   return true;
   });
   console.log(columns)
-  const handleChangePage = (event: unknown, newPage: number) => {
+  const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
   };
 

@@ -1,16 +1,14 @@
 import { useFormik } from "formik"
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 
-import { Box, Button, Container, Input, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Button, Input, Stack, TextField, Typography, useTheme } from "@mui/material";
 import { useAuthServiceContext } from "../../context/AuthContext";
 import { useEffect, useRef, useState } from "react";
-import Cookies from "js-cookie";
-import { jwtDecode } from "jwt-decode";
 import useAxiosWithInterceptor from "../../helper/jwtinterceptor";
 import { styled } from '@mui/material/styles';
 import Paper from '@mui/material/Paper';
 import ProgressSign from "../../components/Progress";
-import { format } from "date-fns";
+
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: '#fff',
@@ -23,29 +21,21 @@ const Item = styled(Paper)(({ theme }) => ({
   }),
 }));
 
-interface registerProps {
-    showFormDetailRegister:boolean;
-    handleFormClickOnBigScreen: (value: string) => void;
-     showForm: (input: string | null | undefined) => void
-}
+
 
 const EmailConfirmation = () => {
     const jwtAxios = useAxiosWithInterceptor()
     const navigate = useNavigate();
-    const theme = useTheme()
-    const below1200 = useMediaQuery("(max-width : 1200px)");
+    const theme = useTheme() 
     const [isLoading, setIsloading] = useState(false)
     const isDarkMode = theme.palette.mode === "dark";
-    const below720 = useMediaQuery("(max-width:750px)")
-    const below460 = useMediaQuery("(max-width:460px)")
     const [timer, setTimer] = useState("5:00")
     const [code, setCode] = useState<string[]>( new Array(5).fill(""))
     const [user, setUser] = useState<null | {username:string, email:string, id:number}>(null)
     const [errorA,setErrorA] = useState<string | null>(null)
-    const {getUserDetails, register, logout, authError } =  useAuthServiceContext()
+    const {getUserDetails, logout } =  useAuthServiceContext()
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const [timeLeft, setTimeLeft]  = useState (0)
-    // const [ActivateTimer, setActivateTimer ] = useState(false)
 
 
     useEffect(()=>{
@@ -56,7 +46,6 @@ const EmailConfirmation = () => {
 
         fetchUser();
     }, [])
-            
     const startCooldown = (nextAvailableTime:string) => {
         const remainingSeconds = Math.max(
             0,
@@ -64,38 +53,35 @@ const EmailConfirmation = () => {
                 (new Date(nextAvailableTime).getTime() - Date.now()) / 1000
             )
         );
-        console.log(remainingSeconds)
         setTimeLeft(remainingSeconds);
     };
 
-    // useEffect(()=>{
-    //     if(timeLeft <= 0){
-    //         setActivateTimer(false)
-    //     }
-    // },[timeLeft])
 
     const fetchOtpStatus = async () => {
         if (!user?.id) return;
-        console.log(user?.id)
         try{
             const res = await jwtAxios.get(
                 `http://127.0.0.1:8000/accounts/api/user/otp_status/?id=${user.id}`,
                 {withCredentials:true}
             );
-
+            
             if (res.data.next_available_time) {
                 startCooldown(res.data.next_available_time);
             }
+            if(res.data?.is_verified){
+                console.log('Email already verified')
+                navigate('/')
+            }
             return res.data
         }catch(err:any){
-            console.log(err)
+            
             throw err
         }
         
     };
 
     useEffect(() => {
-
+        console.log('caleddddddddddddddddddddddd')
         fetchOtpStatus();
     }, [user]);
 
@@ -358,11 +344,7 @@ const EmailConfirmation = () => {
                          component="button">
                             <Typography component="span">Log out</Typography>
                     </Box>
-                        
-                    
-                   
                 </Paper>
-
             </Box>
         </>
     )

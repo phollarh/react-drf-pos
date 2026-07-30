@@ -1,27 +1,20 @@
 import { useFormik } from "formik"
 import { useNavigate } from "react-router-dom"
-import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
 import { Box, Button, Container, Paper, TextField, Typography, useTheme } from "@mui/material";
-import axios from "axios";
 import "../ProfileForm.css"
 import { useState } from "react";
-import { useAuthServiceContext } from "../../../../context/AuthContext";
 import useAxiosWithInterceptor from "../../../../helper/jwtinterceptor";
 
-interface passwordProps {
-    handleClose: () => void;
-}
 
 
-const RestPasswordForm = ({handleClose}:passwordProps) => {
+const RestPasswordForm = () => {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === "dark"
     const jwtAxios = useAxiosWithInterceptor();
     const [sucessMessage, setSucessMessage] = useState<null | string>(null)
     const [errMessage, setErrMessage] = useState<null | string>(null)
     const navigate = useNavigate();
-    const {logout} = useAuthServiceContext()
     const formik = useFormik({
         enableReinitialize: true,
         initialValues: {
@@ -79,11 +72,6 @@ const RestPasswordForm = ({handleClose}:passwordProps) => {
                 });
                 throw err
             }
-            // const status = await login(email, password);
-          
-            // if (status) {
-            //     navigate("/testlogin")
-            // }
          },
     })
     return (

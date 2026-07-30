@@ -1,7 +1,7 @@
 import { useFormik } from "formik"
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { useAuthServiceContext } from "../context/AuthContext";
-import { Box, Button, Container, Paper, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Button,Paper, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 
 interface registerProps {
     showFormDetailRegister:boolean;

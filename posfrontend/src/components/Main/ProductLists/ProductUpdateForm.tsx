@@ -1,16 +1,13 @@
 import { useFormik } from "formik"
 import { useNavigate } from "react-router-dom"
-import { useAuthServiceContext } from "../../../context/AuthContext";
-import { Box, Button, Container, Divider, MenuItem, TextField, Typography } from "@mui/material";
+import { Box, Button, Divider, MenuItem, TextField, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
 import React from "react";
-import LinearIndeterminate from "../../progressSign/LinearIndeterminate";
 import { UseoutletNstaffContext } from "../../../context/OutletNStaffsContext";
 import { Server } from "../../../@types/server";
 import { FormikErrors } from "formik";
 import useCrud from "../../../hooks/useCrud";
-import { DataObject } from "@mui/icons-material";
 import PassCodeDiagUpdate from "../../PassCodeDiagUpdate";
 import PassCodeDiag from "../../PassCodeDiag";
 import { requestIdProps } from "../../../@types/auth-service";
@@ -20,13 +17,12 @@ import { requestIdProps } from "../../../@types/auth-service";
 interface UpdateProductFormProps {
     handleOrderDelete:(id:number|undefined)=>Promise<void>
   dataCRUD?: Server[];
-  productName:string
-  outlet:string;
-  created_by:string;
-  category:{name:string, id:number};
-  costPrice:string;
-  sellingPrice:number;
-  soldIn:{id:number; measurement_type:string;};
+  productName:string | undefined
+  outlet:string | undefined;
+  category:{name:string, id:number} | undefined;
+  costPrice:string | undefined;
+  sellingPrice:number | undefined;
+  soldIn:{id:number; measurement_type:string;} | undefined;
   stockInventory?:number;
   productId?:number;
   dataObject:Server | null
@@ -57,20 +53,9 @@ type payloadProps ={
     }
 
 
-type FormErrors = {
-  product_name: string;
-  category: string;
-  sold_In: string;
-  selling_price: string;
-  cost_price:string
-};
 
 const ProductUpdateForm = ({
-    handleOrderDelete,
-    dataObject,
-    dataCRUD,
-    outlet,
-    created_by,
+
     productName,
     category,
     costPrice,
@@ -123,14 +108,15 @@ const ProductUpdateForm = ({
             const response = await jwtAxios.delete(`http://127.0.0.1:8000/api/products/${productId}/?outlet_id=${outletId}`,
 
                 {
-                //    headers: {
-                //     "X-Pass-Token": token
-                // },
+                   headers: {
+                    "X-Pass-Token": passTokenRef.current
+                },
                     withCredentials:true
                 }
                 )
                 if(response.status === 200){
                     setMess(response.data.message)
+                    passTokenRef.current = null
                     setTimeout(() => {
                         onClose()
                     }, 4000);
@@ -200,8 +186,8 @@ const ProductUpdateForm = ({
         
                 return base;
             }, [outletId]);
-    const { dataCRUD: catData,fetchData: fetchCat} = useCrud<ServerCat>([], url_cat);
-    const { dataCRUD: measuredData,fetchData: fetchMeasured} = useCrud<ServerMeasure>([], url_Soldin);
+    const { dataCRUD: catData} = useCrud<ServerCat>([], url_cat);
+    const { dataCRUD: measuredData} = useCrud<ServerMeasure>([], url_Soldin);
 
     // const uniqueSoldIn = React.useMemo(() =>
     //      [...new Set(dataCRUD?.map(item => item.sold_In))],
@@ -254,20 +240,19 @@ const ProductUpdateForm = ({
             });
             setIsLoading(true)
             const { product_name, category,cost_price,selling_price,sold_In,stock_inventory,product_id,outlet } = values;
-           console.log(outlet)
+           
            const payload :payloadProps ={
                 
                 "product_name": product_name,
-                 "sold_In":{"id" : sold_In,},
+                 "sold_In":{"id" : Number(sold_In),},
                  "outlet":outlet,
                 "cost_price": cost_price,
                 "selling_price":selling_price,
                 "stock_inventory":stock_inventory ,
-                "category": {"id" : category },
+                "category": {"id" : Number(category) },
                 "quantity":values.quantity,
                  "action" : values.action
-                }
-             console.log(payload, 'herere', passTokenRef.current,updateInventory)   
+                }  
               if(updateInventory === false){
                     delete payload["quantity"]
                     delete payload["action"]
@@ -278,9 +263,9 @@ const ProductUpdateForm = ({
                 const response = await jwtAxios.patch(`http://127.0.0.1:8000/api/products/${product_id}/?outlet_id=${outletId}`,
                 payload,
                 { 
-                    // headers: {
-                    // "X-Pass-Token": passTokenRef.current
-                    // },
+                    headers: {
+                    "X-Pass-Token": passTokenRef.current
+                    },
                     withCredentials: true}
                 )
                 const dataCRUDBack = response.data
@@ -306,9 +291,9 @@ const ProductUpdateForm = ({
             }
             else{
                 const response = await jwtAxios.post(`http://127.0.0.1:8000/api/products/?outlet_id=${outletId}`, payload, {
-                    // headers: {
-                    // "X-Pass-Token": passTokenRef.current
-                    // },
+                    headers: {
+                    "X-Pass-Token": passTokenRef.current
+                    },
                 withCredentials: true,
                 
                 });
@@ -350,6 +335,7 @@ const ProductUpdateForm = ({
             
         }finally{
             setIsLoading(false)
+            passTokenRef.current = null
         }
     
         },
@@ -612,6 +598,7 @@ const ProductUpdateForm = ({
                         </Button> */}
                            
                            <PassCodeDiag 
+                           passTokenRef={passTokenRef}
                            open={openDel}
                            handleClose={() => setOpenDel(false)} 
                            requestId={requestId}

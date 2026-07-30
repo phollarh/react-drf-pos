@@ -1,30 +1,16 @@
 import {
-    List,
-    ListItem,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
     Box,
     Typography,
     useTheme,
     Container,
-    Grid,
-    Card,
-    CardMedia,
-    CardContent,
-    Button,
-    Chip,
     useMediaQuery,
     Paper,
     Toolbar
 } from "@mui/material";
 import useCrud from "../../hooks/useCrud";
-import React, { useEffect } from "react";
-import ProductionQuantityLimitsOutlinedIcon from '@mui/icons-material/ProductionQuantityLimitsOutlined';
+import React from "react";
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import useAxiosWithInterceptor from "../../helper/jwtinterceptor";
-import UpdateCategoryDialogue from "./ProductLists/UpdateCategoryDialogue";
-import DeleteIcon from '@mui/icons-material/Delete';
 import CatListTable from "./CategoryList/CatListTable";
 
 
@@ -41,7 +27,7 @@ const CategoriesMainSection = () => {
     const theme = useTheme();
     const [drawerOpen, setDrawerOpen] = React.useState(true);
     const jwtAxios = useAxiosWithInterceptor();
-    const [createProduct, setCreateProduct] = React.useState(false)
+    const [, setCreateProduct] = React.useState(false)
     const below750 = useMediaQuery("(max-width: 750px)")
     const [open, setOpen] = React.useState(false);
     const [dataObject, setDataObject] = React.useState<catProps | null >(null)

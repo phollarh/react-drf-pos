@@ -3,13 +3,15 @@ import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import SalesReceipt from './SalesReceipt';
+
+
 
 interface productType{
     id?:number;
     user?:number;
+    outlet:string;
     product_name:string;
     sold_in:string;
     cost_price: number;
@@ -28,8 +30,10 @@ interface orderType  {
     sub_total:number
 
 }
+
 interface ServerReceipt {
     id: number;
+    hold:boolean;
     orders: orderType[];
     remarks?: string;
     date?: string;
@@ -72,7 +76,7 @@ export default function ReceiptDialogue( {handleClose,open,receiptData,handleCli
         }
       }}
         open={open}
-        onClose={(event, reason) => {
+        onClose={(_event, reason) => {
           if (reason === "backdropClick") return;
           handleClose;
         }}
@@ -85,9 +89,11 @@ export default function ReceiptDialogue( {handleClose,open,receiptData,handleCli
         </DialogTitle>
         <DialogContent sx={{width:"100%", m:0,p:0}}>
           <SalesReceipt
-          dataCRUD={receiptData} 
-          handleClick={handleClick} 
-          setDataCRUDReceipt={setDataCRUDReceipt}/>
+            paymentOption=''
+            remarks=''
+            dataCRUD={receiptData}
+            handleClick={handleClick}
+            setDataCRUDReceipt={setDataCRUDReceipt} showReceiptDetaills={false}/>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Back</Button>

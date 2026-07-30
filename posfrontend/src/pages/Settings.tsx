@@ -2,18 +2,14 @@ import {Box, CssBaseline, SelectChangeEvent, useMediaQuery, useTheme} from "@mui
 import PrimaryAppBar from "./templates/PrimaryAppBar";
 import PrimaryDraw from "./templates/PrimaryDraw";
 import SideMenu from "../components/PrimaryDraw/SideMenu";
-
 import SecondaryDraw from "./templates/SecondaryDraw";
-import MainSettings from "./templates/MainSettings";
 import SettingSecondary from "../components/Main/settingsPage/SettingSecondary";
 import SettingsMain from "../components/Main/settingsPage/SettingsMain";
 import Main from "./templates/Main";
 import React, { useEffect, useState } from "react";
-import useAxiosWithInterceptor from "../helper/jwtinterceptor";
-import axios from "axios";
-import { OutletNstaffService } from "../services/OutletNStaffService";
 import { UseoutletNstaffContext } from "../context/OutletNStaffsContext";
-import { outletsDataProps, outletStaffDataProps } from "../@types/outletsNstaff-service";
+import { outletStaffDataProps } from "../@types/outletsNstaff-service";
+
 
 
 interface dataProps{
@@ -26,21 +22,10 @@ interface dataProps{
     email_address:string;
     outlogo?:string
 }
-interface outletDataProps{
-    Employee_id:string;
-    name:string;
-    outlet:string;
-    email:string;
-    address:string;
-    status:string;
-    phone_number:string;
-    image:string;
-}
 
 const Settings = () => {
   const theme=useTheme()
   const [drawerOpen, setDrawerOpen] = React.useState(true);
-  const jwtAxios = useAxiosWithInterceptor()
   const below1000 = useMediaQuery("(max-width : 1000px)")
   const isBelow750 = useMediaQuery("(max-width : 750px)")
   const isDarkMode = theme.palette.mode === "dark"
@@ -54,20 +39,16 @@ const Settings = () => {
                 window.addEventListener("drawer-toggle", handleDrawerToggle);
                 return () => window.removeEventListener("drawer-toggle", handleDrawerToggle);
     }, []);
-    // const [selectedOulet, setSelectedOutlet] = React.useState("")
-    // const [outletSelection, setOutletSelection]  = React.useState<dataProps|{}>({})
     const [outlet, setOutlet]  = React.useState<dataProps | null>(null)
-    // const [staffStatus, setStaffStatus]  = React.useState({})
-    const [outletStaff, setStaff]  = React.useState<outletDataProps | null >(null)
+    const [outletStaff, setStaff]  = React.useState<outletStaffDataProps | null >(null)
     const [outletId, setOutletId] = React.useState('')
-    // const [selectedEmployeeId, SetselectedEmployeeId] = React.useState('')
     const [mode, setMode] = React.useState<"update"|"create" >()
     const[createOutletObject, setCreateOutletObject]=React.useState(false)
 
     const [displayOutletForm, setDisplayOutletForm] = React.useState(false)
     const [dispalyStaffForm, setDispalyStaffForm] = React.useState(false)
     const [displayMain, setDisplayMain] = React.useState(false)
-    const {outletsData, getOutlets,staffStatus,createOutlet,getOutletStaff ,getStaffStatus,setStaffStatus, staffData,
+    const {outletsData, getOutlets,staffStatus,getOutletStaff ,getStaffStatus,setStaffStatus, staffData,
     setEmployeeId, employeeId} = UseoutletNstaffContext();
     console.log(outletsData, staffData)
  
@@ -105,7 +86,7 @@ const Settings = () => {
           setDisplayMain(true);
           setDisplayOutletForm(true);
       };
-      const handleStaffCreated = (outletStaff:outletDataProps) => {
+      const handleStaffCreated = (outletStaff:outletStaffDataProps) => {
          if(isBelow750){
           setisMainHidden(false)
         }
@@ -215,7 +196,7 @@ const Settings = () => {
         <Box>
           
         </Box>
-        <SecondaryDraw>
+        <SecondaryDraw showReceiptDetaills>
             <SettingSecondary
             isMainHidden={isMainHidden}
             
@@ -242,18 +223,20 @@ const Settings = () => {
               handleStaffCreated={handleStaffCreated}
               mode={mode}
               setCreateOutletObject={setCreateOutletObject}
-              handleOutletCreated ={handleOutletCreated }
-               getOutlets={getOutlets}
+              handleOutletCreated={handleOutletCreated}
+              getOutlets={getOutlets}
               createOutletObject={createOutletObject}
-                staffStatus={staffStatus}
-                setStaff={setStaff} 
+              staffStatus={staffStatus}
+              setStaff={setStaff}
 
-                displayOutletForm={displayOutletForm}  
-                displayStaffForm={dispalyStaffForm}  
-                outlets={outletsData} 
-                outletStaff={outletStaff} 
-                setSelectedOutletObject={setOutlet}
-                selectedOutletObject={outlet}/>
+              displayOutletForm={displayOutletForm}
+              displayStaffForm={dispalyStaffForm}
+              outlets={outletsData}
+              outletStaff={outletStaff}
+              setSelectedOutletObject={setOutlet}
+              selectedOutletObject={outlet} setEmployeeId={function (_value: React.SetStateAction<string>): void {
+                throw new Error("Function not implemented.");
+              } }/>
             </Main>
         </Box>
         

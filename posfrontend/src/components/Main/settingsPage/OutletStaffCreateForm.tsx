@@ -1,13 +1,10 @@
 import { useFormik } from "formik"
-import { useNavigate } from "react-router-dom"
-import { Box, Button, Container, FormControl, FormHelperText, InputLabel, MenuItem, Paper, Select, TextField, Typography, useTheme } from "@mui/material";
+import { Box, Button, Container, FormControl, FormHelperText, InputLabel, MenuItem, Select, TextField, Typography, useTheme } from "@mui/material";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
 import '../accounts/ProfileForm.css'
-import axios from "axios";
-import React, { SetStateAction, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
-import { Pin } from "@mui/icons-material";
 import { outletStaffDataProps } from "../../../@types/outletsNstaff-service";
 import { requestIdProps } from "../../../@types/auth-service";
 import CreatePassCodeDiag from "../../CreatePassCodeDiag";
@@ -38,7 +35,7 @@ interface dataPropsB{
     mode:string | null
     data: outletDataProps  | null;
     outlets:dataProps[] | [];
-    setStaff:React.Dispatch<SetStateAction<outletDataProps | null>>
+    setStaff: React.Dispatch<React.SetStateAction<outletStaffDataProps | null>>
     handleStaffCreated: (outletStaff:outletStaffDataProps) => void
     getStaffStatus: (found: string) => Promise<any>
     
@@ -56,18 +53,16 @@ interface FormValues {
 }
 
 
-const OutletStaffCreateForm = ({data,mode,handleStaffCreated, outlets, setStaff,getStaffStatus}:dataPropsB) => {
+const OutletStaffCreateForm = ({mode,handleStaffCreated, setStaff,getStaffStatus}:dataPropsB) => {
     
     const theme = useTheme();
     const jwtAxios = useAxiosWithInterceptor()
     const isDarkMode = theme.palette.mode === "dark"
     const [errMeg, setErrMeg] = useState<null|string>(null)
     const [sMessg, setSmessg] = useState<null | string>(null)
-    const navigate = useNavigate();
     const [requestId, setRequestId] = useState<requestIdProps | null>(null)
     const [open, setOpen] = useState(false);
     const passTokenRef = useRef<string | null>(null);
-    const RefCreate = useRef<HTMLDivElement | null>(null);
     const createIdRef = useRef(crypto.randomUUID());
         
         useEffect(()=>{ 
@@ -103,7 +98,7 @@ const OutletStaffCreateForm = ({data,mode,handleStaffCreated, outlets, setStaff,
             return errors;
         },
         onSubmit: async (values) => {
-            const {id,name,email, address,status,pin, phone_number} = values;
+            const {name,email, address,status,pin, phone_number} = values;
             const outlet = localStorage.getItem("outlet_id") || ""
             let apiValues:FormValues = {
                 "name":name,
@@ -120,14 +115,15 @@ const OutletStaffCreateForm = ({data,mode,handleStaffCreated, outlets, setStaff,
                 const response = await jwtAxios.post(`http://127.0.0.1:8000/accounts/api/outletstaffs/?outlet_id=${outlet}`,
                     apiValues,
                     {
-                        //  headers: {
-                        // "X-Pass-Token": passTokenRef.current
-                        // },
+                         headers: {
+                        "X-Pass-Token": passTokenRef.current
+                        },
                         withCredentials:true
                     }
                 
                 )
                 if(response.status === 200){
+                    passTokenRef.current=null
                     console.log(response.data)
                     handleStaffCreated(response.data?.["data"])
                     getStaffStatus(response.data?.["data"].Employee_id)
@@ -156,7 +152,7 @@ const OutletStaffCreateForm = ({data,mode,handleStaffCreated, outlets, setStaff,
                     formik.setFieldError("status", err.response.data['outlet'][0]);
                 }
                  if(err.response?.data.error){
-                    err.response?.data.error
+                    setErrMeg(err.response?.data.error)
                     setTimeout(()=>{
                         setErrMeg(null)
                     }, 9000)
@@ -166,11 +162,7 @@ const OutletStaffCreateForm = ({data,mode,handleStaffCreated, outlets, setStaff,
             }
             
             }
-            // const status = await login(email, password);
-          
-            // if (status) {
-            //     navigate("/testlogin")
-            // }
+    
         },
     })
     return (

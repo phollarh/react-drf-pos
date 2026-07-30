@@ -3,13 +3,9 @@ import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import { useTheme } from '@mui/material/styles';
 import DateRangePicker from './DateRangePicker';
-import dayjs, { Dayjs } from "dayjs";
-import { Box, SelectChangeEvent } from '@mui/material';
+import { Dayjs } from "dayjs";
+import { Box} from '@mui/material';
 import { useLocation } from 'react-router-dom';
 
 interface dialogProps{
@@ -24,8 +20,6 @@ interface dialogProps{
     
 }
 export default function DialogForCustomDate({ open,onClickReceipt, handleCloseDialog,startDate,endDate,onEndDateChange, onStartDateChange,onClick }:dialogProps) {
-//   const [open, setOpen] = React.useState(false);
-  const theme = useTheme();
       const location = useLocation();
       const isOnPastReceipt = location.pathname === "/past_receipts";
       const IsOnSalesSummary = location.pathname === "/sales_summary";

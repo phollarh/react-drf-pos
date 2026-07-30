@@ -9,7 +9,7 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import DialogForCustomDate from './DialogForCustomDate';
 import useAxiosWithInterceptor from '../../../helper/jwtinterceptor';
-import dayjs, { Dayjs } from "dayjs";
+import { Dayjs } from "dayjs";
 import { Box, useMediaQuery } from '@mui/material';
 
 
@@ -18,16 +18,17 @@ interface productDetailsProps{
     product_name:string;
     total_qty:number;
 }
-interface SaleRecordProps { 
-    today:productDetailsProps[];
-    yesterday:productDetailsProps[];
-    this_week:productDetailsProps[];
-    last_month:productDetailsProps[];
-    this_month:productDetailsProps[];
-    last_week:productDetailsProps[];
- };
+interface SalesByProductProp {
+        date_range:productDetailsProps[];
+        today:productDetailsProps[];
+        yesterday:productDetailsProps[];
+        this_week:productDetailsProps[];
+        this_month:productDetailsProps[];
+        last_week:productDetailsProps[];
+        last_month:productDetailsProps[]   
+}
 interface SalesByProductProps {
-    salesProductData :Record<string , productDetailsProps[]>
+    salesProductData: SalesByProductProp | null;
     filterOption:string;
     showDialogForCustom:boolean;
     handleCloseDialog:()=>void
@@ -81,24 +82,12 @@ export default function SalesByProductInfoTable({salesProductData, filterOption,
   const below450 = useMediaQuery("(max-width : 450px)")
   const outlet_id = localStorage.getItem("outlet_id") || ""
 
-    
-//   const outputedSalesData = React.useMemo(()=>{
-//     if (filterOption === "custom"){
-//         return[]
-//     }else{
-//          return salesProductData[filterOption]
-//     }
-   
-//   }, [filterOption,salesProductData])
-//   console.log(outputedSalesData)
-
   
     React.useEffect(() => {
+      
         if (filterOption !== "custom"){
-           
-             console.log(salesProductData)
-        // setShowDialogForCustom(false)
-         setOutputedSalesData(salesProductData[filterOption]?? [])
+
+         setOutputedSalesData(salesProductData?.[filterOption as keyof SalesByProductProp]?? [])
         setPage(0);
     }
     setPage(0);
@@ -156,7 +145,7 @@ export default function SalesByProductInfoTable({salesProductData, filterOption,
   return true;
   });
 
-  const handleChangePage = (event: unknown, newPage: number) => {
+  const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
   };
 

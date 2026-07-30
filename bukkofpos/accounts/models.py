@@ -209,13 +209,13 @@ class Outlets(models.Model):
         return str(self.name)
 
 
-def create_outlet(sender, instance, created, **kwargs):
-    if created:
-        Outlets.objects.create(user=instance, name="first outlet")
+# def create_outlet(sender, instance, created, **kwargs):
+#     if created:
+#         Outlets.objects.create(user=instance, name="first outlet")
 
 
 post_save.connect(create_profile, sender=CustomUser)
-post_save.connect(create_outlet, sender=CustomUser)
+# post_save.connect(create_outlet, sender=CustomUser)
 
 
 class OutletStaff(models.Model):

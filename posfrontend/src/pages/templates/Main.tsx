@@ -1,4 +1,4 @@
-import { Box, Typography, useMediaQuery } from "@mui/material";
+import { Box,useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { ReactNode } from "react";
 
@@ -26,12 +26,11 @@ const Main: React.FC<Props> = ({ children,showReceiptDetaills }) => {
     else {
         width = "auto";
     }
-    console.log(width, isOnSalesReceipt, "main..................")
+    
     return (
         <Box sx={{
             flexGrow: 1,
             transition:"width 0.3s ease-in-out",
-            // backgroundColor:theme.palette.primary.contrastText,
             mt: `${theme.primaryAppBar.height}px`,
             mx:0,
             width:width,
@@ -40,11 +39,6 @@ const Main: React.FC<Props> = ({ children,showReceiptDetaills }) => {
             height: `calc(100vh - ${theme.primaryAppBar.height}px)`,
             overflow: "hidden"
         }}>
-            {/* {[...Array(50)].map((_, i) => (
-                <Typography key={i} paragraph>
-                    {i + 1}
-                </Typography>)
-            )} */}
             {children}
         </Box>
     )

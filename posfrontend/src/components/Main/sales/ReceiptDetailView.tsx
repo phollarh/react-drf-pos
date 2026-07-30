@@ -59,18 +59,14 @@ interface ReceiptDialogueProps {
 const ReceiptDetailView = forwardRef<HTMLDivElement, ReceiptDialogueProps>(
     (
         {
-            data,
             OnclickPrint,
             receiptId,
             date,
             balance_due,
             amountTenderd,
             total,
-            remarks,
-            issued,
             orders,
             payment_option,
-            onClose,
         },
         ref
     ) => {

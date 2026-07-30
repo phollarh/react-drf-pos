@@ -69,7 +69,6 @@ class AccountSerializer(serializers.ModelSerializer):
         read_only_fields = ("id",)
 
     def update(self, instance, validated_data):
-        print(validated_data)
         instance = super().update(instance, validated_data)
         return instance
 

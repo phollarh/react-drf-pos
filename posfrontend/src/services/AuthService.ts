@@ -1,16 +1,12 @@
 import axios from "axios"
 import { AuthServiceProps } from "../@types/auth-service";
 import { useState } from "react";
-import { BASE_URL, BASE_URL_ACCOUNT } from "../congif";
+import { BASE_URL_ACCOUNT } from "../congif";
 import { useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
+
 import useAxiosWithInterceptor from "../helper/jwtinterceptor";
 
-interface CustomJwtPayload {
-    is_verified: boolean;
-    user_id: number;
-    exp: number;
-}
+
 
 export function useAuthService(): AuthServiceProps {
 
@@ -59,12 +55,12 @@ export function useAuthService(): AuthServiceProps {
             
             return response;
         } catch (err: any) {
-             console.log('herererere')
+             console.log(err.response)
             setAuthError(err.response.data["error"] ||  "Request failed")
             setTimeout(() => {
                 setAuthError(null);
             }, 5000);
-            throw err;
+            throw err.response;
         }
 
     }

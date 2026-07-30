@@ -1,8 +1,7 @@
-import { Box, Typography, useMediaQuery, styled } from "@mui/material"
-import React, { ReactNode, useEffect, useState } from "react"
-import { duration, easing, useTheme } from "@mui/material/styles";
-import DrawToggle from "../../components/PrimaryDraw/DrawToggle"
-import MuiDrawer from "@mui/material/Drawer"
+import { Box,} from "@mui/material"
+import React, { ReactNode,} from "react"
+import { useTheme } from "@mui/material/styles";
+
 
 type Props = {
     children: ReactNode
@@ -13,7 +12,7 @@ type Props = {
 
 const HomeTemp: React.FC<Props> = ({ children }) => {
     const theme = useTheme()
-    const [drawerOpen, setDrawerOpen] = React.useState(true);
+    const [, setDrawerOpen] = React.useState(true);
     React.useEffect(() => {
                     const handleDrawerToggle = (e: Event) => {
                     const customEvent = e as CustomEvent;
@@ -22,7 +21,7 @@ const HomeTemp: React.FC<Props> = ({ children }) => {
                     window.addEventListener("drawer-toggle", handleDrawerToggle);
                     return () => window.removeEventListener("drawer-toggle", handleDrawerToggle);
         }, []);
-    const drawerWidth = drawerOpen ? theme.primaryDraw.width : theme.primaryDraw.closed;
+    
     
    
     return (

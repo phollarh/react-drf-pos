@@ -11,7 +11,7 @@ import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Fade from '@mui/material/Fade';
 import { Link } from "react-router-dom";
-import { Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Tooltip, useMediaQuery } from '@mui/material';
+import { Box, List, ListItem, ListItemButton, ListItemText, Tooltip, useMediaQuery } from '@mui/material';
 import { useTheme } from "@mui/material/styles";
 import PointOfSaleIcon from '@mui/icons-material/PointOfSale';
 
@@ -158,19 +158,6 @@ export default function SideMenuAccordion({open}: { open: boolean }) {
             </AccordionDetails>
           </Accordion>
 
-          {/* <Accordion disableGutters square sx={{backgroundColor:isDarkMode?"none":theme.palette.primary.light,border:'none', 
-            boxShadow:theme.shadows[0],
-            "&:before": {
-             display: "none",
-            },
-            }}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography fontSize="inherit">Payments</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography>Details inside the child accordion</Typography>
-            </AccordionDetails>
-          </Accordion> */}
         </AccordionDetails>
       </Accordion>
     </div>

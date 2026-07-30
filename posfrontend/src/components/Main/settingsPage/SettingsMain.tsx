@@ -1,16 +1,11 @@
 import { AppBar, Box,Toolbar,Tooltip,Typography, useMediaQuery, useTheme } from "@mui/material";
-import BrowserUpdatedOutlinedIcon from '@mui/icons-material/BrowserUpdatedOutlined';
 import OutletUpdateForm from "./OutletUpdateForm";
 import OutletStaffUpdateForm from "./OutletStaffUpdateForm";
-import LogOutButton from "./LogControllSwitches";
 import ControlledSwitches from "./LogControllSwitches";
 import React, { SetStateAction } from "react";
-import Avatar from '@mui/material/Avatar';
-import Stack from '@mui/material/Stack';
-import { deepOrange } from '@mui/material/colors';
 import UploadAvatars from "./UploadAvater";
 import { outletsDataProps, outletStaffDataProps, staffStatusProps } from "../../../@types/outletsNstaff-service";
-import { formatDistance, subDays } from "date-fns";
+import { formatDistance } from "date-fns";
 import CreateoutletForm from "./CreateoutletForm";
 import OutletStaffCreateForm from "./OutletStaffCreateForm";
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
@@ -42,13 +37,9 @@ interface dataProps{
 
 const SettingsMain = ({mode,setMode,getStaffStatus,handleStaffCreated,setisMainHidden,isMainHidden,
     handleOutletCreated,setCreateOutletObject,
-    staffStatus,setSelectedOutletObject, getOutlets,selectedOutletObject,createOutletObject,displayOutletForm,outlets, outletStaff, setStaff}:dataProps) => {
+    staffStatus,setSelectedOutletObject, getOutlets,selectedOutletObject,createOutletObject,outlets, outletStaff, setStaff}:dataProps) => {
     const theme = useTheme();
     const isBelow750 = useMediaQuery("(max-width : 750px)")
-    // const [checked, setChecked] = React.useState(false);
-    
-    
-
     return (
         <>
         <Box 

@@ -1,7 +1,5 @@
 import {
-    List,
     ListItem,
-    ListItemButton,
     ListItemIcon,
     ListItemText,
     Box,
@@ -11,11 +9,10 @@ import {
     Grid,
     Card,
     CardContent,
-    Button,
-    useMediaQuery
+    useMediaQuery,
 } from "@mui/material";
 import useCrud from "../../hooks/useCrud";
-import React, { useEffect } from "react";
+import React from "react";
 import ProductionQuantityLimitsOutlinedIcon from '@mui/icons-material/ProductionQuantityLimitsOutlined';
 import UpdateMeasurementDialogue from "./ProductLists/UpdateMeasurementDialogue";
 import useAxiosWithInterceptor from "../../helper/jwtinterceptor";
@@ -36,8 +33,7 @@ const MeasurementsMainSection = () => {
     const [drawerOpen, setDrawerOpen] = React.useState(true);
     const jwtAxios = useAxiosWithInterceptor();
     const outlet_id = localStorage.getItem("outlet_id") || ""
-    const below750 = useMediaQuery("(max-width : 750px)")
-    const below450 = useMediaQuery("(max-width : 450px)")
+    const below750 = useMediaQuery("(max-width : 750px)");
         const urlMeasure = React.useMemo(() => {
                 let base = `/measurements_info/`;
                 

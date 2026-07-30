@@ -3,7 +3,6 @@ import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 
 import ResetPasswordForm from './ResetPasswordForm';
@@ -13,7 +12,7 @@ interface resetpProps{
     handleClose:()=>void
 }
 
-export default function ResetPasswordDiag({open,setOpen, handleClose}:resetpProps) {
+export default function ResetPasswordDiag({open, handleClose}:resetpProps) {
   
 
 //   const handleClickOpen = () => {
@@ -38,7 +37,7 @@ export default function ResetPasswordDiag({open,setOpen, handleClose}:resetpProp
           {"Update Password"}
         </DialogTitle>
         <DialogContent>
-          <ResetPasswordForm handleClose={handleClose} />
+          <ResetPasswordForm />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>

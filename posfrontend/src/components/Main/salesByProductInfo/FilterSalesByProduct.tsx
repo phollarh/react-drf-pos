@@ -1,9 +1,8 @@
-import * as React from 'react';
-import InputLabel from '@mui/material/InputLabel';
+
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import { Typography, useTheme } from "@mui/material";
+import {useTheme } from "@mui/material";
 
 type filterOptionType= {
   filterOption:string;

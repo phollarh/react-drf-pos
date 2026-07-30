@@ -12,7 +12,7 @@ import { useLocation } from "react-router-dom";
 
 
 const PrimaryAppBar = () => {
-    const [drawerOpen, setDrawerOpen] = React.useState(true);
+    const [, setDrawerOpen] = React.useState(true);
     const [sideMenu, SetsideMenu] = React.useState(false);
     const location = useLocation();
     const isOnSalesReceipt = location.pathname === "/sales_receipts";
@@ -34,7 +34,7 @@ const PrimaryAppBar = () => {
     //     }
     // }, [isSmallScreenSettings])
         const toggleDrawer = (open: boolean) =>
-        (event: React.MouseEvent) => {
+        (_event: React.MouseEvent) => {
             SetsideMenu(open)
 
         }
@@ -47,8 +47,6 @@ const PrimaryAppBar = () => {
             window.addEventListener("drawer-toggle", handleDrawerToggle);
             return () => window.removeEventListener("drawer-toggle", handleDrawerToggle);
         }, []);
-    const drawerWidth = drawerOpen ? theme.primaryDraw.width : theme.primaryDraw.closed;
-    console.log(sideMenu)
     const below600 = useMediaQuery("(max-width:750px)")
 
     return(
@@ -56,17 +54,11 @@ const PrimaryAppBar = () => {
        <AppBar 
         sx={
             {
-            //    zIndex: (theme) => theme.zIndex.drawer + 2,
-                // backgroundColor:theme.palette.primary.dark,
-                // height:`${theme.primaryAppBar.height}px`,
-                // ml: `${drawerWidth}px`, 
                 borderBottom:`1px solid ${theme.palette.divider}`,
-                // width: `calc(100vw - ${drawerWidth}px)`,
             }}
             >
                 
         <Toolbar variant='dense'  sx={{
-                // ml:isSmallScreen ?"0px":`${theme.primaryDraw.width}px`,
                 height: theme.primaryAppBar.height,
                 minHeight: theme.primaryAppBar.height,
             }}>
@@ -113,7 +105,9 @@ const PrimaryAppBar = () => {
 
           <Typography variant="h6" color='textPrimary' component="div" sx={{ml:!below600?`${theme.SecondaryDraw.width}px`:"auto", flexGrow: 1 }}>
             
-            <AccountButton  />
+            <AccountButton showForm={() => { } } handleFormClickOnBigScreen={function (_value: string): void {
+                        throw new Error('Function not implemented.');
+                    } }  />
           </Typography>
         </Toolbar>
       </AppBar>

@@ -1,9 +1,9 @@
-import * as React from 'react';
+
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
-import { Typography, useTheme } from "@mui/material";
+import { Typography} from "@mui/material";
 import { UseoutletNstaffContext } from '../context/OutletNStaffsContext';
 
 type filterOptionType= {
@@ -12,7 +12,6 @@ type filterOptionType= {
 }
 
 export default function OutletFilterSelection({filterOption, handleChange}:filterOptionType) {
-    const theme = useTheme();
     const {outletsData} = UseoutletNstaffContext();
     const safeValue =
     outletsData.some(o => String(o.id) === filterOption)

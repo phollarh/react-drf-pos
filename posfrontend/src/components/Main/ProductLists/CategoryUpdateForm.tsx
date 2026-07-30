@@ -1,6 +1,5 @@
 import { useFormik } from "formik"
-import { Box, Button, Container, MenuItem, TextField, Typography } from "@mui/material";
-import { useEffect } from "react";
+import { Box, Button, Container,TextField } from "@mui/material";
 import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
 import React from "react";
 
@@ -24,7 +23,6 @@ interface UpdateCatFormProps {
 
 const CategoryUpdateForm = ({
     handleOrderDelete,
-    dataCRUD,
     categoryId,
     name,
     setIsLoading,

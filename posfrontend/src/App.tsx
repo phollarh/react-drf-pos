@@ -1,26 +1,18 @@
 import Home from './pages/Home'
 import {BrowserRouter, Route, Routes } from 'react-router-dom'
-import { ThemeProvider } from '@emotion/react';
-import {createMuiTheme} from './theme/theme'
 import Products from './pages/Products';
-import Login from './pages/Login';
 import AuthServiceProvider from './context/AuthContext';
 import OutletNstaffContextProvider from "./context/OutletNStaffsContext";
-import CreateReceipt from './pages/CreateReceipt';
 import Sales from './pages/Sales';
 import Categories from './pages/Categories';
 import Measurements from './pages/Measurements';
 import PastReceipt from './pages/PastReceipt';
 import SalesByProduct from './pages/SalesByProduct';
-import Register from './pages/Register';
 import ToggleColorMode from './components/ToggleColorMode';
 import ViewUpdateProfile from './pages/account/ViewUpdateProfile';
 import Settings from './pages/Settings';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import SalesNReceipt from './pages/SalesNReceipt';
-import TestHome from './pages/TestHome';
 import LoginTemplate from './pages/LoginTemplate';
-import RegisterTemplate from './pages/templates/ConfirmationTemplate';
 import ConfirmationTemplate from './pages/templates/ConfirmationTemplate';
 import ForgotPasswordTemplate from './pages/templates/ForgotPasswordTemplate';
 import { useEffect } from 'react';
@@ -68,7 +60,6 @@ function App() {
             <Route path='/sales_summary' element={<SalesByProduct/>} />
             <Route path='/profile' element={<ViewUpdateProfile/>} />
             <Route path='/settings' element={<Settings/>} />
-            <Route path='/testHome' element={<TestHome/>} />
           </Routes> 
         
         </ToggleColorMode>

@@ -1,4 +1,4 @@
-import * as React from 'react';
+
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
@@ -6,7 +6,7 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 
 type PaginationSizeFormType= {
   size:number | null;
-  handleChange:(event: SelectChangeEvent<string>)=>void;
+  handleChange:(event: SelectChangeEvent<number>)=>void;
 }
 
 export default function PaginationSizeForm({handleChange, size}:PaginationSizeFormType) {

@@ -1,4 +1,4 @@
-import { forwardRef, useRef } from "react";
+import { forwardRef} from "react";
 import { NumericFormat, NumericFormatProps } from "react-number-format";
 import TextField, { TextFieldProps } from "@mui/material/TextField";
 
@@ -26,7 +26,7 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         },
         ref
     ) => {
-        const inputRef = useRef<HTMLInputElement>(null);
+        
         return (
             <NumericFormat size="small" sx={{whiteSpace:"nowrap", borderRadius:50}}
             

@@ -1,7 +1,6 @@
 import { Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography, useMediaQuery } from "@mui/material";
 import { Link } from "react-router-dom";
 import React from "react";
-import HomeIcon from '@mui/icons-material/Home';
 import { useTheme } from "@mui/material/styles";
 import SideMenuAccordion from "./sideMenuAccord/SideMenuDrop";
 import SideMenuAccordionProduct from "./sideMenuAccord/SideMenuAccordionProduct";

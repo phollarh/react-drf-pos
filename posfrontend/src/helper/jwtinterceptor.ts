@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { useNavigate } from "react-router-dom";
-import { BASE_URL } from "../congif";
+
 
 
 
@@ -20,7 +20,7 @@ jwtAxios.interceptors.response.use(
                 console.log("im called...")
                  axios.defaults.withCredentials = true;
                 try{
-                    const response = await axios.get(
+                    await axios.get(
                         "http://127.0.0.1:8000/accounts/api/user/get_email_verify_status/"
                     );
                    

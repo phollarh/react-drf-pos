@@ -1,32 +1,33 @@
 import { useFormik } from "formik"
-import { useNavigate } from "react-router-dom"
-import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
-import { Box, Button, Container, Paper, TextField, Typography, useTheme } from "@mui/material";
-import axios from "axios";
+import { Box, Button, Paper, TextField, Typography, useTheme } from "@mui/material";
 import "../components/Main/accounts/ProfileForm.css"
 import { useState } from "react";
-import useAxiosWithInterceptor from "../helper/jwtinterceptor";
 import { useAuthServiceContext } from "../context/AuthContext";
 import { requestIdProps } from "../@types/auth-service";
+import Checkbox from '@mui/material/Checkbox';
 
 
 interface passwordProps {
+    passTokenRef: React.MutableRefObject<string | null>
     handleClose: () => void;
-    handleDelete: () => Promise<any>
-    purpose:string
+    handleDelete: () => Promise<any>;
+    purpose:string;
     requestId: requestIdProps | null;
 }
 
 
-const PassCodeForm = ({handleClose,purpose, requestId, handleDelete}:passwordProps) => {
+const PassCodeForm = ({handleClose,purpose, requestId, passTokenRef, handleDelete}:passwordProps) => {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === "dark"
-    const jwtAxios = useAxiosWithInterceptor();
     const [sucessMessage, setSucessMessage] = useState<null | string>(null)
-    const [errMessage, setErrMessage] = useState<null | string>(null)
-    const navigate = useNavigate();
-    const {logout,AuthenticateUserPass, authError} = useAuthServiceContext()
+    const [, setErrMessage] = useState<null | string>(null)
+    const {AuthenticateUserPass, authError} = useAuthServiceContext()
+    const [checked, setChecked] = useState(false);
+
+    const handleCheckedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+            setChecked(event.target.checked);
+        };
     const formik = useFormik({
         enableReinitialize: true,
         initialValues: {
@@ -48,8 +49,10 @@ const PassCodeForm = ({handleClose,purpose, requestId, handleDelete}:passwordPro
             setErrMessage(null)
            try{
             
-            const resp = await AuthenticateUserPass(passcode, requestId ,purpose, handleDelete)
+            const resp = await AuthenticateUserPass(passcode, requestId ,purpose, undefined, checked)
                 if(resp.status === 200){
+                    passTokenRef.current = resp.data.pass_token;
+                    await handleDelete()
                     handleClose()
                 }
            }catch(err:any){
@@ -106,6 +109,18 @@ const PassCodeForm = ({handleClose,purpose, requestId, handleDelete}:passwordPro
                         <Button variant="contained" color="error" disableElevation sx={{display:"block",margin:"1px auto", textAlign:"center", textTransform:"none" }} type="submit">Delete</Button>
                     </Box>
                 </Box>
+                <Box>
+                                    <Typography sx={{fontSize:"0.9rem"}} component="span">
+                                         <Checkbox
+                                    size="small"
+                                    checked={checked}
+                                    onChange={handleCheckedChange}
+                                    slotProps={{
+                                        input: { 'aria-label': 'controlled' },
+                                    }}
+                                    />
+                                          Trust this session for 15mins</Typography>
+                                </Box>
                 {sucessMessage&&
                 <Box sx={{width:"100%"}}>
                     <Typography color="success" sx={{display:"block", margin:"1px auto", width:"100%", textAlign:"center"}}>

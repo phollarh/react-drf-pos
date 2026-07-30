@@ -1,29 +1,15 @@
 import {
-    ListItem,
-    ListItemIcon,
-    ListItemText,
     Box,
     Typography,
     useTheme,
     Container,
-    Grid,
-    Card,
-    CardContent,
-    Button,
     Toolbar,
     Paper,
-    SelectChangeEvent,
     useMediaQuery
 } from "@mui/material";
 import useCrud from "../../hooks/useCrud";
-import React, { useEffect } from "react";
-import ProductionQuantityLimitsOutlinedIcon from '@mui/icons-material/ProductionQuantityLimitsOutlined';
-import UpdateProductDialogue from "./ProductLists/UpdateProductDialogue";
-import useAxiosWithInterceptor from "../../helper/jwtinterceptor";
+import React from "react";
 import ProductSearchForm from "./ProductLists/ProductSearchForm";
-import OutletFilterSelection from "../OutletFilterSelection";
-import { Height } from "@mui/icons-material";
-import CreateSalesTable from "./sales/CreateSalesTable";
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ProductListTable from "./ProductLists/ProductListTable";
 import { Server } from "../../@types/server";
@@ -34,10 +20,10 @@ import { Server } from "../../@types/server";
 const MainSection = () => {
     const theme = useTheme();
     const [drawerOpen, setDrawerOpen] = React.useState(true);
-    const jwtAxios = useAxiosWithInterceptor();
+    
     const [searchByproductName, setSearchByproductName] = React.useState<string>("");
-    const [filterOption, setFilterOption] = React.useState(() => localStorage.getItem("outlet_id") || "" );
-    const [createProduct, setCreateProduct] = React.useState(false)
+    const [filterOption] = React.useState(() => localStorage.getItem("outlet_id") || "" );
+    const [, setCreateProduct] = React.useState(false)
     const below750 = useMediaQuery("(max-width: 750px)")
     const below350 = useMediaQuery("(max-width: 350px)")
     const [open, setOpen] = React.useState(false);
@@ -54,34 +40,13 @@ const MainSection = () => {
     }, []);
     
     const drawerWidth = drawerOpen ? theme.primaryDraw.width : theme.primaryDraw.closed;
-    const style = {
-                p:1,
-                width: '100%',
-                height:"500px",
-                borderRadius: 4,
-                border: '1px solid',
-                borderColor: 'divider',
-                backgroundColor: 'background.paper',
-                };
-
+    
     const handleCreateNewProduct = ()=>{
         setDataObject(null)
         setCreateProduct(true);
         setOpen(true)
     }
 
-
-    // let url = `/products/`
-
-
-    // if (filterOption !=="") {
-    //     url = url+`?outlet_id=${filterOption}`;
-    // }
-    // console.log(filterOption)
-    // if(searchByproductName !== ""){
-    //     url = url+`?search=${searchByproductName}`
-    // }
-    // console.log(url)
     const url = React.useMemo(() => {
         let base = `/products/`;
         const params = new URLSearchParams();
