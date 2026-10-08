@@ -4,6 +4,8 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.db import models
+from django.db.models import Q
+from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import post_save
 from django.utils import timezone
@@ -178,7 +180,7 @@ class Outlets(models.Model):
     supivisor_passcode = models.CharField(max_length=255, null=True, blank=True)
     pin = models.CharField(max_length=255)
     name = models.CharField(max_length=50, null=False, blank=False)
-    email_address = models.EmailField(max_length=50, unique=True, null=True, blank=True)
+    email_address = models.EmailField(max_length=50, null=True, blank=True)
     city = models.CharField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=100, null=True, blank=True)
     # phone_number = PhoneNumberField(null=True, blank=True)
@@ -189,6 +191,13 @@ class Outlets(models.Model):
         null=True, blank=True, upload_to=outlet_logo_upload_path
     )
     outlet_description = models.TextField(null=True, blank=True, max_length=200)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                "user", Lower("name"), name="Oulet_already_exist"
+            )
+        ]
 
     def save(self, *args, **kwargs):
         try:
@@ -241,6 +250,7 @@ class OutletStaff(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     pin = models.CharField(max_length=255)
     # security fields
+
     failed_attempts = models.IntegerField(default=0)
     last_failed_attempt = models.DateTimeField(null=True, blank=True)
     is_locked = models.BooleanField(default=False)
@@ -295,12 +305,30 @@ class OutletStaffLogin(models.Model):
         blank=True,
         null=True,
     )
+    assignment_expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
     assigned = models.BooleanField(default=False)
     login_date = models.DateTimeField(auto_now_add=True)
     logout_date = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=False)
     assigned_at = models.DateTimeField(null=True, blank=True)
     last_activity = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["outlet_staff"],
+                condition=Q(is_active=True),
+                name="only_one_active_staff_per_session",
+            ),
+            models.UniqueConstraint(
+                fields=["outlet_staff"],
+                condition=Q(assigned=True),
+                name="only_one_asigned_staff_per_session",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.outlet_staff} | - Active: {self.is_active}"

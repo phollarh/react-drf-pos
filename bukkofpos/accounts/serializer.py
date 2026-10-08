@@ -130,9 +130,6 @@ class OutletStaffSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-
-        print(validated_data)
-
         return super().create(validated_data)
 
     # def update(self, instance, validated_data):

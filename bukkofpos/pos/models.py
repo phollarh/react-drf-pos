@@ -26,6 +26,7 @@ class Product(models.Model):
     update_at = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     product_name = models.CharField(max_length=100)
+    is_active = models.BooleanField(default=True)
     sold_In = models.ForeignKey(
         "Measurement",
         on_delete=models.SET_NULL,
@@ -36,7 +37,7 @@ class Product(models.Model):
     outlet = models.ForeignKey(
         Outlets,
         related_name="products",
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,
         blank=True,
     )
@@ -67,31 +68,27 @@ class Product(models.Model):
     #     get_ordered_quantity
     #     self.stock_inventory = self.stock_inventory - self.products.all()
     #     super().save(*args, **kwargs)
+
+
 class InventoryLog(models.Model):
     class Typechoices(models.TextChoices):
         ADD = "add", "add"
         SUBTRACT = "subtract", "subtract"
 
     product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        related_name="inventory_logs"
+        Product, on_delete=models.CASCADE, related_name="inventory_logs"
     )
     quantity = models.DecimalField(max_digits=10, decimal_places=3)
     action = models.CharField(max_length=20, choices=Typechoices.choices)
     performed_by_supervisor = models.ForeignKey(
-        OutletStaff,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True
+        OutletStaff, on_delete=models.SET_NULL, blank=True, null=True
     )
     performed_by_admin = models.ForeignKey(
-        get_user_model(),
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True
+        get_user_model(), on_delete=models.SET_NULL, blank=True, null=True
     )
     created_at = models.DateTimeField(auto_now_add=True)
+
+
 # def initiate_inventory_log(sender, instance, created, **kwargs):
 #     if created and instance.stock_inventory > 0:
 
@@ -140,7 +137,7 @@ class Measurement(models.Model):
 class Order(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     product = models.ForeignKey(
-        "Product", related_name="products", on_delete=models.CASCADE
+        "Product", related_name="products", on_delete=models.PROTECT
     )
     quantity = models.DecimalField(
         max_digits=12, decimal_places=3, validators=[order_quantity_validation]
@@ -149,16 +146,37 @@ class Order(models.Model):
     date = models.DateTimeField(default=timezone.now)
     paid = models.BooleanField(default=False)
     sub_total = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+    measurement_type_at_sale = models.CharField(
+        max_length=10, null=True, blank=True, editable=False
+    )
+    measurement_value_at_sale = models.CharField(
+        max_length=10, null=True, blank=True, editable=False
+    )
+    product_name_at_sale = models.CharField(max_length=100)
+
+    unit_selling_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )
+    unit_cost_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+    )
 
     def __str__(self):
 
-        return (
-            f"{self.product} | {self.product.selling_price} per {self.product.sold_In}"
-        )
+        return f"{self.product} | {self.unit_selling_price} per {self.measurement_type_at_sale}"
 
     def save(self, *args, **kwargs):
-        # calculate subtotal and store it before saving
+        if self._state.adding:
+            self.unit_cost_price = self.product.cost_price
+            self.unit_selling_price = self.product.selling_price
+            self.product_name_at_sale = self.product.product_name
+            if self.product.sold_In:
+                self.measurement_type_at_sale = self.product.sold_In.measurement_type
+                self.measurement_value_at_sale = self.product.sold_In.value
         self.sub_total = self.quantity * self.product.selling_price
+
         super().save(*args, **kwargs)
 
     # @property
@@ -174,7 +192,13 @@ class SalesReceipt(models.Model):
     orders = models.ManyToManyField(
         Order, related_name="order_receipt", through="SalesReceiptOrder"
     )
-    assigned_staff = models.ForeignKey(OutletStaff, null=True, blank=True,related_name="staff_receipts", on_delete=models.DO_NOTHING)
+    assigned_staff = models.ForeignKey(
+        OutletStaff,
+        null=True,
+        blank=True,
+        related_name="staff_receipts",
+        on_delete=models.DO_NOTHING,
+    )
     remarks = models.TextField(max_length=200, null=True, blank=True)
     date = models.DateTimeField(default=timezone.now)
     issued = models.BooleanField(default=False)
@@ -231,7 +255,7 @@ class Payment(models.Model):
         related_name="payment",
     )
     amount_tenderd = models.DecimalField(
-        default=0, decimal_places=2, max_digits=8, blank=True, null=True
+        default=0, decimal_places=2, max_digits=15, blank=True, null=True
     )
 
     payment_time = models.DateTimeField(null=True, blank=True)
@@ -256,3 +280,30 @@ def initiate_payment(sender, instance, created, **kwargs):
 
 
 post_save.connect(initiate_payment, sender=SalesReceipt)
+
+
+class PrinterSetup(models.Model):
+    class PaperSize(models.IntegerChoices):
+        MM_58 = 58, "58 mm"
+        MM_80 = 80, "80 mm"
+
+    outlet = models.OneToOneField(
+        Outlets,
+        on_delete=models.CASCADE,
+        related_name="printer_setup",
+    )
+    paper_size = models.PositiveSmallIntegerField(
+        choices=PaperSize.choices,
+        default=PaperSize.MM_80,
+    )
+
+    def __str__(self):
+        return f"{self.outlet.name} | {self.paper_size} mm"
+
+
+def create_printer_setup(sender, instance, created, **kwargs):
+    if created:
+        PrinterSetup.objects.create(outlet=instance)
+
+
+post_save.connect(create_printer_setup, sender=Outlets)

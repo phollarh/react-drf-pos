@@ -1,18 +1,22 @@
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.http import Http404
 from rest_framework import viewsets, status
 from django.db import transaction
+from django.db.models import Exists, OuterRef
 from django.core import signing
 from django.core.signing import BadSignature, SignatureExpired
 from django.contrib.auth import get_user_model
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, action
+
+from accounts.views import get_active_outlet_id
 from .models import (
     Category,
     InventoryLog,
     Measurement,
     Order,
+    PrinterSetup,
     Product,
     SalesReceipt,
     SalesReceiptOrder,
@@ -27,12 +31,13 @@ from .serializers import (
     OrderSerializers,
     ProductInfoSerializer,
     ProductSerializers,
-    SalesInfoSerializer,
+    # SalesInfoSerializer,
     SalesReceiptCreateSerializer,
     # SalesReceiptOrderSerializer,
     SalesReceiptSerializer,
     SalesSerializer,
     ViewOrderSerializer,
+    printerSetupSerializer,
     productInfoSerializerBydate,
 )
 from rest_framework.response import Response
@@ -45,7 +50,7 @@ from django.utils import timezone
 # from datetime import datetime, timedelta, timezone as dt_timezone
 import calendar
 from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Q, Value
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, TruncDate, TruncMonth
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
@@ -54,6 +59,12 @@ from .global_permisson import IsVerified
 from accounts.models import AuthorizationNonce, OutletStaff, Outlets
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import permission_classes
+from notifications.notification_helper import create_notification
+from accounts.session_permisson import (
+    ASPermission,
+    IsAdminOrSupervisor,
+    IsAdminOrSupervisorOrStaff,
+)
 
 # reportlab
 from django.http import HttpResponse
@@ -86,31 +97,51 @@ def index(request):
 
 class ProductListViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.select_related("category", "sold_In")
-    permission_classes = [IsAuthenticated, IsVerified]
+    permission_classes = [
+        IsAuthenticated,
+        IsVerified,
+        ASPermission,
+        IsAdminOrSupervisor,
+    ]
     serializer_class = ProductSerializers
 
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
     ]
-    search_fields = [
-        "product_name","id"
-    ]
+    search_fields = ["product_name", "id"]
+
+    def get_permissions(self):
+        if self.action == "list":
+            return (
+                IsVerified(),
+                IsAuthenticated(),
+                ASPermission(),
+                IsAdminOrSupervisorOrStaff(),
+            )
+        return super().get_permissions()
 
     def get_queryset(self):
-        outlet_id = self.request.query_params.get("outlet_id")
+        # outlet_id = self.request.query_params.get("outlet_id")
+        outlet_id = get_active_outlet_id(self.request)
         if not outlet_id:
             raise ValidationError(
                 {"error": "No active Outlet, Please Add/Activate an Outlet.."}
             )
 
         qs = super().get_queryset()
-        return qs.filter(user=self.request.user, outlet__id=outlet_id)
+        return qs.filter(user=self.request.user, outlet__id=outlet_id, is_active=True)
 
     def create(self, request, *args, **kwargs):
+        outlet_id = get_active_outlet_id(request)
 
+        if not outlet_id:
+            return Response(
+                {"error": "Please activate an outlet"},
+                status=400,
+            )
         token = request.headers.get("X-Pass-Token")
-        print(token)
+
         if not token:
             token = request.COOKIES.get("pass_token")
 
@@ -162,10 +193,10 @@ class ProductListViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_403_FORBIDDEN,
                     )
                 verify_nonce.delete()
-
+            outlet = get_object_or_404(Outlets, id=outlet_id, user=request.user)
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            serializer.save(user=request.user)
+            serializer.save(user=request.user, outlet=outlet)
             quantity = serializer.data["stock_inventory"]
             action = "add"
 
@@ -180,13 +211,6 @@ class ProductListViewSet(viewsets.ModelViewSet):
             )
 
     def partial_update(self, request, *args, **kwargs):
-        outlet_id = request.query_params.get("outlet_id")
-
-        if not outlet_id:
-            return Response(
-                {"error": "Please activate an outlet"},
-                status=400,
-            )
 
         try:
             instance = self.get_object()
@@ -257,13 +281,19 @@ class ProductListViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(instance, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
 
-            serializer.save(user=request.user)
+            product_instance = serializer.save(user=request.user)
             quantity = request.data.get("quantity")
             action = request.data.get("action")
             # print(quantity,action)
             if quantity is not None and action is not None:
-
+                message_title = f"Inventory Update"
+                message = (
+                    f"Inventory stock of {product_instance.product_name} was updated "
+                )
                 create_inventory_log(authorizer, instance.id, quantity, action)
+                create_notification(
+                    request.user, "inventory.update", message_title, message
+                )
             # verify_nonce.delete()
             return Response(
                 {"data": serializer.data, "message": "update successful"},
@@ -328,22 +358,83 @@ class ProductListViewSet(viewsets.ModelViewSet):
                             {
                                 "error": "Authorization has expired. Please authenticate again."
                             },
-                                status=status.HTTP_403_FORBIDDEN,
+                            status=status.HTTP_403_FORBIDDEN,
                         )
-        
+
                 except AuthorizationNonce.DoesNotExist:
                     return Response(
                         {"error": "Invalid or expired authorization token"},
                         status=status.HTTP_403_FORBIDDEN,
                     )
                 verify_nonce.delete()
-            self.perform_destroy(instance)
+            # self.perform_destroy(instance)
+            instance.is_active = False
+            instance.save(
+                update_fields=[
+                    "is_active",
+                ]
+            )
             return Response({"message": "Product deleted"}, status=status.HTTP_200_OK)
 
 
+class InventoryViewset(viewsets.ViewSet):
+    permission_classes = [
+        IsAuthenticated,
+        IsVerified,
+        ASPermission,
+        IsAdminOrSupervisor,
+    ]
+    queryset = InventoryLog.objects.all()
+
+    def get_permissions(self):
+        if self.action == "list":
+            return [
+                IsAuthenticated(),
+                IsVerified(),
+                ASPermission(),
+                IsAdminOrSupervisorOrStaff(),
+            ]
+        return super().get_permissions()
+
+    def list(self, request):
+        product_id = request.query_params.get("product_id")
+        active_outlet_id = get_active_outlet_id(request)
+        current_count = int(request.headers.get("X-Count-Header"))
+
+        if not product_id:
+            return Response(
+                {"error": "Product details are required"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        queryset = self.queryset.filter(
+            product__id=product_id,
+            product__user=request.user,
+            product__outlet_id=active_outlet_id,
+        )
+        get_list = current_count + 10
+
+        if get_list >= queryset.count():
+            message = "All inventory data fetched"
+            disable_button = True
+            get_list = queryset.count()
+        else:
+            message = "click to load more data  >>>"
+            disable_button = False
+            get_list = get_list
+        return_queryset = queryset[:get_list]
+        serializer = InventoryLogSerializer(return_queryset, many=True)
+        return Response(
+            {
+                "data": serializer.data,
+                "message": message,
+                "disable_button": disable_button,
+            },
+            status=status.HTTP_200_OK,
+        )
+from django.core.exceptions import ValidationError as DjangoValidationError
+
 def create_inventory_log(authorizer, product, quantity, action):
     User = get_user_model()
-    print(authorizer["authorize"])
     product_instance = Product.objects.get(id=product)
     quantity_dec = Decimal(quantity)
     if quantity_dec <= 0.00:
@@ -354,7 +445,15 @@ def create_inventory_log(authorizer, product, quantity, action):
         product_instance.stock_inventory -= quantity_dec
     else:
         raise ValueError("Invalid action")
-    product_instance.save()
+    try:
+        product_instance.full_clean()
+        product_instance.save()
+    except DjangoValidationError:
+        
+        raise ValidationError(
+            {"stock_inventory": ["stock_inventory cannot be negative"]}
+        )
+    
     log = {
         "product": product_instance,
         "quantity": quantity_dec,
@@ -366,7 +465,6 @@ def create_inventory_log(authorizer, product, quantity, action):
         log["performed_by_supervisor"] = OutletStaff.objects.get(
             Employee_id=authorizer["id"]
         )
-    print(log)
 
     InventoryLog.objects.create(**log)
 
@@ -400,42 +498,76 @@ def create_inventory_log(authorizer, product, quantity, action):
 
 class MeasuremnetListViewSet(viewsets.ModelViewSet):
     queryset = Measurement.objects.all()
-    permission_classes = [IsAuthenticated, IsVerified]
+    permission_classes = [
+        IsAuthenticated,
+        IsVerified,
+        ASPermission,
+        IsAdminOrSupervisor,
+    ]
     serializer_class = MeasurementSerializers
 
     def get_queryset(self):
-        outlet_id = self.request.query_params.get("outlet_id")
-        print(outlet_id, "outlet id ....")
+        # outlet_id = self.request.query_params.get("outlet_id")
+        # print(outlet_id, "outlet id ....")
 
+        outlet_id = get_active_outlet_id(self.request)
         if not outlet_id:
             raise ValidationError(
                 {"error": "Please Add/Activate and outlet to continue"}
             )
-        queryset = Measurement.objects.filter(outlet=outlet_id)
+        queryset = Measurement.objects.filter(
+            outlet__user=self.request.user, outlet_id=outlet_id
+        )
 
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        outlet_id = get_active_outlet_id(self.request)
+        if not outlet_id:
+            return Response(
+                {"error": "Please Add/Activate and outlet to continue"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        outlet = get_object_or_404(Outlets, id=outlet_id, user=request.user)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(outlet=outlet)
+        return Response(
+            {"message": "created successfully"}, status=status.HTTP_201_CREATED
+        )
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        role = request.pos_authorization.get("role")
+        if role != "admin":
+            return Response(
+                {"error": "You can not perform this operation"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         self.perform_destroy(instance)
         return Response({"message": "Measurement deleted"}, status=status.HTTP_200_OK)
 
 
 class CategoryListViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
-    permission_classes = [IsAuthenticated, IsVerified]
+    permission_classes = [
+        IsAuthenticated,
+        IsVerified,
+        ASPermission,
+        IsAdminOrSupervisor,
+    ]
     serializer_class = CategorySerializers
 
     def get_queryset(self):
-        outlet_id = self.request.query_params.get("outlet_id")
-
+        # outlet_id = self.request.query_params.get("outlet_id")
+        outlet_id = get_active_outlet_id(self.request)
         if not outlet_id:
             raise ValidationError(
                 {"error": "Please Add/Activate and outlet to continue"}
             )
         queryset = Category.objects.filter(
             outlet=outlet_id, outlet__user=self.request.user
-        ).distinct()
+        )
 
         return queryset
 
@@ -444,8 +576,28 @@ class CategoryListViewSet(viewsets.ModelViewSet):
     #     category = serializer.save()
     #     update_object=Category.objects.get(id=category.id)
     #     print(update_object.cats.first(outlet=outlet_id))
+    def create(self, request, *args, **kwargs):
+        outlet_id = get_active_outlet_id(request)
+        if not outlet_id:
+            return Response(
+                {"error": "Please/Add ot activate an outlet to continue"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        outlet = get_object_or_404(Outlets, id=outlet_id, user=request.user)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(outlet=outlet)
+        return Response(
+            {"message": "created successfully"}, status=status.HTTP_201_CREATED
+        )
 
     def destroy(self, request, *args, **kwargs):
+        role = request.pos_authorization.get("role")
+        if role != "admin":
+            return Response(
+                {"error": "You can not perform this operation"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({"message": "Category deleted"}, status=status.HTTP_200_OK)
@@ -454,7 +606,12 @@ class CategoryListViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.select_related("user", "product")
     serializer_class = CreateOrderSerializer
-    permission_classes = [IsAuthenticated, IsVerified]
+    permission_classes = [
+        IsAuthenticated,
+        IsVerified,
+        ASPermission,
+        IsAdminOrSupervisorOrStaff,
+    ]
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -462,9 +619,12 @@ class OrderViewSet(viewsets.ModelViewSet):
         return super().get_serializer_class()
 
     def create(self, request, *args, **kwargs):
-        outlet_id = request.headers.get("X-Pass-Token")
+        outlet_id = get_active_outlet_id(request)
         if not outlet_id:
-            return Response({"error": "Activate an outlet to continue"})
+            return Response(
+                {"error": "Activate an outlet to continue"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         receipt_id = request.data.get("receipt_id")
 
         mixed_outlet = False
@@ -488,7 +648,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     hold=False,
                     user=self.request.user,
                 ).distinct()
-                
+
                 if receipts.count() > 1:
                     raise ValidationError(
                         "Multiple active receipts exist for this outlet."
@@ -502,11 +662,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                         user=self.request.user,
                     ).distinct()
                     if get_false_receipts.count() > 2:
-                        print(
-                            get_false_receipts.count(),
-                            get_false_receipts,
-                            "false receipts",
-                        )
+
                         return Response(
                             {
                                 # "mess": get_false_receipts,
@@ -522,6 +678,15 @@ class OrderViewSet(viewsets.ModelViewSet):
                     )
             order = self.get_serializer(data=request.data)
             order.is_valid(raise_exception=True)
+            product = order.validated_data["product"]
+            if str(product.outlet.id) != str(outlet_id):
+                return Response(
+                    {
+                        "error": "Can not perform action, product does not belong to this outlet"
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
             instance = order.save(user=request.user)
             mixed_outlet = receipt_obj.sales_receipt_order.exclude(
                 order__product__outlet=instance.product.outlet
@@ -561,142 +726,146 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class SalesInfoAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsVerified]
+class SalesInfoChartAPIView(APIView):
+    permission_classes = [
+        IsAuthenticated,
+        IsVerified,
+        ASPermission,
+        IsAdminOrSupervisor,
+    ]
 
     def get(self, request):
         now = timezone.now()
-        start = timezone.make_aware(datetime.combine(now.date(), datetime.min.time()))
-        end = timezone.make_aware(datetime.combine(now.date(), datetime.max.time()))
-        outlet_id = request.query_params.get("outlet_id")
+        # start = timezone.make_aware(datetime.combine(now.date(), datetime.min.time()))
+        # end = timezone.make_aware(datetime.combine(now.date(), datetime.max.time()))
+
+        outlet_id = get_active_outlet_id(request)
         if not outlet_id:
             raise ValidationError(
                 {"error": "Please Activate/Add an Outlet to View Sales Info"}
             )
-        current_year = timezone.now().year
-        try:
-            receipts = SalesReceipt.objects.filter(
-                issued=True,
-                sales_receipt_order__order__product__outlet=outlet_id,
-                issued_at__year=current_year,
+        current_year = timezone.localdate().year
+        # current_year = timezone.now().year
+
+        receipts = SalesReceipt.objects.filter(
+            issued=True,
+            sales_receipt_order__order__product__outlet=outlet_id,
+            issued_at__year=current_year,
+        )
+        if not receipts:
+            return Response(
+                {"error": "No Data match the Receipt"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        except SalesReceipt.DoesNotExist():
-            return Response({"error": "No Data match the Receipt"})
-        sales_data = []
-        daily_sales_data = []
-        current_day = timezone.now().date()
+
+        start_of_year = date(current_year, 1, 1)
+        start_of_next_year = date(current_year + 1, 1, 1)
+        current_day = timezone.localdate()
         start_of_week = current_day - timedelta(days=current_day.weekday())
         months = list(calendar.month_name)[1:]
-        sales = []
-        cost_of_sales = []
-
-        cost_of_sales.append(
-            {
-                "cost_of_sale": SalesReceiptOrder.objects.filter(
-                    sales_receipt__in=receipts,
-                    order__product__outlet=outlet_id,
-                    sales_receipt__issued_at__gte=start,
-                    sales_receipt__issued_at__lte=end,
-                )
-                .annotate(
-                    cost_of_sales_for_the_day=ExpressionWrapper(
-                        F("order__product__cost_price") * F("order__quantity"),
-                        output_field=DecimalField(max_digits=10, decimal_places=2),
-                    )
-                )
-                .aggregate(
-                    total_cost_of_sales_for_the_day=Sum("cost_of_sales_for_the_day")
-                )["total_cost_of_sales_for_the_day"]
-                or Decimal(0.00),
-            }
-        )
-        sales.append(
-            {
-                "sales": SalesReceiptOrder.objects.filter(
-                    sales_receipt__in=receipts,
-                    sales_receipt__issued_at__gte=start,
-                    sales_receipt__issued_at__lte=end,
-                    order__product__outlet=outlet_id,
-                ).aggregate(gross_sales_for_the_day=Sum("order__sub_total"))[
-                    "gross_sales_for_the_day"
-                ]
-                or Decimal(0.00),
-            }
-        )
-        # test=SalesReceiptOrder.objects.filter(sales_receipt__issued_at__date=current_day,order__product__outlet=outlet_id, sales_receipt__in=receipts,)
-        # for o in test:
-        #     print(o.id, o.order.id, o.order.sub_total)
-
-        net_sales = sales[0]["sales"]
-        for i in range(7):
-            key = start_of_week + timedelta(days=i)
-            key_str = key.strftime("%A")
-            daily_sales_data.append(
-                {
-                    "daily": key_str,
-                    "total_daily": SalesReceiptOrder.objects.filter(
-                        order__product__outlet=outlet_id,
-                        sales_receipt__in=receipts,
-                        sales_receipt__issued_at__date=key,
-                    ).aggregate(daily_sales=Sum("order__sub_total"))["daily_sales"]
-                    or Decimal(0.00),
-                }
+        # current_day = timezone.now().date()
+        end_of_week = start_of_week + timedelta(days=6)
+        monthly_sales = {}
+        weekly_sales_dic = {}
+        monthly_data = (
+            SalesReceiptOrder.objects.filter(
+                order__product__outlet=outlet_id,
+                sales_receipt__in=receipts,
+                sales_receipt__issued_at__date__gte=start_of_year,
+                sales_receipt__issued_at__date__lt=start_of_next_year,
             )
-
-        for i, month in enumerate(months, start=1):
-            sales_data.append(
-                {
-                    "month": month,
-                    "total": SalesReceiptOrder.objects.filter(
-                        sales_receipt__in=receipts,
-                        order__product__outlet=outlet_id,
-                        # order__date__month=i,
-                        sales_receipt__issued_at__month=i,
-                    ).aggregate(monthly_sales=Sum("order__sub_total"))["monthly_sales"]
-                    or Decimal(0.00),
-                }
-            )
-            # monthly_sales[month] = (
-
-            # )
-        # updated_monthly_sales = [{"monthly_sales": monthly_sales}]
-        gross_profit = net_sales - cost_of_sales[0]["cost_of_sale"]
-        serializer = SalesInfoSerializer(
-            {
-                "monthly_sales": sales_data,
-                "daily_sales": daily_sales_data,
-                "gross_sales": sales,
-                "cost_of_sales": cost_of_sales,
-                "net_sales": net_sales,
-                "gross_profit": gross_profit,
-            }
+            .annotate(month=TruncMonth("sales_receipt__issued_at"))
+            .values("month")
+            .annotate(monthly_sales=Sum("order__sub_total"))
         )
-        return Response(serializer.data)
 
+        for m in range(len(months)):
 
-class WeeklySalesChartInfoAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsVerified]
+            print(months[m])
+            monthly_sales[months[m]] = Decimal("0.00")
 
-    def get(self, request):
-        current_day = timezone.now().date()
-        current_year = timezone.now().year
-        receipts = SalesReceipt.objects.filter(issued=True, date__year=current_year)
-        start_of_week = current_day - timedelta(days=current_day.weekday())
-        days_in_the_week_sales = {}
+        for data in monthly_data:
+            month_str = data["month"].strftime("%B")
+            monthly_sales[month_str] = data["monthly_sales"]
+
+        monthly_sales = [
+            {"month": key, "total": value} for key, value in monthly_sales.items()
+        ]
+
+        weekly_sales = (
+            SalesReceiptOrder.objects.filter(
+                order__product__outlet=outlet_id,
+                sales_receipt__in=receipts,
+                sales_receipt__issued_at__date__gte=start_of_week,
+                sales_receipt__issued_at__date__lte=end_of_week,
+            )
+            .annotate(date=TruncDate("sales_receipt__issued_at"))
+            .values("date")
+            .annotate(daily_sales=Sum("order__sub_total"))
+        )
 
         for i in range(7):
             key = start_of_week + timedelta(days=i)
             key_str = key.strftime("%A")
-            days_in_the_week_sales[key_str] = (
-                SalesReceiptOrder.objects.filter(
-                    sales_receipt__in=receipts, order__date__date=key
-                ).aggregate(daily_sales=Sum("order__sub_total"))["daily_sales"]
-                or 0
-            )
+            weekly_sales_dic[key_str] = Decimal(0)
 
-            updated_daily_sales = [{"daily_sales": days_in_the_week_sales}]
+        for sales in weekly_sales:
+            name = sales["date"].strftime("%A")
+            weekly_sales_dic[name] = sales["daily_sales"]
+        weekly_sales = [
+            {"daily": key, "total_daily": value}
+            for key, value in weekly_sales_dic.items()
+        ]
 
-        return Response(updated_daily_sales)
+        return Response(
+            {
+                "monthly_sales": monthly_sales,
+                "daily_sales": weekly_sales,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+# class WeeklySalesChartInfoAPIView(APIView):
+#     permission_classes = [
+#         IsAuthenticated,
+#         IsVerified,
+#         ASPermission,
+#         IsAdminOrSupervisor,
+#     ]
+
+#     def get(self, request):
+#         current_day = timezone.now().date()
+#         current_year = timezone.now().year
+#         active_outlet_id = get_active_outlet_id(request)
+
+#         if not active_outlet_id:
+#             return Response(
+#                 {"error": "Please activate an outlet"},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+#         receipts = SalesReceipt.objects.filter(
+#             issued=True,
+#             date__year=current_year,
+#             sales_receipt_order__order__product__outlet=active_outlet_id
+#         )
+#         start_of_week = current_day - timedelta(days=current_day.weekday())
+#         days_in_the_week_sales = {}
+
+#         for i in range(7):
+#             key = start_of_week + timedelta(days=i)
+#             key_str = key.strftime("%A")
+#             days_in_the_week_sales[key_str] = (
+#                 SalesReceiptOrder.objects.filter(
+#                     sales_receipt__in=receipts,order__user=request.user, order__date__date=key
+#                 ).aggregate(daily_sales=Sum("order__sub_total"))["daily_sales"]
+#                 or 0
+#             )
+
+
+#         updated_daily_sales = [{"daily_sales": days_in_the_week_sales}]
+#         print(updated_daily_sales)
+#         return Response(updated_daily_sales)
 
 
 # class OrderViewSet(viewsets.ViewSet):
@@ -724,13 +893,14 @@ class SalesReceiptPagePagination(PageNumberPagination):
         )
 
 
-def get_current_dates():
-    today = timezone.now()
+def get_current_dates(request):
+    today = timezone.localtime()
     current_year = today.year
-    receipts = SalesReceipt.objects.filter(issued=True, issued_at__year=current_year)
+    current_day = today.date()
+    current_month = today.month
 
-    current_day = timezone.now().date()
-    current_month = timezone.now().month
+    receipts = SalesReceipt.objects.filter(issued=True, user=request.user)
+
     start_of_week = current_day - timedelta(days=current_day.weekday())
     end_of_last_week = start_of_week - timedelta(days=1)
     start_of_last_week = start_of_week - timedelta(days=7)
@@ -740,8 +910,7 @@ def get_current_dates():
     else:
         previous_month = current_month - 1
         year_of_previous_month = current_year
-    last_month_receipts = SalesReceipt.objects.filter(
-        issued=True,
+    last_month_receipts = receipts.filter(
         issued_at__month=previous_month,
         issued_at__year=year_of_previous_month,
     )
@@ -752,7 +921,6 @@ def get_current_dates():
         "current_year": current_year,
         "current_day": current_day,
         "current_month": current_month,
-        "current_year": current_year,
         "start_of_week": start_of_week,
         "end_of_last_week": end_of_last_week,
         "start_of_last_week": start_of_last_week,
@@ -764,10 +932,15 @@ def get_current_dates():
 
 class CheckSalesReceiptStatus(viewsets.ViewSet):
 
-    permission_classes = [IsAuthenticated, IsVerified]
+    permission_classes = [
+        IsAuthenticated,
+        IsVerified,
+        ASPermission,
+        IsAdminOrSupervisorOrStaff,
+    ]
 
     def list(self, request):
-        outlet_id = request.query_params.get("outlet_id")
+        outlet_id = get_active_outlet_id(request)
         if not outlet_id:
             return Response(
                 {"error": "Add/activate an outlet to continue"},
@@ -783,7 +956,8 @@ class CheckSalesReceiptStatus(viewsets.ViewSet):
         return Response(serializer.data)
 
     def partial_update(self, request, pk=None):
-        outlet_id = request.query_params.get("outlet_id")
+
+        outlet_id = get_active_outlet_id(request)
         if not outlet_id:
             return Response(
                 {"error": "Add/activate an outlet"}, status=status.HTTP_403_FORBIDDEN
@@ -794,15 +968,24 @@ class CheckSalesReceiptStatus(viewsets.ViewSet):
                 {"error": "Assign a staff to perform action"},
                 status=status.HTTP_403_FORBIDDEN,
             )
+        matching_orders = SalesReceiptOrder.objects.filter(
+            order__product__outlet_id=outlet_id, sales_receipt_id=OuterRef("pk")
+        )
         with transaction.atomic():
+            # receipt = (
+            #     SalesReceipt.objects.select_for_update()
+            #     .filter(
+            #         issued=False,
+            #         sales_receipt_order__order__product__outlet=outlet_id,
+            #         id=pk,
+            #     )
+            #     .distinct()
+            #     .first()
+            # )
+
             receipt = (
                 SalesReceipt.objects.select_for_update()
-                .filter(
-                    issued=False,
-                    sales_receipt_order__order__product__outlet=outlet_id,
-                    id=pk,
-                )
-                .distinct()
+                .filter(Exists(matching_orders), id=pk, issued=False)
                 .first()
             )
             if not receipt:
@@ -845,7 +1028,12 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
     #         x.delete()
 
     serializer_class = SalesReceiptSerializer
-    permission_classes = [IsAuthenticated, IsVerified]
+    permission_classes = [
+        IsAuthenticated,
+        IsVerified,
+        ASPermission,
+        IsAdminOrSupervisorOrStaff,
+    ]
     pagination_class = SalesReceiptPagePagination
     filter_backends = [
         DjangoFilterBackend,
@@ -881,27 +1069,70 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
                     issued=False, user=self.request.user, hold=True
                 ).order_by("-date")
 
-            response_serializer = SalesReceiptSerializer(instance, context=self.get_serializer_context())
+            response_serializer = SalesReceiptSerializer(
+                instance, context=self.get_serializer_context()
+            )
             token = signing.dumps({"receipt_id": instance.id})
             response = response_serializer.data
-            response["pdf_url"] = request.build_absolute_uri(
-                reverse("sales_receipt_pdf", kwargs={"pk": instance.pk})
-            ) + f"?token={token}"
+            response["pdf_url"] = (
+                request.build_absolute_uri(
+                    reverse("sales_receipt_pdf", kwargs={"pk": instance.pk})
+                )
+                + f"?token={token}"
+            )
             return Response(response, status=status.HTTP_200_OK)
 
-    
+    @action(detail=False, methods=["GET"], url_path="issued_receipt_pdf_regenerate")
+    def issued_receipt_pdf_regenerate(self, request):
+        receipt_id = request.query_params.get("receipt_id")
+        outlet_id = request.query_params.get("outlet_id")
+
+        if not receipt_id and not outlet_id:
+            return Response(
+                {"error": "receipt id and outet id is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        matching_orders = SalesReceiptOrder.objects.filter(
+            order__product__outlet=outlet_id, sales_receipt_id=OuterRef("pk")
+        )
+
+        try:
+            instance = SalesReceipt.objects.get(
+                Exists(matching_orders),
+                id=receipt_id,
+                user=request.user,
+                issued=True,
+                hold=False,
+            )
+        except SalesReceipt.DoesNotExist:
+            return Response(
+                {"error": "receipt not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        token = signing.dumps({"receipt_id": instance.id})
+        response = {
+            "pdf_url": (
+                request.build_absolute_uri(
+                    reverse("sales_receipt_pdf", kwargs={"pk": instance.pk})
+                )
+                + f"?token={token}"
+            )
+        }
+        return Response(response, status=status.HTTP_200_OK)
 
     def list(self, request, *args, **kwargs):
         get_assigned_staff = self.request.COOKIES.get("assigned_staff")
-        if not get_assigned_staff:
-            return Response(
-                {"error": "Assign a staff to perform action"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        issued_receipt = self.request.query_params.get("issued")
+
+        if not issued_receipt or issued_receipt.lower() == "false":
+            if not get_assigned_staff:
+                return Response(
+                    {"error": "Assign a staff to perform action"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
-        get_dates = get_current_dates()
+        get_dates = get_current_dates(self.request)
         false_receipt = self.request.query_params.get("issued")
 
         qs = SalesReceipt.objects.filter(issued=False, user=self.request.user).order_by(
@@ -911,16 +1142,15 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
 
             qs = qs.filter(hold=False)
         if false_receipt is not None:
-            qs = SalesReceipt.objects.filter(issued=false_receipt.lower() == "false")
-        get_outlet = self.request.query_params.get("outlet_id")
+            qs = qs.filter(issued=false_receipt.lower() == "false")
+        get_outlet = get_active_outlet_id(self.request)
         if not get_outlet:
             raise ValidationError(
                 {"error": " No Active Outlet, Add/activate an outlet"}
             )
 
         order_query = Order.objects.filter(product__outlet=int(get_outlet))
-        if self.action == "partial_update":
-            return qs.filter(issued=False)
+
         qs = (
             qs.filter(sales_receipt_order__order__product__outlet=int(get_outlet))
             .distinct()
@@ -933,11 +1163,12 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
                 )
             )
         )
-
+        if self.action == "partial_update":
+            return qs.filter(issued=False)
         # query_set = super().get_queryset()
         issued = self.request.query_params.get("issued")
         if issued is not None:
-            now = timezone.now()
+            now = timezone.localtime()
             start_of_today = timezone.make_aware(
                 datetime.combine(now.date(), datetime.min.time())
             )
@@ -967,18 +1198,18 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
                 )
             elif date_range == "last_24_hours":
                 queryset = queryset.filter(
-                    issued_at__date__gte=get_dates["current_day"] - timedelta(days=1),
-                    issued_at__date__lte=timezone.now().date(),
+                    issued_at__date__gte=timezone.now() - timedelta(hours=24),
+                    issued_at__date__lte=timezone.now(),
                 )
             elif date_range == "this_week":
                 queryset = queryset.filter(
                     issued_at__date__gte=get_dates["start_of_week"],
-                    issued_at__date__lte=timezone.now().date(),
+                    issued_at__date__lte=timezone.localdate(),
                 )
             elif date_range == "this_month":
                 queryset = queryset.filter(
                     issued_at__date__gte=get_dates["current_day"].replace(day=1),
-                    issued_at__date__lte=timezone.now().date(),
+                    issued_at__date__lte=timezone.localdate(),
                 )
             queryset = queryset.prefetch_related(
                 Prefetch(
@@ -1019,7 +1250,12 @@ class SalesReceiptOrderViewSet(viewsets.ViewSet):
 
 class SalesReceiptOrderUpdateViewSet(viewsets.ViewSet):
     # queryset = Product.objects.filter(user=request.user)
-    permission_classes = [IsAuthenticated, IsVerified]
+    permission_classes = [
+        IsAuthenticated,
+        IsVerified,
+        ASPermission,
+        IsAdminOrSupervisor,
+    ]
 
     def list(self, request):
         queryset = SalesReceiptOrder.objects.prefetch_related("order__product")
@@ -1036,7 +1272,12 @@ class SalesReceiptOrderUpdateViewSet(viewsets.ViewSet):
 
 
 class SalesInfoViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated, IsVerified]
+    permission_classes = [
+        IsAuthenticated,
+        IsVerified,
+        ASPermission,
+        IsAdminOrSupervisor,
+    ]
 
     def calculate_sales(
         self,
@@ -1059,7 +1300,7 @@ class SalesInfoViewSet(viewsets.ViewSet):
         if start_date_range and end_date_range:
             queryset = queryset.filter(
                 sales_receipt__issued_at__date__gte=start_date_range,
-                sales_receipt__issued_at__date___lte=end_date_range,
+                sales_receipt__issued_at__date__lte=end_date_range,
             )
 
         elif start_date and end_date:
@@ -1089,7 +1330,7 @@ class SalesInfoViewSet(viewsets.ViewSet):
             gross_sales_for=Sum("order__sub_total"),
             total_cost_of_sales_for=Sum(
                 ExpressionWrapper(
-                    F("order__product__cost_price") * F("order__quantity"),
+                    F("order__unit_cost_price") * F("order__quantity"),
                     output_field=DecimalField(max_digits=10, decimal_places=2),
                 )
             ),
@@ -1106,10 +1347,13 @@ class SalesInfoViewSet(viewsets.ViewSet):
         }
 
     def list(self, request):
-        outlet_id = request.query_params.get("outlet_id")
+        outlet_id = get_active_outlet_id(request)
         if not outlet_id:
-            return Response({"error": "Please Add/Activate an outlet to continue"})
-        context = get_current_dates()
+            return Response(
+                {"error": "Please Add/Activate an outlet to continue"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        context = get_current_dates(request)
         receipt_in_outlet = context["receipts"].filter(
             sales_receipt_order__order__product__outlet=outlet_id
         )
@@ -1168,73 +1412,115 @@ class SalesInfoViewSet(viewsets.ViewSet):
 
 
 class ProductsInfoViewset(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated, IsVerified]
+    permission_classes = [
+        IsAuthenticated,
+        IsVerified,
+        ASPermission,
+        IsAdminOrSupervisor,
+    ]
 
-    def calculate_sales(self, start_date, outlet_id, end_date=None):
-
+    def calculate_sales(self, start_date, outlet_id, product_id=None, end_date=None):
+        queryset = Product.objects.filter(outlet__id=outlet_id)
+        sales_filter = Q(
+            products__order_salesreceipt__sales_receipt__issued=True,
+            products__order_salesreceipt__sales_receipt__issued_at__date__gte=start_date,
+        )
         if end_date:
-            queryset = Product.objects.annotate(
-                total_qty=Coalesce(
-                    Sum(
-                        "products__quantity",
-                        filter=Q(
-                            products__order_salesreceipt__sales_receipt__issued=True,
-                            products__order_salesreceipt__sales_receipt__issued_at__date__gte=start_date,
-                            products__order_salesreceipt__sales_receipt__issued_at__date__lte=end_date,
-                            outlet=outlet_id,
-                        ),
-                    ),
-                    Value(0),
-                    output_field=DecimalField(max_digits=10, decimal_places=2),
-                )
+            sales_filter &= Q(
+                products__order_salesreceipt__sales_receipt__issued_at__date__lte=end_date
             )
         else:
-            queryset = Product.objects.annotate(
-                total_qty=Coalesce(
-                    Sum(
-                        "products__quantity",
-                        filter=Q(
-                            products__order_salesreceipt__sales_receipt__issued=True,
-                            products__order_salesreceipt__sales_receipt__issued_at__date=start_date,
-                            outlet=outlet_id,
-                        ),
-                    ),
-                    Value(0),
-                    output_field=DecimalField(max_digits=10, decimal_places=2),
-                )
+            sales_filter &= Q(
+                products__order_salesreceipt__sales_receipt__issued_at__date=start_date
             )
-        return queryset.order_by("-total_qty")
+        queryset = queryset.annotate(
+            total_qty=Coalesce(
+                Sum(
+                    "products__quantity",
+                    filter=sales_filter,
+                ),
+                Value(0),
+                output_field=DecimalField(max_digits=10, decimal_places=2),
+            ),
+            total_amount=Coalesce(
+                Sum(
+                    F("products__quantity") * F("products__unit_selling_price"),
+                    filter=sales_filter,
+                ),
+                Value(0),
+                output_field=DecimalField(max_digits=12, decimal_places=2),
+            ),
+            total_profit=Coalesce(
+                Sum(
+                    F("products__quantity")
+                    * (
+                        F("products__unit_selling_price")
+                        - F("products__unit_cost_price")
+                    ),
+                    filter=sales_filter,
+                ),
+                Value(0),
+                output_field=DecimalField(max_digits=12, decimal_places=2),
+            ),
+        )
+        # total_outlet_profit = queryset.aggregate(outlet_profits=Sum("total_profit"))["outlet_profits"]
+
+        aggregated_quantity = queryset.aggregate(sales_contribution=Sum("total_qty"))[
+            "sales_contribution"
+        ]
+        # profit_rank = (queryset["total_profit"]/total_outlet_profit) * 100
+
+        queryset = queryset.order_by("-total_profit")
+        profitlis = [product.total_profit for product in queryset]
+        for product in queryset:
+            rank = profitlis.index(product.total_profit) + 1
+            product.profit_rank = rank
+            # print(rank)
+        # print(queryset)
+        if product_id:
+            product = next(
+                (product for product in queryset if str(product.id) == str(product_id)),
+                None,
+            )
+            # queryset = queryset.filter(id=product_id)
+            # product = queryset.first()
+            if product and aggregated_quantity:
+                product.sales_contribution = (
+                    product.total_qty / aggregated_quantity
+                ) * 100
+
+            queryset = [product] if product else []
+
+            return queryset
+
+        return sorted(queryset, key=lambda prod: prod.total_qty, reverse=True)
 
     def list(self, request):
-        context = get_current_dates()
-        outlet_id = request.query_params.get("outlet_id")
-        if not outlet_id:
-            return Response({"error": "add/activate an outlet to continue..."})
-        queryset = Product.objects.none()
+        context = get_current_dates(request)
+        outlet_id = get_active_outlet_id(request)
+        # if not outlet_id:
+        #     return Response({"error": "add/activate an outlet to continue..."})
+
+        product_id = request.query_params.get("product_id")
+
         start_date_range = request.query_params.get("start_date_range")
         end_date_range = request.query_params.get("end_date_range")
+        queryset = Product.objects.none()
         if start_date_range and end_date_range:
-            queryset = Product.objects.annotate(
-                total_qty=Coalesce(
-                    Sum(
-                        "products__quantity",
-                        filter=Q(
-                            products__order_salesreceipt__sales_receipt__issued=True,
-                            products__order_salesreceipt__sales_receipt__issued_at__date__gte=start_date_range,
-                            products__order_salesreceipt__sales_receipt__issued_at__date__lte=end_date_range,
-                            outlet=outlet_id,
-                        ),
-                    ),
-                    Value(0),
-                    output_field=DecimalField(max_digits=10, decimal_places=2),
-                )
+            queryset = self.calculate_sales(
+                start_date=start_date_range,
+                end_date=end_date_range,
+                outlet_id=outlet_id,
+                product_id=product_id,
             )
 
         serializer = productInfoSerializerBydate(
             {
                 "today": ProductInfoSerializer(
                     self.calculate_sales(
-                        start_date=context["current_day"], outlet_id=outlet_id
+                        start_date=context["current_day"],
+                        outlet_id=outlet_id,
+                        product_id=product_id,
                     ),
                     many=True,
                 ).data,
@@ -1242,6 +1528,7 @@ class ProductsInfoViewset(viewsets.ViewSet):
                     self.calculate_sales(
                         outlet_id=outlet_id,
                         start_date=context["current_day"] - timedelta(days=1),
+                        product_id=product_id,
                     ),
                     many=True,
                 ).data,
@@ -1250,6 +1537,7 @@ class ProductsInfoViewset(viewsets.ViewSet):
                         outlet_id=outlet_id,
                         start_date=context["start_of_week"],
                         end_date=context["current_day"],
+                        product_id=product_id,
                     ),
                     many=True,
                 ).data,
@@ -1258,6 +1546,7 @@ class ProductsInfoViewset(viewsets.ViewSet):
                         outlet_id=outlet_id,
                         start_date=context["current_day"].replace(day=1),
                         end_date=context["current_day"],
+                        product_id=product_id,
                     ),
                     many=True,
                 ).data,
@@ -1266,6 +1555,7 @@ class ProductsInfoViewset(viewsets.ViewSet):
                         outlet_id=outlet_id,
                         start_date=context["start_of_last_week"],
                         end_date=context["end_of_last_week"],
+                        product_id=product_id,
                     ),
                     many=True,
                 ).data,
@@ -1275,6 +1565,7 @@ class ProductsInfoViewset(viewsets.ViewSet):
                         start_date=context["last_month_start"],
                         end_date=context["current_day"].replace(day=1)
                         - timedelta(days=1),
+                        product_id=product_id,
                     ),
                     many=True,
                 ).data,
@@ -1284,16 +1575,115 @@ class ProductsInfoViewset(viewsets.ViewSet):
         return Response(serializer.data)
 
 
+class WeeklyProductSalesChartInfoAPIView(APIView):
+    permission_classes = [
+        IsAuthenticated,
+        IsVerified,
+        ASPermission,
+        IsAdminOrSupervisor,
+    ]
+
+    def get(self, request):
+        outlet_id = get_active_outlet_id(request)
+        product_id = request.query_params.get("product_id")
+        if not product_id or not outlet_id:
+            return Response(
+                {"error": "invalid details"}, status=status.HTTP_403_FORBIDDEN
+            )
+        current_day = timezone.localdate()
+        start_of_week = current_day - timedelta(days=current_day.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+        days_in_the_week_sales = {}
+
+        sales = (
+            Product.objects.filter(
+                products__order_salesreceipt__sales_receipt__issued=True,
+                products__order_salesreceipt__sales_receipt__issued_at__date__gte=start_of_week,
+                products__order_salesreceipt__sales_receipt__issued_at__date__lte=end_of_week,
+                outlet=outlet_id,
+                id=product_id,
+            )
+            .annotate(
+                date=TruncDate("products__order_salesreceipt__sales_receipt__issued_at")
+            )
+            .values("date")
+            .annotate(
+                daily_sales=Sum(
+                    F("products__quantity") * F("products__unit_selling_price")
+                )
+            )
+        )
+
+        # days_value = {}
+        for i in range(7):
+            key = start_of_week + timedelta(days=i)
+            key_str = key.strftime("%A")
+            days_in_the_week_sales[key_str] = Decimal(0)
+
+            # days_in_the_week_sales[key_str] = Product.objects.filter(
+            #     products__order_salesreceipt__sales_receipt__issued=True,
+            #     products__order_salesreceipt__sales_receipt__issued_at__date=key,
+            #     outlet=outlet_id,
+            #     id=product_id,
+            # ).aggregate(daily_sales=Sum(F("products__quantity") * F("selling_price")))[
+            #     "daily_sales"
+            # ] or Decimal(
+            #     0.00
+            # )
+        for day in sales:
+            name = day["date"].strftime("%A")
+            days_in_the_week_sales[name] = day["daily_sales"]
+
+        updated_daily_sales = {"daily_sales": days_in_the_week_sales}
+
+        return Response(updated_daily_sales)
+
+
+class PrinterSetUpViewSet(viewsets.ViewSet):
+    permission_classes = [
+        IsAuthenticated,
+        IsVerified,
+        ASPermission,
+        IsAdminOrSupervisorOrStaff,
+    ]
+    queryset = PrinterSetup.objects.all()
+
+    def get_queryset(self):
+        print(self.queryset.filter(outlet__user=self.request.user))
+        return self.queryset.filter(outlet__user=self.request.user)
+
+    def list(self, request):
+        outlet_id = get_active_outlet_id(request)
+        if not outlet_id:
+            return Response(
+                {"error": "Activate an outlet"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        printer_setup = get_object_or_404(self.get_queryset(), outlet_id=outlet_id)
+        serializer = printerSetupSerializer(printer_setup)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def partial_update(self, request, pk=None):
+        outlet_id = get_active_outlet_id(request)
+
+        if not outlet_id:
+            return Response(
+                {"error": "Activate an outlet"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        get_object = get_object_or_404(self.get_queryset(), outlet_id=outlet_id)
+        serializer = printerSetupSerializer(get_object, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"message": "paper size updated"}, status=status.HTTP_200_OK)
+
+
 # # generate receipt pdf reportlab
-def generate_sales_receipt_pdf(
-   pk, payment_option, total, balance, remarks=None
-):
+def generate_sales_receipt_pdf(pk, payment_option, total, balance, remarks=None):
     Receipt = SalesReceipt.objects.get(pk=pk, issued=True)
-    
-    # outlet= Outlets.objects.get(id=Receipt__sales_receipt_order__order__product__outlet__id)
     outlet = Receipt.orders.first().product.outlet
-    print(outlet.name)
-    
+
     # print(Receipt,outlet)
     # attending_staff=get_object_or_404(OutletStaffLogin, user=request.user)
 
@@ -1318,13 +1708,13 @@ def generate_sales_receipt_pdf(
     title_style = getSampleStyleSheet()["Title"]
     title_style.alignment = TA_CENTER
     title_style.fontSize = 10
-    title_style.fontName = "Times-Bold"  
-    
+    title_style.fontName = "Times-Bold"
+
     contact = f"888888888"
     contact_style = getSampleStyleSheet()["Normal"]
     contact_style.alignment = TA_CENTER
     contact_style.fontSize = 8
-    
+
     Address = f"{outlet.address}"
     address_style = getSampleStyleSheet()["Normal"]
     address_style.alignment = TA_CENTER
@@ -1340,8 +1730,8 @@ def generate_sales_receipt_pdf(
     Receipt_id_style = getSampleStyleSheet()["Normal"]
     Receipt_id_style.fontSize = 8
     Receipt_id_style.fontName = "Times-Bold"
-
-    time = f"&nbsp;&nbsp;&nbsp;DATE: {Receipt.issued_at.strftime('%Y-%m-%d %H:%M:%S')}"
+    local_time = timezone.localtime(Receipt.issued_at)
+    time = f"&nbsp;&nbsp;&nbsp;DATE: {local_time.strftime('%Y-%m-%d %H:%M:%S')}"
     time_style = getSampleStyleSheet()["Normal"]
     time_style.fontSize = 8
     time_style.fontName = "Times-Bold"
@@ -1362,16 +1752,16 @@ def generate_sales_receipt_pdf(
     items_details_style = getSampleStyleSheet()["Normal"]
     items_details_style.fontSize = 9
     items_details_style.fontName = "Times-Roman"
-    
-        # Create a table to display the receipt data
+
+    # Create a table to display the receipt data
     receipt_data = [["Product", "Qty", "Price"]]
 
     for product in Receipt.orders.all():
         receipt_data.append(
             [
-                f"{product.product.product_name}",
+                f"{product.product_name_at_sale}",
                 f"{product.quantity}",
-                f" {product.sub_total}",
+                f" {product.unit_selling_price}",
             ]
         )
 
@@ -1425,7 +1815,6 @@ def generate_sales_receipt_pdf(
         )
     )
 
-    
     elements.append(Paragraph(title, title_style))
     elements.append(Paragraph(Address, address_style))
     elements.append(Spacer(1, 4))
@@ -1458,6 +1847,7 @@ def generate_sales_receipt_pdf(
     response.write(buffer.read())
     buffer.close()
     return response
+
 
 @api_view(["GET"])
 @permission_classes([AllowAny])

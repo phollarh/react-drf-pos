@@ -9,6 +9,7 @@ from .models import (
     Category,
     InventoryLog,
     Measurement,
+    PrinterSetup,
     Product,
     Order,
     SalesReceipt,
@@ -143,10 +144,10 @@ class CreateProductSerializers(serializers.ModelSerializer):
     # def get_created_by(self, obj):
     #     return obj.created_by.username if obj.created_by else None
 
-    # def validate_created_by(self, value):
-    #     if not value in [key for key,_ in OutletStaff.STATUS]:
-    #         raise serializers.ValidationError("Not Allowed ")
-    #     return value
+    def validate_stock_inventory(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("inventory must be creater than zero")
+        return value
 
     def create(self, validated_data):
         category_pop = validated_data.pop("category", None)
@@ -170,14 +171,13 @@ class CreateProductSerializers(serializers.ModelSerializer):
             # outlet=outlet_instance,
             category=category_instance,
             sold_In=measurement_instance,
-            **validated_data
+            **validated_data,
         )
         return product
 
     def update(self, instance, validated_data):
         category = validated_data.pop("category", None)
         sold_In = validated_data.pop("sold_In", None)
-        print(validated_data)
 
         # outlet_pop = validated_data.pop("outlet", None)
         # instance = super().update(instance, validated_data)
@@ -206,11 +206,21 @@ class CreateProductSerializers(serializers.ModelSerializer):
 
 class InventoryLogSerializer(serializers.ModelSerializer):
     action = serializers.ChoiceField(choices=InventoryLog.Typechoices.choices)
+    performed_by = serializers.SerializerMethodField(required=False)
+    created_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = InventoryLog
-        fields = ("id", "product", "quantity", "action")
-        read_only_fields = ("id",)
+        fields = ("id", "product", "quantity", "action", "created_at", "performed_by")
+        read_only_fields = ("id", "performed_by")
+
+    def get_performed_by(self, obj):
+        perfomer = "Unknown"
+        if obj.performed_by_supervisor is not None:
+            perfomer = f"supervisor {obj.performed_by_supervisor.name}"
+        if obj.performed_by_admin is not None:
+            perfomer = "Admin"
+        return perfomer
 
 
 class MeasurementSerializers(serializers.ModelSerializer):
@@ -252,6 +262,10 @@ class OrderSerializers(serializers.ModelSerializer):
             "quantity",
             "description",
             "date",
+            "product_name_at_sale",
+            "measurement_type_at_sale",
+            "measurement_value_at_sale",
+            "unit_selling_price",
             "paid",
             "sub_total",
         )
@@ -283,6 +297,7 @@ class SalesReceiptSerializer(serializers.ModelSerializer):
     balance_due = serializers.SerializerMethodField()
     payment_option = serializers.SerializerMethodField()
     amount_tenderd = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
 
     class Meta:
         model = SalesReceipt
@@ -313,13 +328,18 @@ class SalesReceiptSerializer(serializers.ModelSerializer):
 
         return None
 
+    def get_date(self, obj):
+        receipt_date = obj.issued_at if obj.issued and obj.issued_at else obj.date
+
+        return serializers.DateTimeField().to_representation(receipt_date)
+
     def get_balance_due(self, obj):
 
         total_sales_amount = self.get_total(obj)
 
         try:
             payment = obj.payment
-        except:
+        except Payment.DoesNotExist:
             payment = None
 
         if payment and payment.amount_tenderd is not None:
@@ -359,7 +379,7 @@ class SalesReceiptCreateSerializer(serializers.ModelSerializer):
         allow_blank=True,
     )
     amount_tenderd = serializers.DecimalField(
-        max_digits=10, required=False, write_only=True, decimal_places=2
+        max_digits=15, required=False, write_only=True, decimal_places=2
     )
 
     def update(self, instance, validated_data):
@@ -367,7 +387,7 @@ class SalesReceiptCreateSerializer(serializers.ModelSerializer):
         payment_option_bc = validated_data.pop("payment_option", None)
         amount_tenderd = validated_data.pop("amount_tenderd", None)
         hold = validated_data.get("hold")
-        print(amount_tenderd)
+
         with transaction.atomic():
             instance = super().update(instance, validated_data)
             if orderItem_data is not None:
@@ -375,18 +395,29 @@ class SalesReceiptCreateSerializer(serializers.ModelSerializer):
                 receipt = SalesReceipt.objects.get(id=instance.id)
                 receipt.orders.all().delete()
 
-                order_items = [
-                    Order(
-                        user=self.context["request"].user,
-                        sub_total=orderItem["quantity"]
-                        * orderItem["product"].selling_price,
-                        **orderItem
-                    )
-                    for orderItem in orderItem_data
-                ]
+                # order_items = [
+                #     Order(
+                #         user=self.context["request"].user,
 
-                new_order_item = Order.objects.bulk_create(order_items)
-                for new_order in new_order_item:
+                #         sub_total=orderItem["quantity"]
+                #         * orderItem["product"].selling_price,
+                #         **orderItem,
+                #     )
+                #     for orderItem in orderItem_data
+                # ]
+
+                # new_order_item = Order.objects.bulk_create(order_items)
+                new_order_items = []
+
+                for order_item_data in orderItem_data:
+                    new_order = Order(
+                        user=self.context["request"].user,
+                        **order_item_data,
+                    )
+
+                    new_order.save()
+                    new_order_items.append(new_order)
+                for new_order in new_order_items:
                     receipt.add_order(
                         order=new_order,
                         payment_option=payment_option_bc
@@ -403,13 +434,22 @@ class SalesReceiptCreateSerializer(serializers.ModelSerializer):
                     receipt.issued_at = timezone.now()
                     receipt.issued = True
                     receipt.payment.save()
+                    receipt.full_clean()
                     receipt.save()
-                    print(orderItem_data)
+
                     for x in orderItem_data:
+
                         product = x["product"]
-                        Product.objects.filter(id=product.id).update(
-                            stock_inventory=F("stock_inventory") - x["quantity"]
-                        )
+                        inventory_update = Product.objects.filter(
+                            id=product.id, stock_inventory__gte=x["quantity"]
+                        ).update(stock_inventory=F("stock_inventory") - x["quantity"])
+                        if inventory_update == 0:
+                            raise serializers.ValidationError(
+                                {
+                                    "inventory_error": "low stock",
+                                    "product_id": product.id,
+                                }
+                            )
 
         return instance
 
@@ -474,6 +514,7 @@ class CreateOrderSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         print(validated_data, self.initial_data)
+
         validated_data.pop("receipt_id", None)
         return super().create(validated_data)
 
@@ -491,14 +532,15 @@ class IssuedReceiptsSerializer(serializers.ModelSerializer):
         fields = ("order", "payment_option", "sales_receipt", "remarks")
 
 
-class DailySalesSerializer(serializers.Serializer):
-    daily = serializers.CharField()
-    total_daily = serializers.DecimalField(max_digits=10, decimal_places=2)
+# class DailySalesSerializer(serializers.Serializer):
+#     daily = serializers.CharField()
+#     total_daily = serializers.DecimalField(max_digits=10, decimal_places=2)
 
+# class WeeklySerializer(serializers.Serializer):
 
-class MonthlySalesSerializer(serializers.Serializer):
-    month = serializers.CharField()
-    total = serializers.DecimalField(max_digits=10, decimal_places=2)
+# class MonthlySalesSerializer(serializers.Serializer):
+#     month = serializers.CharField()
+#     total = serializers.DecimalField(max_digits=10, decimal_places=2)
 
 
 class GrossSalesSerilizer(serializers.Serializer):
@@ -509,13 +551,13 @@ class CostOfSalesSalesSerilizer(serializers.Serializer):
     cost_of_sale = serializers.DecimalField(max_digits=10, decimal_places=2)
 
 
-class SalesInfoSerializer(serializers.Serializer):
-    daily_sales = DailySalesSerializer(many=True)
-    monthly_sales = MonthlySalesSerializer(many=True)
-    gross_sales = GrossSalesSerilizer(many=True)
-    cost_of_sales = CostOfSalesSalesSerilizer(many=True)
-    net_sales = serializers.DecimalField(max_digits=10, decimal_places=2)
-    gross_profit = serializers.DecimalField(max_digits=10, decimal_places=2)
+# class SalesInfoSerializer(serializers.Serializer):
+#     daily_sales = DailySalesSerializer(many=True)
+#     monthly_sales = MonthlySalesSerializer(many=True)
+# gross_sales = GrossSalesSerilizer(many=True)
+# cost_of_sales = CostOfSalesSalesSerilizer(many=True)
+# net_sales = serializers.DecimalField(max_digits=10, decimal_places=2)
+# gross_profit = serializers.DecimalField(max_digits=10, decimal_places=2)
 
 
 class PreSalesSerializer(serializers.Serializer):
@@ -538,17 +580,30 @@ class ProductInfoSerializer(serializers.ModelSerializer):
     total_qty = serializers.DecimalField(
         read_only=True, max_digits=10, decimal_places=2
     )
+    total_amount = serializers.DecimalField(
+        read_only=True, max_digits=10, decimal_places=2
+    )
+    total_profit = serializers.DecimalField(
+        read_only=True, max_digits=10, decimal_places=2
+    )
+    sales_contribution = serializers.FloatField(
+        read_only=True, default=None, allow_null=True
+    )
+    profit_rank = serializers.IntegerField(
+        read_only=True, default=None, allow_null=True
+    )
 
     class Meta:
         model = Product
-        fields = ["id", "product_name", "total_qty"]
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-
-        if data["total_qty"] is None:
-            data["total_qty"] = 0
-        return data
+        fields = [
+            "id",
+            "product_name",
+            "total_qty",
+            "total_amount",
+            "total_profit",
+            "profit_rank",
+            "sales_contribution",
+        ]
 
 
 class productInfoSerializerBydate(serializers.Serializer):
@@ -559,3 +614,10 @@ class productInfoSerializerBydate(serializers.Serializer):
     last_week = ProductInfoSerializer(many=True)
     last_month = ProductInfoSerializer(many=True)
     date_range = ProductInfoSerializer(many=True)
+
+
+class printerSetupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PrinterSetup
+        fields = ["outlet", "paper_size", "id"]
+        read_only_fields = ("id",)

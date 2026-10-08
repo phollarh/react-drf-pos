@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "debug_toolbar",
     "pos",
     "accounts",
+    "notifications",
     # external app
     "corsheaders",
     "drf_spectacular",
@@ -51,6 +52,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "accounts.middleware.UserTimezoneMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
@@ -79,23 +81,23 @@ WSGI_APPLICATION = "bukkofpos.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
-
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME"),
-        "USER": os.environ.get("DB_USER"),
-        "PASSWORD": os.environ.get("DB_PASSWORD"),
-        "HOST": os.environ.get("DB_HOST"),
-        "PORT": os.environ.get("DB_PORT"),
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.environ.get("DB_NAME"),
+#         "USER": os.environ.get("DB_USER"),
+#         "PASSWORD": os.environ.get("DB_PASSWORD"),
+#         "HOST": os.environ.get("DB_HOST"),
+#         "PORT": os.environ.get("DB_PORT"),
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -173,6 +175,40 @@ REST_FRAMEWORK = {
 #     # OTHER SETTINGS
 # }
 
+# CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+CHANNEL_REDIS_URL = os.getenv(
+    "CHANNEL_REDIS_URL",
+    "redis://redis:6379/0",
+)
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [CHANNEL_REDIS_URL],
+        },
+    },
+}
+
+CHANNEL_REDIS_URL = os.getenv(
+    "CHANNEL_REDIS_URL",
+    "redis://redis:6379/0",
+)
+
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels_redis.core.RedisChannelLayer",
+#         "CONFIG": {
+#             "hosts": [
+#                 {
+#                     "address": CHANNEL_REDIS_URL,
+#                     "socket_timeout": None,
+#                 }
+#             ],
+#         },
+#     },
+# }
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "Your API",
     "VERSION": "1.0.0",
@@ -196,6 +232,9 @@ CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "x-pass-token",
+    "x-count-header",
+    "X-Count-Header-Crud",
+    "X-Timezone"
 ]
 # CORS_ALLOWED_ORIGINS = [
 #     "http://localhost:5173"]
@@ -216,4 +255,40 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_NAME": "access_token",
     "REFRESH_TOKEN_NAME": "refresh_token",
     "JWT_COOKIE_SAMESITE": "Lax",
+}
+
+
+CELERY_BROKER_URL = os.getenv(
+    "CELERY_BROKER_URL",
+    "redis://redis:6379/1",
+)
+
+CELERY_RESULT_BACKEND = os.getenv(
+    "CELERY_RESULT_BACKEND",
+    "redis://redis:6379/2",
+)
+
+CELERY_LOCK_REDIS_URL = os.getenv(
+    "CELERY_LOCK_REDIS_URL",
+    "redis://redis:6379/3",
+)
+
+STAFF_ASSIGNMENT_MAX_AGE = 15 * 60 
+
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TASK_TRACK_STARTED = True
+
+CELERY_TIMEZONE = "Africa/Lagos"
+
+CELERY_BEAT_SCHEDULE = {
+    # "run-periodic-test-every-30-seconds": {
+    #     "task": "notifications.tasks.periodic_test",
+    #     "schedule": 30.0,
+    # },
+    "auto_end_StaffsessionDB_when_cookies_expires": {
+            "task": "notifications.tasks.update_db_status_OnStaff_SessionCookies_expiration",
+            "schedule": 5 * 60,
+        },
 }

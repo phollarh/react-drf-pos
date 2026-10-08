@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import (
     Category,
     InventoryLog,
+    PrinterSetup,
     Product,
     Measurement,
     Order,
@@ -38,3 +39,4 @@ admin.site.register(Category)
 admin.site.register(Measurement)
 admin.site.register(SalesReceipt, SalesReceiptAdmin)
 admin.site.register(SalesReceiptOrder)
+admin.site.register(PrinterSetup)
