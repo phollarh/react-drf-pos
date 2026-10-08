@@ -44,7 +44,7 @@ export const createMuiTheme = (mode: "light"| "dark") =>{
         height:80,
     },
     primaryDraw: {
-            width: 270,
+            width: 220,
             closed: 60,
         },
     MainDrawWidth: {

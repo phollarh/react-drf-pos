@@ -38,13 +38,14 @@ const useCrud = <T>(initialData: T[], apiURL: string|null): IuseCrud<T> => {
         if (!apiURL) return;
         try {
             const response = await jwtAxios.get(`${BASE_URL}${apiURL}`, {
+             
                 withCredentials: true,
             });
 
             
-
+            
             const data = response.data;
-
+            console.log(apiURL, data)
             if (Array.isArray(data)) {
                 setError(null)
                 setDataCRUD(data);
@@ -54,11 +55,12 @@ const useCrud = <T>(initialData: T[], apiURL: string|null): IuseCrud<T> => {
                 setDataCRUDPaginate(data);
             }
             setError(null)
-
+            // return data
         } catch (error:any) {
             
             setError(error?.response.data.error);
             console.log(error?.response.data.error)
+            throw error.response
         } finally{
             setIsloading(false)
         }

@@ -4,12 +4,15 @@ import {
     useTheme,
     Container,
     Paper,
+    Alert,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import BarChartMain from "./SalesInfo/BarCharts";
 import LineChartHome from "./SalesInfo/LineChart";
 import useAxiosWithInterceptor from "../../helper/jwtinterceptor";
 import SalesInfo from "./SalesInfo/SalesInfo"
+import { BASE_URL, BASE_URL_CHARTS } from "../../congif";
+import { useAuthServiceContext } from "../../context/AuthContext";
 
 type SaleRecord = { net_sales?: number; gross_sales?: number, cost_of_sales?:number };
 type typeSales = {
@@ -34,8 +37,21 @@ const HomeMainSection = () => {
     const [xLabelsDailySales , setXLabelsDailySales] = useState<string[]>([])
     const [labelsDataDailySales , setLabelsDataDailySales] = useState<number[]>([])
     const [salesData, setSalesData] = useState<typeSales|null>(null)
-    const outlet_id:string  = localStorage.getItem("outlet_id") || ""
+    const {activeOutletId} = useAuthServiceContext();
+    // const outlet_id:string  = localStorage.getItem("outlet_id") || ""
+    const [outletId, setOutletId] = useState("")
     const [noOutletError , setNoOutletError] = useState<null | string>(null)
+    useEffect(()=>{
+            if(activeOutletId === null){
+                
+                setNoOutletError("No active outlet, please add/activate an outlet to view data")
+                
+            }else{
+                setOutletId(String(activeOutletId))
+            }
+            
+    },[activeOutletId])
+    
     React.useEffect(() => {
         console.log(drawerOpen)
                 const handleDrawerToggle = (e: Event) => {
@@ -48,24 +64,25 @@ const HomeMainSection = () => {
     
 
    const getSalestData = async ()=>{
-        
-
+        console.log("called")
          try{
         const response = await jwtAxios.get(
-        `http://127.0.0.1:8000/api/sales_info/?outlet_id=${outlet_id}`,{
+        `${BASE_URL}/sales_info/?outlet_id=${outletId}`,{
             withCredentials:true
         })
-        if(response.data?.error){
-            setNoOutletError(response.data?.error)
-        }
-        console.log(response.data)
+        
+        
         setSalesData(response.data)
         return response.data
     }catch(err:any){
+        if(err.response.data?.error){
+    
+            // setNoOutletError(err.response.data?.error)
+        }
         if (err.response?.status === 400) {
                 throw new Error("400");
             }
-        throw err;
+        throw err.response;
         
     }
     
@@ -73,10 +90,10 @@ const HomeMainSection = () => {
 
     const getSalesChartData = async ()=>{
         
-
+        
          try{
         const response = await jwtAxios.get(
-        `http://127.0.0.1:8000/sales/info/?outlet_id=${outlet_id}`,{
+        `${BASE_URL}/sales_info/charts/?outlet_id=${outletId}/`,{
             withCredentials:true
         })
         const dailysalesData = response.data['daily_sales']
@@ -87,7 +104,7 @@ const HomeMainSection = () => {
         for(let x in dailysalesData){
             dailyLables.push(dailysalesData[x]['daily'])
             dailyLablesData.push(dailysalesData[x]['total_daily'] ?? 0)
-            console.log(dailyLablesData)
+            
             
         }
         setXLabelsDailySales(dailyLables)
@@ -110,17 +127,18 @@ const HomeMainSection = () => {
             console.log(err.response)
                 throw new Error("400");
             }
-        throw err;
+            console.log(err.response)
+        throw err.response;
         
     }
     
     }
     
     useEffect(() => {
-       
+       if(!outletId) return;
         getSalesChartData();
         getSalestData();
-    }, []);
+    }, [outletId]);
 
 
     
@@ -131,20 +149,20 @@ const HomeMainSection = () => {
             <Container maxWidth="lg"   sx={{width:"100%", overflow:"hidden"}}>
                 {noOutletError &&
                 <Paper sx={{m:2}} elevation={3} >
-                        <Typography component="h4" sx={{color:"red", display:"block",fontSize:"1.3rem", p:2,margin:"1px auto", textAlign:"center"}}>
-                        please Activate or add an Outlet to View Details
-                    </Typography>
+                    <Alert severity="error">{noOutletError}</Alert>
+                        {/* <Typography component="h4" sx={{color:"red", display:"block",fontSize:"1.3rem", p:2,margin:"1px auto", textAlign:"center"}}>
+                        
+                    </Typography> */}
                 </Paper>
                      
                 }
-               
                 <Box>
-                    <Typography variant="h3" sx={{fontFamily:"sans-serif", color:theme.palette.primary.main, p:2, m:0}}>
-                        Dashboard
-                        <Typography variant="body1" sx={{mt:2, fontSize:'0.4em', fontFamily:'inherit'}}>
+                    {/* <Typography variant="h3" sx={{fontFamily:"sans-serif", color:theme.palette.primary.main, p:2, m:0}}>
+                        Dashboard */}
+                        <Typography variant="h5" sx={{mt:2, fontSize:'0.4em', fontFamily:'inherit'}}>
                             Dashboard
                         </Typography>
-                    </Typography>
+                    {/* </Typography> */}
                 </Box>
                 <Box>
 

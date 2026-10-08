@@ -9,6 +9,7 @@ import Main from "./templates/Main";
 import React, { useEffect, useState } from "react";
 import { UseoutletNstaffContext } from "../context/OutletNStaffsContext";
 import { outletStaffDataProps } from "../@types/outletsNstaff-service";
+import { useAuthServiceContext } from "../context/AuthContext";
 
 
 
@@ -44,19 +45,23 @@ const Settings = () => {
     const [outletId, setOutletId] = React.useState('')
     const [mode, setMode] = React.useState<"update"|"create" >()
     const[createOutletObject, setCreateOutletObject]=React.useState(false)
-
+    const {activeOutletId} = useAuthServiceContext();
     const [displayOutletForm, setDisplayOutletForm] = React.useState(false)
     const [dispalyStaffForm, setDispalyStaffForm] = React.useState(false)
     const [displayMain, setDisplayMain] = React.useState(false)
     const {outletsData, getOutlets,staffStatus,getOutletStaff ,getStaffStatus,setStaffStatus, staffData,
     setEmployeeId, employeeId} = UseoutletNstaffContext();
-    console.log(outletsData, staffData)
+    
  
-
+    useEffect(()=>{
+      if(activeOutletId){
+        setOutletId(String(activeOutletId))
+      }
+    }, [activeOutletId])
   
     const handleCreate =()=>{
       setDisplayOutletForm(true)
-      console.log("clicked")
+  
     }
     useEffect(()=>{
       if(!isBelow750){
@@ -97,7 +102,7 @@ const Settings = () => {
             setOutlet(null)
             setDisplayOutletForm(false)
             setStaff(outletStaff)
-            console.log(outletStaff.Employee_id)
+            
             setEmployeeId(outletStaff.Employee_id)
             setDisplayMain(true)
             setDispalyStaffForm(true)

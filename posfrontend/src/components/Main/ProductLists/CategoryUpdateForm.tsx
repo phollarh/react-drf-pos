@@ -1,7 +1,9 @@
 import { useFormik } from "formik"
 import { Box, Button, Container,TextField } from "@mui/material";
 import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { BASE_URL } from "../../../congif";
+import { useAuthServiceContext } from "../../../context/AuthContext";
 
 interface Server {
     id: number;
@@ -30,7 +32,15 @@ const CategoryUpdateForm = ({
     onClose
  }:UpdateCatFormProps) => {
     const jwtAxios = useAxiosWithInterceptor();
-    const outletId = localStorage.getItem("outlet_id")
+    
+    const {activeOutletId} = useAuthServiceContext();
+    const [outletId, setOutletId] = useState("")
+     useEffect(()=>{
+        if(activeOutletId){
+            setOutletId(String(activeOutletId))
+        }
+                
+    },[activeOutletId])
 
     
 
@@ -52,11 +62,11 @@ const CategoryUpdateForm = ({
         //     return errors;
         // },
         onSubmit: async (values) => {
-            console.log('you submitted')
+        
             setIsLoading(true)
             const { name,category_id } = values;
             
-           console.log(category_id)
+        
            const payload ={
                 "outlet":outletId,
                 "name": name,
@@ -64,7 +74,7 @@ const CategoryUpdateForm = ({
                 console.log(payload)
         try{
             if(category_id && category_id > 0){
-                const response = await jwtAxios.patch(`http://127.0.0.1:8000/api/categories_info/${category_id}/?outlet_id=${outletId}`,
+                const response = await jwtAxios.patch(`${BASE_URL}/categories_info/${category_id}/?outlet_id=${outletId}`,
                 payload,
                 { withCredentials: true}
                 )
@@ -78,8 +88,8 @@ const CategoryUpdateForm = ({
                                        
                 return dataCRUDBack
             }else{
-                console.log('called')
-                const response = await jwtAxios.post(`http://127.0.0.1:8000/api/categories_info/?outlet_id=${outletId}`, payload, {
+                
+                const response = await jwtAxios.post(`${BASE_URL}/categories_info/?outlet_id=${outletId}`, payload, {
                 withCredentials: true,
                 });
                 setIsLoading(false);

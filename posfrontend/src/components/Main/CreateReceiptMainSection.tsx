@@ -12,13 +12,15 @@ import {
     SelectChangeEvent
 } from "@mui/material";
 import useCrud from "../../hooks/useCrud";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Button from '@mui/material/Button';
 import CardActions from '@mui/material/CardActions';
 import AddShoppingCartOutlinedIcon from '@mui/icons-material/AddShoppingCartOutlined';
 import { useNavigate } from "react-router-dom";
 import useAxiosWithInterceptor from "../../helper/jwtinterceptor"
 import OutletFilterSelection from "../OutletFilterSelection";
+import { useAuthServiceContext } from "../../context/AuthContext";
+import { BASE_URL } from "../../congif";
 
 
 interface Server {
@@ -39,7 +41,18 @@ const MainSection = () => {
     const jwtAxios = useAxiosWithInterceptor();
     const theme = useTheme();
     const [drawerOpen, setDrawerOpen] = React.useState(true);
-    const [filterOption, setFilterOption] = React.useState(() => localStorage.getItem("outlet_id") || "" );
+    const {activeOutletId, userId} = useAuthServiceContext();
+    const [outletId, setOutletId] = useState("")
+
+    useEffect(()=>{
+            if(activeOutletId){
+                setOutletId(String(activeOutletId))
+            }
+                    
+    },[activeOutletId])
+    
+
+    const [filterOption, setFilterOption] = React.useState(() => outletId || "" );
     React.useEffect(() => {
                 const handleDrawerToggle = (e: Event) => {
                 const customEvent = e as CustomEvent;
@@ -83,7 +96,7 @@ const MainSection = () => {
             return base;
         }, [filterOption]);
     const { dataCRUD,  error } = useCrud<Server>([], url)
-    console.log('this page is active')
+    
     // useEffect(() => {
     //     fetchData();
 
@@ -93,10 +106,10 @@ const MainSection = () => {
     //     console.log(dataCRUD)
 
     // }, [dataCRUD]);
-    const userId = localStorage.getItem('user_id')
+    // const userId = localStorage.getItem('user_id')
     const handleClick = async (id:number )=>{
         try {
-            const response = await jwtAxios.post('http://127.0.0.1:8000/api/order/',
+            const response = await jwtAxios.post(`${BASE_URL}/order/`,
                 {
                     user:userId,
                     'product':id,

@@ -13,6 +13,11 @@ import {
 import SettingsIcon from '@mui/icons-material/Settings';
 import { outletsDataProps, outletStaffDataProps } from "../../../@types/outletsNstaff-service";
 import PrinterSettings from "./PrinterSettings";
+import PrinterSetup from "./PrinterSetup";
+import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
+import { BASE_URL } from "../../../congif";
+import { useEffect, useState } from "react";
+import { useAuthServiceContext } from "../../../context/AuthContext";
 
 
 
@@ -32,6 +37,14 @@ interface settingsProps{
     }
    
 }
+    
+interface printerSetupProps {
+    
+    outlet: string,
+    paper_size: string,
+    id: number
+}
+
 
 const SettingSecondary = (
     {
@@ -40,9 +53,46 @@ const SettingSecondary = (
         outlets:{outletsData ,handleClick,outletId},
         outletStaff:{outletStaffData,selectedEmployeeId,handleOutletStaffClick}
     }:settingsProps) => {
-    const isBelow750 = useMediaQuery("(max-width: 750px)")   
+    const isBelow750 = useMediaQuery("(max-width: 750px)")  
+    const jwtAxios= useAxiosWithInterceptor() ;
+    const [printerSetup,setPrinterSetup] = useState<printerSetupProps | null>(null)
+    const {activeOutletId} = useAuthServiceContext();
     const theme = useTheme();
-    console.log(isMainHidden)
+    const getPrinterSetup = async ()=>{
+        try{
+            const response = await jwtAxios.get(`${BASE_URL}/printer_setup`, {params:{"outlet_id":activeOutletId},withCredentials:true})
+            console.log(response.data)
+            if(response.status === 200){
+                
+                    setPrinterSetup(response.data)
+                
+            }
+            
+            return response.data
+        }catch(err:any){
+            console.log(err.response)
+            throw err
+        }
+      }
+    useEffect(()=>{
+        if(!activeOutletId) return
+        
+      getPrinterSetup()
+    
+    },[activeOutletId])
+     const handleSetPaperSize = async (event: SelectChangeEvent)=>{
+        const paperSize = event.target.value
+        try{
+            const response = await jwtAxios.patch(`${BASE_URL}/printer_setup/${printerSetup?.id}/`, {"paper_size":paperSize, "outlet_id":printerSetup?.outlet}, {withCredentials:true})
+            console.log(response.data)
+            await getPrinterSetup()
+            return response.data
+        }catch(err:any){
+            throw err.response
+        }
+     
+    }
+    
 
     return (
         <>
@@ -53,7 +103,7 @@ const SettingSecondary = (
                     m:0,
                     p:0,
                     height: `calc(100vh - ${theme.primaryAppBar.height}px)`,
-                    overflow: "hidden",
+                    overflow: "auto",
                     maxWidth:isBelow750?undefined:theme.SecondaryDraw.width
                 }}>
                 <Box 
@@ -121,7 +171,12 @@ const SettingSecondary = (
                         </FormControl>
                 </Box>  
                 <Divider sx={{mt:4}}/> 
-                <PrinterSettings/>                
+                <PrinterSettings/>     
+                
+                <Box >
+                    <PrinterSetup handleSetPaperSize={handleSetPaperSize} printerSetup={printerSetup}/>           
+                </Box>
+                
             </Box>
         </>      
     )

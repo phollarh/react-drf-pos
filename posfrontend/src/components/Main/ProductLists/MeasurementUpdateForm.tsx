@@ -1,7 +1,8 @@
 import { useFormik } from "formik"
 import { Box, Button, Container, MenuItem, TextField } from "@mui/material";
 import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
-import React from "react";
+
+
 
 
 interface Server {
@@ -34,7 +35,16 @@ const MeasurementUpdateForm = ({
     onSuccess
  }:UpdateMeasureFormProps) => {
     const jwtAxios = useAxiosWithInterceptor();
-
+    // const {activeOutletId} = useAuthServiceContext();
+    // const [outletId, setOutletId] = useState("");
+    //      useEffect(()=>{
+    //         if(activeOutletId){
+    //             setOutletId(String(activeOutletId))
+    //         }
+                    
+    //     },[activeOutletId])
+    
+        
     
 
     const formik = useFormik({
@@ -43,33 +53,19 @@ const MeasurementUpdateForm = ({
             value: ItemValue ?? 0,
             measure_id:measurementId ?? 0
         },
-        // validate: (values) => {
-        //     const errors: Partial<typeof values> = {};
-        //     if (!values.email) {
-        //         errors.email = "Required"
-        //     }
-        //     if (!values.password) {
-        //         errors.password = "password field can not be empty"
-        //         console.error(formik.touched.password, formik.errors.password)
-        //     }
-        //     return errors;
-        // },
+       
         onSubmit: async (values) => {
-            console.log('you submitted')
             setIsLoading(true)
             const { measurement_type, value,measure_id } = values;
-            
-           
-           const payload ={
+            const payload ={
                 
                 "measurement_type": measurement_type,
                  "value":value,
                  "outlet":outlet_id
                 }
-                console.log(payload)
         try{
             if(measure_id && measure_id > 0){
-                console.log('called........')
+                
                 const response = await jwtAxios.put(`http://127.0.0.1:8000/api/measurements_info/${measure_id}/?outlet_id=${outlet_id}`,
                 payload,
                 { withCredentials: true}

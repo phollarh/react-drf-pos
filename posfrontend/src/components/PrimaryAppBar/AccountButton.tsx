@@ -6,6 +6,7 @@ import { Link, useLocation} from "react-router-dom";
 import React, { useState } from "react";
 import DarkModeSwitch from "./DarkModeSwitch";
 import { useAuthServiceContext } from "../../context/AuthContext";
+import Notifications from "../Notifications/Notifications";
 
 interface accountProps {
     showForm: (input:string) => void;
@@ -24,9 +25,9 @@ const AccountButton = ({handleFormClickOnBigScreen, showForm}:accountProps) => {
     const isDarkMode = theme.palette.mode === "dark";
     const isOnHome = location.pathname === "/login"
     const isOnHomeR = location.pathname === "/register"
-    console.log("is below 750", below750 , isOnHome, isOnHomeR)
+    
     const {logout , isLoggedIn}=useAuthServiceContext();
-    console.log(above1200, "islogged" ,isLoggedIn)
+    
     const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
     };
@@ -153,19 +154,22 @@ const AccountButton = ({handleFormClickOnBigScreen, showForm}:accountProps) => {
                     </Box>
                 )}
 
-                {isOnHome || isOnHomeR &&  <Box sx={{flexGrow:1}}></Box>}
+                {(isOnHome || isOnHomeR) &&  (<Box sx={{flexGrow:1}}></Box>)}
                 
                 
                      <Box sx={{display:isOnHome && below750 ? "none":"block"}} marginBottom={1}>
+                    
                     <DarkModeSwitch />  
                 </Box>
      
                 
                 
-
+                    
                     <Box   sx={{mt:1, display:isOnHome && below750 ?"none":"block"}}>
+
+                    <Notifications/>
                     <IconButton
-                        
+                        sx={{ml:2}}
                         edge="end"
                         color="inherit"
                         onClick={handleProfileMenuOpen}

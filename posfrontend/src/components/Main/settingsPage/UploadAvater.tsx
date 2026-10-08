@@ -4,6 +4,7 @@ import ButtonBase from '@mui/material/ButtonBase';
 import { deepOrange } from '@mui/material/colors';
 import useAxiosWithInterceptor from '../../../helper/jwtinterceptor';
 import { outletsDataProps, outletStaffDataProps } from '../../../@types/outletsNstaff-service';
+import { BASE_URL_ACCOUNT } from '../../../congif';
 
 
 
@@ -29,9 +30,15 @@ export default function UploadAvatars({outletStaffSelection,outletSelection}:sta
     
     if (file) {
       formFile.append("image", file)
+      const outletId = localStorage.getItem("outlet_id") || ""
       if(outletStaffSelection !==null && outletStaffSelection !== undefined){
             try{
-              const response=await jwtAxios.patch(`http://127.0.0.1:8000/accounts/api/outletstaffs/${outletStaffSelection?.Employee_id}/`,formFile, {withCredentials:true} )
+              const response=await jwtAxios.patch(`${BASE_URL_ACCOUNT}/outletstaffs/${outletStaffSelection?.Employee_id}/`,
+                formFile, {
+                   params: {
+                      outlet_id: outletId,
+                    },
+                  withCredentials:true} )
                   const reader = new FileReader();
                   reader.onload = () => {
               // avaterSrc=reader.result as string
@@ -40,14 +47,15 @@ export default function UploadAvatars({outletStaffSelection,outletSelection}:sta
                   reader.readAsDataURL(file);
               return response.data
             }catch(err:any){
-              console.log(err)
+              
+              throw err.response
             }
 
         }
       if(outletSelection !== null && outletSelection !==undefined){
 
           try{
-              const response=await jwtAxios.patch(`http://127.0.0.1:8000/accounts/api/outlets/${outletSelection.id}/`,formFile, {withCredentials:true} )
+              const response=await jwtAxios.patch(`${BASE_URL_ACCOUNT}/outlets/${outletSelection.id}/`,formFile, {withCredentials:true} )
                   const reader = new FileReader();
                   reader.onload = () => {
               // avaterSrc=reader.result as string
@@ -56,7 +64,7 @@ export default function UploadAvatars({outletStaffSelection,outletSelection}:sta
                   reader.readAsDataURL(file);
               return response.data
             }catch(err:any){
-              console.log(err)
+              throw err.response
             }
 
       }

@@ -1,29 +1,15 @@
 import { Box, Button, Card, CardActions, CardContent, Container, Divider, List, ListItem, ListItemText, Typography, useTheme } from '@mui/material';
 import { format } from 'date-fns';
-import React from 'react';
-import { forwardRef } from "react";
-import { UseReactToPrintFn } from 'react-to-print';
-interface ProductProps{
-    id:number;
-    product_name:string;
-    category:string;
-    cost_price:number;
-    selling_price :number;
-    stock_inventory:number;
-    sold_In:string
-    
-}
+import React, { useState } from 'react';
+import useAxiosWithInterceptor from '../../../helper/jwtinterceptor';
+import { BASE_URL, BASE_URL_CHARTS } from '../../../congif';
+import { UseoutletNstaffContext } from '../../../context/OutletNStaffsContext';
+import { useAuthServiceContext } from '../../../context/AuthContext';
+import qz from 'qz-tray';
+import { OrderProps } from '../../../@types/server';
 
-interface OrderProps {
-    id:number;
-    date:string;
-    description:string;
-    paid:boolean;
-    product:ProductProps;
-    quantity:number;
-    sub_total:number
 
-}
+
 
 interface Server {
     id: number;
@@ -50,16 +36,11 @@ interface ReceiptDialogueProps {
   issued:boolean;
   orders:OrderProps[];
   payment_option:string;
-  OnclickPrint: UseReactToPrintFn;
- 
   onClose?:() => void;
-
 }
 
-const ReceiptDetailView = forwardRef<HTMLDivElement, ReceiptDialogueProps>(
-    (
+const ReceiptDetailView = (
         {
-            OnclickPrint,
             receiptId,
             date,
             balance_due,
@@ -67,11 +48,13 @@ const ReceiptDetailView = forwardRef<HTMLDivElement, ReceiptDialogueProps>(
             total,
             orders,
             payment_option,
-        },
-        ref
+        }:ReceiptDialogueProps,
+    
     ) => {
-        
+            const jwtAxios = useAxiosWithInterceptor();
           const theme = useTheme();
+          const {activeOutletId} = useAuthServiceContext();
+          const [printerMess,setPrinterMess] = useState<string | null>(null) 
             const style = {
                 py: 0,
                 width: '100%',
@@ -104,11 +87,41 @@ const ReceiptDetailView = forwardRef<HTMLDivElement, ReceiptDialogueProps>(
                           };
                       }
             
-
+    const handlePrint =async () =>{
+        if(!activeOutletId) return
+        console.log(activeOutletId, receiptId)
+        try{
+            const response = await jwtAxios.get(`${BASE_URL}/sales_receipt/issued_receipt_pdf_regenerate/`,
+                 { params:{"outlet_id":activeOutletId, "receipt_id":receiptId, "issued":true}
+                    ,withCredentials:true})
+                    if(response.status === 200){
+                        const printerName = localStorage.getItem("selectedPrinter") || ""
+                            if(printerName !== ""){
+                            const config = qz.configs.create(printerName);
+                            await qz.print(config, [
+                                    {
+                                        type: "pdf",
+                                        data:  response.data.pdf_url
+                                    },
+                                    ] as any);
+                                    }else{
+                                        setPrinterMess("for a more robust printing experience, please setup Printer in setting");
+                                        window.open(response.data.pdf_url, "_blank")
+                                    }
+                                                
+                                    setTimeout(()=>{
+                                        setPrinterMess(null)
+                                    }, 100 * 150)
+                    }
+        }catch(err:any){
+            throw err.response
+        }
+        
+    }
 
   return (
-    <>
-    <div ref={ref}>
+
+    
         <Container component="main" maxWidth="lg">
         <Card
             sx={{
@@ -160,8 +173,8 @@ const ReceiptDetailView = forwardRef<HTMLDivElement, ReceiptDialogueProps>(
                                                 fontWeight: 700,
 
                                             }}>
-                                            {item.product.product_name}
-                                            <Typography component="span" display="block">{item.quantity} X {item.product.selling_price}</Typography>
+                                            {item.product_name_at_sale}
+                                            <Typography component="span" display="block">{item.quantity} X {item.unit_selling_price}</Typography>
                                             
                                             
                                             </Typography>
@@ -314,7 +327,7 @@ const ReceiptDetailView = forwardRef<HTMLDivElement, ReceiptDialogueProps>(
             
             </CardContent>
             <CardActions>
-                <Button onClick={OnclickPrint}>
+                <Button onClick={handlePrint}>
                     Print
                 </Button>
             </CardActions>
@@ -323,10 +336,7 @@ const ReceiptDetailView = forwardRef<HTMLDivElement, ReceiptDialogueProps>(
 
 
     </Container>
-    </div>
-    
-    </>
     );
-    });
+    };
 
 export default ReceiptDetailView

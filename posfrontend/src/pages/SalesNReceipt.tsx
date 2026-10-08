@@ -18,6 +18,8 @@ import OutletStaffSession from "../components/Main/accounts/outletStaffSession/O
 import { UseoutletNstaffContext } from "../context/OutletNStaffsContext";
 import { outletStaffDataProps } from "../@types/outletsNstaff-service";
 import qz from "qz-tray";
+import { useAuthServiceContext } from "../context/AuthContext";
+import { BASE_URL, BASE_URL_ACCOUNT } from "../congif";
 
 
 
@@ -72,7 +74,7 @@ const SalesNReceipt = () => {
   const [, setReceiptId] = React.useState<number| null>(null)
   const [, setOpen] = React.useState(false);
   const [errorOrder,setErrorOrder] = React.useState<null|string>(null);
-  const outlet_id =localStorage.getItem("outlet_id") || "" 
+//   const outlet_id =localStorage.getItem("outlet_id") || "" 
   const [paymentOption, setPaymentOption] = React.useState('');
   const [remarks, setRemarks] = React.useState('');
   const [amountTendered, setAmountTendered] = React.useState<number>(0)
@@ -80,20 +82,41 @@ const SalesNReceipt = () => {
   const [assignMess, setAssignMess] = useState<null|string>(null)
   const [printerMess, setPrinterMess] = useState<null|string>(null)
   const [assignedStaff, setAssignedStaff]  = React.useState<outletStaffDataProps | null >(null)
-  const {getStaffStatus,staffData} = UseoutletNstaffContext();
+  const {getStaffStatus, setStaffStatus,staffData} = UseoutletNstaffContext();
   const [searchByproductName, setSearchByproductName] = React.useState<string>("");
+  const [inventoryError,setInventoryError] = useState<{inventory_error:string, product_id:string}|null>(null)
+    const {activeOutletId, userId} = useAuthServiceContext();
+    const [, setUserId] = useState("")
+    const [outlet_id, setOutletId] = useState("")
+    const [filterOption, setFilterOption] = React.useState("" );
+      
+    useEffect(()=>{
+                  if(activeOutletId){
+                      setOutletId(String(activeOutletId))
+                      setFilterOption(String(activeOutletId))
+                  }
+                  if(userId){
+                    setUserId
+                  }
+                          
+      },[activeOutletId,userId])
+          
+  
   
 
 
     useEffect(()=>{
+        
         if (!staffData.length) return;
+        
         const getAssignedStaff = async ()=>{
             try{
-                const response = await jwtAxios.get('http://127.0.0.1:8000/accounts/api/staffs-login/assign_staff_session/', 
+                const response = await jwtAxios.get(`${BASE_URL_ACCOUNT}/staffs-login/assign_staff_session/`, 
                     {withCredentials:true}
                 )
-
+                
                 if(response.status === 200){
+                    console.log("I only set cos is 200")
                      const staff_status=await getStaffStatus(response.data.assigned_staff)
                      const IsItAssigne =  staffData?.find((item)=>String(response.data.assigned_staff) === String(item.Employee_id)) ?? null
                      if(IsItAssigne && staff_status.is_active === true){
@@ -103,17 +126,20 @@ const SalesNReceipt = () => {
                         
                         
                 }
+                
                 return response.data
             }catch(err:any){
-                 console.log(err)
-                if(err.response?.status === 400){
+                 console.log(err.response)
+                if(err.response?.status === 404){
+                    setStaffStatus(undefined)
+                    setAssignedStaff(null)
                     setAssignMess(err.response.data?.error)
                     setTimeout(()=>{
                         setAssignMess(null)
                     },100 * 100)
                 }
-                console.log(assignMess)
-                throw err
+                
+                throw err.response
             }
                 
  
@@ -123,10 +149,10 @@ const SalesNReceipt = () => {
             getAssignedStaff()
         
        
-    },[staffData])
+    },[staffData, activeOutletId])
     
 
-  const [filterOption] = React.useState(() => localStorage.getItem("outlet_id") || "" );
+  
   React.useEffect(() => {
                 const handleDrawerToggle = (e: Event) => {
                 const customEvent = e as CustomEvent;
@@ -143,6 +169,7 @@ const SalesNReceipt = () => {
               setSearchByproductName(inputId)
           }
     const url_product = React.useMemo(() => {
+        if(filterOption==="")return null
             let base = `/products/`;
             
             const params = new URLSearchParams();
@@ -162,6 +189,7 @@ const SalesNReceipt = () => {
             return base;
         }, [filterOption,searchByproductName]);
         const url_receipt = React.useMemo(() => {
+            if (filterOption === "") return null
             let base =  `/sales_receipt/`;
             
             const params = new URLSearchParams();
@@ -179,7 +207,7 @@ const SalesNReceipt = () => {
             return base;
         }, [filterOption]);
 
-        console.log(url_receipt)
+        
         
 
       const handleReceiptSubmit = async (hold:boolean, receipt_id:number)=>{
@@ -205,35 +233,38 @@ const SalesNReceipt = () => {
                     "hold":hold
                     }
             try{
-                if(!localStorage.getItem("outlet_id")) return;
-                console.log('imcaled 1...')
-                const response = await jwtAxios.put(`http://127.0.0.1:8000/api/sales_receipt/${receipt_id}/?outlet_id=${localStorage.getItem("outlet_id")}`,
+                if(outlet_id === "") return;
+                
+                const response = await jwtAxios.put(`${BASE_URL}/sales_receipt/${receipt_id}/?outlet_id=${outlet_id}`,
                 payload,
                { withCredentials: true}
             )
-            console.log('imcaled 2...')
+            
                 const dataCRUDBack = response.data
                 // setData(dataCRUDBack)
                 if(response.status === 200){
-                 
-                    const printerName = localStorage.getItem("selectedPrinter") || ""
-                    if(printerName !== ""){
-                        const config = qz.configs.create(printerName);
-                          await qz.print(config, [
-                            {
-                                type: "pdf",
-                                data:  response.data.pdf_url
-                            },
-                        ] as any);
-                    }else{
-                        setPrinterMess("for a more robust printing experience, please setup Printer in setting");
-                        window.open(response.data.pdf_url, "_blank")
-                    }
-                   
-                    setTimeout(()=>{
-                        setPrinterMess(null)
-                    }, 100 * 150)
+                    if(!response.data?.["hold"]){
+                        
+                        const printerName = localStorage.getItem("selectedPrinter") || ""
+                            if(printerName !== ""){
+                                const config = qz.configs.create(printerName);
+                                await qz.print(config, [
+                                    {
+                                        type: "pdf",
+                                        data:  response.data.pdf_url
+                                    },
+                                ] as any);
+                            }else{
+                                setPrinterMess("for a more robust printing experience, please setup Printer in setting");
+                                window.open(response.data.pdf_url, "_blank")
+                            }
+                        
+                            setTimeout(()=>{
+                                setPrinterMess(null)
+                        }, 100 * 150)
 
+                    }
+                    
                     
                   
                     await fetchReceipt()
@@ -242,6 +273,9 @@ const SalesNReceipt = () => {
                 }
                 return dataCRUDBack
             }catch(error:any){
+                if(error.response?.status === 400 && error.response?.data?.inventory_error){
+                    setInventoryError(error.response?.data)
+                }
                 if (error.response?.status === 404) {
                 setErrorOrder(error.response?.data.detail)
                 }
@@ -254,7 +288,7 @@ const SalesNReceipt = () => {
                         setAssignMess(null)
                     },100 * 100)
                 }
-                throw error
+                throw error.response
             }finally{
                 setRemarks("")
             }
@@ -293,7 +327,7 @@ const SalesNReceipt = () => {
         try{
             if(!id) return;
             
-            const response = await jwtAxios.patch(`http://127.0.0.1:8000/api/sales_receipt_status/${id}/?outlet_id=${outlet_id}`, 
+            const response = await jwtAxios.patch(`${BASE_URL}/sales_receipt_status/${id}/?outlet_id=${outlet_id}`, 
                 payload,
                 {withCredentials:true}
             )
@@ -326,8 +360,9 @@ const SalesNReceipt = () => {
         }
     }
     const getReceiptStatus = async ()=>{
+        
          try{
-            const response = await jwtAxios.get(`http://127.0.0.1:8000/api/sales_receipt_status/?outlet_id=${outlet_id}`,{withCredentials:true})
+            const response = await jwtAxios.get(`${BASE_URL}/sales_receipt_status/?outlet_id=${outlet_id}`,{withCredentials:true})
             setReceiptStatusData(response.data)
            if(localStorage.getItem("receipt_id")){
                 const getId=response.data?.find((item:{id:number, hold:boolean})=>!item.hold)
@@ -353,18 +388,19 @@ const SalesNReceipt = () => {
 
     const { dataCRUD: receiptData,fetchData: fetchReceipt, setDataCRUD:setDataCRUDReceipt, error:receiptError} = useCrud<ServerReceipt>([], url_receipt);
     
-    const userId = localStorage.getItem('user_id')
+    
     // const { dataCRUD, fetchData, error,setDataCRUD } = useCrud<Server>([], url_receipt)
 
-        React.useEffect(()=>{
+    React.useEffect(()=>{
+            if(outlet_id === "") return
        getReceiptStatus()
-    },[receiptStatus, receiptData])
+    },[receiptStatus, receiptData, outlet_id])
 
 
     const handleClick = async (id:number )=>{
         setErrorOrder(null);
         const receipt_id =localStorage.getItem("receipt_id") || ""
-        console.log(receipt_id)
+        
         if(below720){
             setShowReceiptDetaills((prevValue)=>!prevValue)
         }
@@ -377,7 +413,7 @@ const SalesNReceipt = () => {
                 } 
         try {
             
-            const response = await jwtAxios.post('http://127.0.0.1:8000/api/order/',payload,
+            const response = await jwtAxios.post(`${BASE_URL}/order/`,payload,
                 {
                     headers:{"X-Pass-Token":outlet_id}
                     ,withCredentials:true}
@@ -423,12 +459,13 @@ const SalesNReceipt = () => {
             setErrorOrder(error.response?.data.error_len)
         }
             if (error.response?.status === 400) {
+                console.log(error.response)
                 new Error("400");
                 setShowReceiptDetaills(false)
                 setErrorOrder(error?.response.data.error);
             }
 
-            throw error;
+            throw error.response;
         }
     };
 
@@ -482,7 +519,7 @@ const SalesNReceipt = () => {
                                         </Typography>
                                     </Box>
                                     }
-                                {assignMess && <Typography>{assignMess}</Typography>}
+                                
                                 <OutletStaffSession setDataCRUDReceipt={setDataCRUDReceipt} fetchReceipt={fetchReceipt} assignMess={assignMess} setAssignMess={setAssignMess}  assignedStaff={assignedStaff} setAssignedStaff={setAssignedStaff} staffData={staffData}/>
                                 <Paper sx={{height:"7%", backgroundColor:theme.palette.primary.contrastText}}>
                                     
@@ -550,7 +587,7 @@ const SalesNReceipt = () => {
                                     </Typography>
                                 </Box>
                                 }
-                                {assignMess && <Typography>{assignMess} helooooo</Typography>}
+                                
                                
                                     <OutletStaffSession setDataCRUDReceipt={setDataCRUDReceipt} fetchReceipt={fetchReceipt} assignMess={assignMess} setAssignMess={setAssignMess} assignedStaff={assignedStaff} setAssignedStaff={setAssignedStaff} staffData={staffData}/>
                                 
@@ -560,7 +597,7 @@ const SalesNReceipt = () => {
                                         
                                         {receiptStatusData?.map((receiptItem)=>{
                                     return(
-                                            <>
+                                            <React.Fragment key={receiptItem.id}>
                                                 <Tooltip sx={{cursor:"not-allowed"}} arrow placement="bottom-end" title={receiptItem.hold === true?"On hold": "Active"}>
                                                     <Box disabled={loading?true:false} 
                                                      sx={{
@@ -581,7 +618,7 @@ const SalesNReceipt = () => {
                                                 </Box>
                                                 </Tooltip>
                                             
-                                            </>
+                                            </React.Fragment>
                                         )
                                         })}
                                     </Box>
@@ -620,6 +657,8 @@ const SalesNReceipt = () => {
                                     }  
                                     <Box flexGrow={1} sx={{height:"95%",m:0.5, overflowY:"auto", overflowX:"hidden"}}>
                                         <SalesReceipt 
+                                        setInventoryError={setInventoryError}
+                                        inventoryError={inventoryError}
                                       setAmountTendered={setAmountTendered} amountTendered={amountTendered}
                                       paymentOption={paymentOption} setPaymentOption={setPaymentOption}
                                       remarks={remarks} setRemarks={setRemarks}
@@ -646,6 +685,8 @@ const SalesNReceipt = () => {
                     (
                         <Box flexGrow={1} sx={{width:{lg:"100%",md:"100%", sm:"100%" }, height:"100%",m:0.5 ,overflow:"auto"}}>
                             <SalesReceipt 
+                            inventoryError={inventoryError}
+                            setInventoryError={setInventoryError}
                             showReceiptDetaills={showReceiptDetaills}
                             setAmountTendered={setAmountTendered} amountTendered={amountTendered}
                             paymentOption={paymentOption} setPaymentOption={setPaymentOption}

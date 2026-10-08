@@ -11,6 +11,8 @@ interface NumberInputProps
     > {
     value: string;
     setEditingField: React.Dispatch<React.SetStateAction<"quantity" | "subtotal">>;
+    error?: boolean;
+    helperText?: string;
     onChange: (value: string) => void;
 }
 
@@ -22,6 +24,8 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
             onChange,
             decimalScale = 3,
             allowNegative = false,
+            error,
+            helperText,
             ...props
         },
         ref
@@ -40,8 +44,11 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
                 allowNegative={allowNegative}
                 thousandSeparator={false}
                 allowLeadingZeros={false}
+                error={Boolean(error)}
+                helperText={helperText}
                 onValueChange={(values) => {
                     onChange(values.value);
+                    
                 }}
                 onFocus = {()=>{
                     setEditingField("quantity")
@@ -64,7 +71,7 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     if (dot === -1) return;
 
     const cursor = input.selectionStart ?? 0;
-    console.log(input,value, dot, cursor)
+    
 
     const decimal = value.slice(dot + 1);
 

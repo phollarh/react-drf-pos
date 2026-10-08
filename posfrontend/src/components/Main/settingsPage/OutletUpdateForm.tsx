@@ -7,6 +7,7 @@ import { outletsDataProps } from "../../../@types/outletsNstaff-service";
 import PassCodeDiag from "../../PassCodeDiag";
 import PassCodeDiagUpdate from "../../PassCodeDiagUpdate";
 import { requestIdProps } from "../../../@types/auth-service";
+import { BASE_URL_ACCOUNT } from "../../../congif";
 
 
 interface dataProps{
@@ -73,7 +74,7 @@ const OutletUpdateForm = ({data, getOutlets,setSelectedOutletObject}:dataPropsB)
 
     const handleDelete = async ( )=>{
         try{
-            const response = await jwtAxios.delete(`http://127.0.0.1:8000/accounts/api/outlets/${data?.id}/`,
+            const response = await jwtAxios.delete(`${BASE_URL_ACCOUNT}/outlets/${data?.id}/`,
 
                 {
                    headers: {
@@ -90,10 +91,8 @@ const OutletUpdateForm = ({data, getOutlets,setSelectedOutletObject}:dataPropsB)
                     },4000)
                    
                 }
-                console.log(response.data)
                 return response.data
         }catch(err:any){
-             console.log(err)
             if(err.response?.status === 403 && err.response?.data.error_token){
                 setOpenDel(true)
             }
@@ -152,8 +151,8 @@ const OutletUpdateForm = ({data, getOutlets,setSelectedOutletObject}:dataPropsB)
                 if(apiValues.pin === ""){
                     delete apiValues.pin
                 }
-                console.log(passTokenRef.current)
-                const response = await jwtAxios.patch(`http://127.0.0.1:8000/accounts/api/outlets/${id}/`,
+                
+                const response = await jwtAxios.patch(`${BASE_URL_ACCOUNT}/outlets/${id}/`,
                     apiValues,
                     {
                          headers: {
@@ -177,7 +176,7 @@ const OutletUpdateForm = ({data, getOutlets,setSelectedOutletObject}:dataPropsB)
                     setOpen(true)
                 }
                  if(err.response?.status === 403 && err.response?.data.error_admin){
-                    setOpen(true)
+                    setOpen(false)
                     setMess(err.response.data.error_admin || "Error")
                 }
                 if(err.response.data?.message){
@@ -190,7 +189,7 @@ const OutletUpdateForm = ({data, getOutlets,setSelectedOutletObject}:dataPropsB)
                 setTimeout(() => {
                     setMess(null)
                 },8000);
-                console.log(err)
+                
             }
             
             // const status = await login(email, password);

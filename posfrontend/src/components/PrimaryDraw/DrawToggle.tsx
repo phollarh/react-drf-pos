@@ -15,7 +15,7 @@ const DrawToggle: React.FC<Props> = ({ open, handleDrawOpen, handleDrawClosed })
             justifyContent: "center"
         }}>
             <IconButton sx={{mt:5}} onClick={open ? handleDrawClosed : handleDrawOpen}>
-                {open ? <ChevronLeft sx={{fontSize:'30px'}} /> : <ChevronRight sx={{fontSize:'30px'}} />}
+                {open ? <ChevronLeft sx={{fontSize:'25px'}} /> : <ChevronRight sx={{fontSize:'25px'}} />}
             </IconButton>
         </Box>
     )

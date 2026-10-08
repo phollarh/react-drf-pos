@@ -39,7 +39,7 @@ const Login = ({showFormDetails, handleFormClickOnBigScreen, showForm}:loginProp
         onSubmit: async (values) => {
             const { email, password } = values;
             const status = await login(email, password);
-            console.log("LOGIN RESPONSE:", status);
+           
             if (status === 401) {
                 console.log("Unauthorized")
                 formik.setErrors({
@@ -48,14 +48,14 @@ const Login = ({showFormDetails, handleFormClickOnBigScreen, showForm}:loginProp
                 })
 
             } else {
-                navigate("/");
+                navigate("/authorization");
             }
             // if (status) {
             //     navigate("/testlogin")
             // }
         },
     })
-    console.log('width',below720, below1200)
+    
     return (
         <>
 

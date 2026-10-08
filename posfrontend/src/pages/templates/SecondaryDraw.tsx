@@ -15,7 +15,7 @@ const SecondaryDraw = ({ children,showReceiptDetaills }: SecondaryDrawProps) => 
 
 
     let width;
-    console.log(showReceiptDetaills)
+    
 
     if (below720 && !isOnSalesReceipt) {
         width = "100%";
@@ -29,7 +29,7 @@ const SecondaryDraw = ({ children,showReceiptDetaills }: SecondaryDrawProps) => 
     else {
         width = "auto";
     }
-    console.log(isBelow750, width, '.......................')
+    
     return (
         <Box sx={{
             mt: `${theme.primaryAppBar.height}px`,

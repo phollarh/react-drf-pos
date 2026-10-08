@@ -34,7 +34,7 @@ export default function SalesByProductInfo({salesProductData}:SalesByProductProp
 
   const handleChange=(event: SelectChangeEvent)=>{
     const newValue = event.target.value as string
-    console.log(newValue)
+    
     setFilterOption(newValue);
     if(newValue === "custom"){
        setShowDialogForCustom(true)
@@ -76,7 +76,7 @@ export default function SalesByProductInfo({salesProductData}:SalesByProductProp
               </Box>
             
             </Box>
-        
+                
                 <SalesByProductInfoTable 
                     salesProductData={salesProductData}
                     filterOption={filterOption}

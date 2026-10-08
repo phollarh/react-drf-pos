@@ -8,6 +8,8 @@ import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
 import { outletStaffDataProps } from "../../../@types/outletsNstaff-service";
 import { requestIdProps } from "../../../@types/auth-service";
 import CreatePassCodeDiag from "../../CreatePassCodeDiag";
+import { useAuthServiceContext } from "../../../context/AuthContext";
+import { BASE_URL_ACCOUNT } from "../../../congif";
 
 
 interface outletDataProps{
@@ -64,8 +66,19 @@ const OutletStaffCreateForm = ({mode,handleStaffCreated, setStaff,getStaffStatus
     const [open, setOpen] = useState(false);
     const passTokenRef = useRef<string | null>(null);
     const createIdRef = useRef(crypto.randomUUID());
-        
-        useEffect(()=>{ 
+    
+    const {activeOutletId} = useAuthServiceContext();
+    const [outletId, setOutletId] = useState("")
+
+    useEffect(()=>{
+            if(activeOutletId){
+                setOutletId(String(activeOutletId))
+            }
+                    
+    },[activeOutletId])
+    
+
+    useEffect(()=>{ 
         setRequestId(
             {object_details:"outlet_staff_create",
                 id:createIdRef.current
@@ -99,7 +112,7 @@ const OutletStaffCreateForm = ({mode,handleStaffCreated, setStaff,getStaffStatus
         },
         onSubmit: async (values) => {
             const {name,email, address,status,pin, phone_number} = values;
-            const outlet = localStorage.getItem("outlet_id") || ""
+            
             let apiValues:FormValues = {
                 "name":name,
                 "phone_number": phone_number,
@@ -110,9 +123,9 @@ const OutletStaffCreateForm = ({mode,handleStaffCreated, setStaff,getStaffStatus
                 "pin":pin
                 }
             if(mode === "create"){
-                console.log('caled....')
+                
                 try{
-                const response = await jwtAxios.post(`http://127.0.0.1:8000/accounts/api/outletstaffs/?outlet_id=${outlet}`,
+                const response = await jwtAxios.post(`${BASE_URL_ACCOUNT}/outletstaffs/?outlet_id=${outletId}`,
                     apiValues,
                     {
                          headers: {
@@ -124,7 +137,7 @@ const OutletStaffCreateForm = ({mode,handleStaffCreated, setStaff,getStaffStatus
                 )
                 if(response.status === 200){
                     passTokenRef.current=null
-                    console.log(response.data)
+            
                     handleStaffCreated(response.data?.["data"])
                     getStaffStatus(response.data?.["data"].Employee_id)
                     setStaff(response.data?.["data"])
@@ -141,15 +154,19 @@ const OutletStaffCreateForm = ({mode,handleStaffCreated, setStaff,getStaffStatus
                 setOpen(true)
                 }
                
-                console.log(err.response?.data)
+                
                 if (err.response?.data?.email) {
                     formik.setFieldError("email", err.response.data.email);
                 }
                 if (err.response?.data?.pin) {
                     formik.setFieldError("pin", err.response.data.pin);
                 }
-                if (err.response?.data?.status) {
-                    formik.setFieldError("status", err.response.data['outlet'][0]);
+                // if (err.response?.data?.status) {
+                //     formik.setFieldError("status", err.response.data['outlet'][0]);
+                // }
+                if (err.response?.data.status) {
+                    console.log(err.response.data.status)
+                    formik.setFieldError("status", err.response.data?.status);
                 }
                  if(err.response?.data.error){
                     setErrMeg(err.response?.data.error)
@@ -220,6 +237,7 @@ const OutletStaffCreateForm = ({mode,handleStaffCreated, setStaff,getStaffStatus
                                     value={formik.values.status}
                                     onChange={formik.handleChange}
                                     label="Status"
+                                    
                                    
                                     >
                                         <MenuItem value="">
@@ -227,7 +245,7 @@ const OutletStaffCreateForm = ({mode,handleStaffCreated, setStaff,getStaffStatus
                                         </MenuItem>
                                         
                                         <MenuItem value="Supervisor">Supervisor</MenuItem>
-                                        <MenuItem value="Manager">Manager</MenuItem>
+                                        {/* <MenuItem value="Manager">Manager</MenuItem> */}
                                         <MenuItem value="Staff">Staff</MenuItem>
                                                         
                                 </Select>

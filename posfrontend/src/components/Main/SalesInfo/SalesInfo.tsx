@@ -7,6 +7,8 @@ import FilterSalesByProduct from '../salesByProductInfo/FilterSalesByProduct';
 import useAxiosWithInterceptor from '../../../helper/jwtinterceptor';
 import { Dayjs } from 'dayjs';
 import DialogForCustomDate from '../salesByProductInfo/DialogForCustomDate';
+import { useAuthServiceContext } from '../../../context/AuthContext';
+import { BASE_URL } from '../../../congif';
 
 type salesDataType={
  net_sales?: number; gross_sales?: number, cost_of_sales?:number
@@ -26,11 +28,21 @@ export default function SalesInfo({salesData}:salesDataProps) {
   const jwtAxios = useAxiosWithInterceptor();
   const [startDate, setStartDate] = React.useState<Dayjs | null>(null);
   const [endDate, setEndDate] = React.useState<Dayjs | null>(null);
-  const outlet_id = localStorage.getItem("outlet_id") || ""
+  const {activeOutletId} = useAuthServiceContext();
+  const [outletId, setOutletId] = React.useState("")
+
+  React.useEffect(()=>{
+            if(activeOutletId){
+                setOutletId(String(activeOutletId))
+            }
+                    
+    },[activeOutletId])
+    
+
   
     const handleChange=(event: SelectChangeEvent)=>{
       const newValue = event.target.value as string
-      console.log(newValue)
+    
       setFilterOption(newValue);
       if(newValue === "custom"){
          setShowDialogForCustom(true)
@@ -40,7 +52,7 @@ export default function SalesInfo({salesData}:salesDataProps) {
     React.useEffect(() => {
       if (filterOption !== "custom"){
                
-                 console.log(salesData)
+    
             // setShowDialogForCustom(false)
              setOutputedSalesData(salesData[filterOption]?? {})
             
@@ -60,11 +72,9 @@ export default function SalesInfo({salesData}:salesDataProps) {
             const EndDateFormate = endDate.format("YYYY-MM-DD")
              try{
                     const response = await jwtAxios.get(
-                    `http://127.0.0.1:8000/api/sales_info/?outlet_id=${outlet_id}&end_date_range=${EndDateFormate}&start_date_range=${startDateFormate}`,{
+                    `${BASE_URL}/sales_info/?outlet_id=${outletId}&end_date_range=${EndDateFormate}&start_date_range=${startDateFormate}`,{
                         withCredentials:true
                     })
-                
-                    console.log(response.data)
                     const newData = response.data?.date_range ?? {};
                     setOutputedSalesData(newData)
                     handleCloseDialog()

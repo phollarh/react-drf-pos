@@ -5,13 +5,16 @@ import {
     Container,
     useMediaQuery,
     Paper,
-    Toolbar
+    Toolbar,
+    Alert
 } from "@mui/material";
 import useCrud from "../../hooks/useCrud";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import useAxiosWithInterceptor from "../../helper/jwtinterceptor";
 import CatListTable from "./CategoryList/CatListTable";
+import { useAuthServiceContext } from "../../context/AuthContext";
+import { BASE_URL } from "../../congif";
 
 
 
@@ -32,6 +35,23 @@ const CategoriesMainSection = () => {
     const [open, setOpen] = React.useState(false);
     const [dataObject, setDataObject] = React.useState<catProps | null >(null)
     const isDarkMode = theme.palette.mode === ("dark")
+    const [noOutletError , setNoOutletError] = useState<null | string>(null)
+    const {activeOutletId} = useAuthServiceContext();
+    const [outletId, setOutletId] = useState("")
+
+    useEffect(()=>{
+             if(activeOutletId === null){
+                     setNoOutletError("No active outlet, please add/activate an outlet to view data")
+                    
+                }else{
+                    
+                    setOutletId(String(activeOutletId))
+                    setNoOutletError(null)
+                }
+                    
+    },[activeOutletId])
+    
+
     React.useEffect(() => {
                 const handleDrawerToggle = (e: Event) => {
                 const customEvent = e as CustomEvent;
@@ -42,9 +62,10 @@ const CategoriesMainSection = () => {
     }, []);
     
     const drawerWidth = drawerOpen ? theme.primaryDraw.width : theme.primaryDraw.closed;
-    const outletId = localStorage.getItem("outlet_id") || ""
+    // const outletId = localStorage.getItem("outlet_id") || ""
     
         const url_cat = React.useMemo(() => {
+            if(outletId === "") return null;
                 let base = `/categories_info/`;
                 
                 const params = new URLSearchParams();
@@ -75,12 +96,12 @@ const CategoriesMainSection = () => {
     
     const { dataCRUD, setDataCRUD,fetchData} = useCrud<catProps>([], url_cat);
 
-console.log(dataCRUD)
+
     const handleDelete = async (catId:number | undefined) =>{
 
     try{
         const response = await jwtAxios.delete(
-        `http://127.0.0.1:8000/api/categories_info/${catId}/?outlet_id=${outletId}`,{
+        `${BASE_URL}/categories_info/${catId}/?outlet_id=${outletId}`,{
             withCredentials:true
         })
         
@@ -105,9 +126,16 @@ console.log(dataCRUD)
             <>
             <Container  sx={{width:below750?"100%":`calc(100vw - ${drawerWidth}px)`,mb:4,pb:4,height:`calc(100vh - ${theme.primaryAppBar.height}px)`, overflowX:"hidden", overflowY:"hidden", ml:below750?"0px":`${drawerWidth}px`}}>
             <Paper sx={{height:"100%"}}>
+                {noOutletError && <Alert severity="error">{noOutletError}</Alert> }
                 <Toolbar sx={{justifyContent:"space-between", height:"10%",mt:2}}>
                     <Typography variant="h4">
-                        {dataCRUD?.length > 0 ? 'Category Lists' : "No Category Added...Please Add Category"}
+                        {
+                        (dataCRUD?.length > 0 ) 
+                            ? 
+                           ( 'Category Lists' )
+                            : 
+                         (<Alert severity="error">No category added. Add to list....</Alert>) 
+                        }
                     </Typography>
                     <Box component="button" onClick={handleCreateNewProduct}  sx={{border:"none", backgroundColor:isDarkMode?theme.palette.primary.dark:theme.palette.primary.contrastText}}>
                         <AddCircleOutlineIcon  sx={{cursor:"pointer",color:"blue",backgroundColor:isDarkMode?"none":theme.palette.primary.contrastText, fontSize:"2rem"}} />

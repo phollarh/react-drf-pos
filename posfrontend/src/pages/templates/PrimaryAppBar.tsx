@@ -11,12 +11,14 @@ import { useLocation } from "react-router-dom";
 
 
 
+
 const PrimaryAppBar = () => {
     const [, setDrawerOpen] = React.useState(true);
     const [sideMenu, SetsideMenu] = React.useState(false);
     const location = useLocation();
     const isOnSalesReceipt = location.pathname === "/sales_receipts";
     const isOnSettings = location.pathname === "/settings";
+    const isOnguide = location.pathname === "/guide";
     const isSmallScreenSettings = useMediaQuery("(max-width : 1000px)")
     
     const theme = useTheme();
@@ -73,7 +75,7 @@ const PrimaryAppBar = () => {
                         <MenuIcon />
                     </IconButton>
             </Box>
-            <Box sx={{ml:isSmallScreen ?"0px":`${theme.primaryDraw.width}px`, display:isOnSettings?"none":isSmallScreen && !isOnSalesReceipt? "block" :  "none" , }}>
+            <Box sx={{ml:isSmallScreen ?"0px":`${theme.primaryDraw.width}px`, display:isOnSettings || isOnguide ?"none":isSmallScreen && !isOnSalesReceipt? "block" :  "none" , }}>
                     <IconButton
                         onClick={toggleDrawer(true)}
 
@@ -84,7 +86,7 @@ const PrimaryAppBar = () => {
                         <MenuIcon />
                     </IconButton>
             </Box>
-            {isOnSettings && 
+            {(isOnSettings || isOnguide) && (
             <Box sx={{ml:isSmallScreenSettings ?"0px":`${theme.primaryDraw.width}px`, display:isSmallScreenSettings ?"block" :  "none" , }}>
                     <IconButton
                         onClick={toggleDrawer(true)}
@@ -96,13 +98,13 @@ const PrimaryAppBar = () => {
                         <MenuIcon />
                     </IconButton>
             </Box>
-            }
+            )}
             
         <Drawer anchor="left" onClose={toggleDrawer(false)} open={sideMenu}>
 
                     <SideMenu open={sideMenu} />
                 </Drawer>
-
+            
           <Typography variant="h6" color='textPrimary' component="div" sx={{ml:!below600?`${theme.SecondaryDraw.width}px`:"auto", flexGrow: 1 }}>
             
             <AccountButton showForm={() => { } } handleFormClickOnBigScreen={function (_value: string): void {

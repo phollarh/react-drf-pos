@@ -24,7 +24,7 @@ export default function DialogForCustomDate({ open,onClickReceipt, handleCloseDi
       const isOnPastReceipt = location.pathname === "/past_receipts";
       const IsOnSalesSummary = location.pathname === "/sales_summary";
       const isOnHome = location.pathname === "/";
-      console.log(IsOnSalesSummary)
+      
 
   return (
     <React.Fragment>

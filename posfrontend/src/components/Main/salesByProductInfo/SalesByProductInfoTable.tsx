@@ -11,11 +11,16 @@ import DialogForCustomDate from './DialogForCustomDate';
 import useAxiosWithInterceptor from '../../../helper/jwtinterceptor';
 import { Dayjs } from "dayjs";
 import { Box, useMediaQuery } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { BASE_URL } from '../../../congif';
+import { useAuthServiceContext } from '../../../context/AuthContext';
 
 
 interface productDetailsProps{
     id:number;
     product_name:string;
+    total_amount:number;
+    profit_rank:string;
     total_qty:number;
 }
 interface SalesByProductProp {
@@ -36,7 +41,7 @@ interface SalesByProductProps {
 }
 
 interface Column {
-  id: 'product_name' | 'code' | 'category' | 'total_qty';
+  id: 'product_name' | 'profit_rank' | 'sales_revenue' | 'total_qty';
   label: string;
   minWidth?: number;
   align?: 'left';
@@ -45,29 +50,38 @@ interface Column {
 
 const columns: readonly Column[] = [
   { id: 'product_name', label: 'Product Name', minWidth: 70 },
-  { id: 'code', label: 'Product\u00a0Code', minWidth: 30 },
-  { id: 'category',label: 'Category',minWidth: 70,
+  { 
+    id: 'profit_rank',
+    label: 'Profit Rank',
+    minWidth: 30 
+    },
+  {
+     id: 'sales_revenue'
+     ,label: 'Sales Revenue',
+     minWidth: 30,
+    format: (value: number) => value.toLocaleString('en-US'),
 },
   {
     id: 'total_qty',
     label: 'Quantity\u00a0Sold',
-    minWidth: 70,
+    minWidth: 30,
     align: 'left',
-    format: (value: number) => value.toLocaleString('en-US'),
+    // format: (value: number) => value.toLocaleString('en-US'),
   },
 ];
 
 interface Data {
+  id:number;
   product_name: string;
-  code: number;
-  category?:string
+  profit_rank: string;
+  sales_revenue:number;
   total_qty: number;
 
 }
 
-function createData(product_name:string,code:number,category:string,total_qty:number): Data
+function createData(product_name:string,profit_rank:string,sales_revenue:number,total_qty:number, id:number): Data
  {
-  return { product_name, code,category, total_qty };
+  return { product_name, profit_rank,sales_revenue, total_qty, id };
 }
 
 
@@ -75,13 +89,28 @@ export default function SalesByProductInfoTable({salesProductData, filterOption,
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const[outputedSalesDataState, setOutputedSalesData] = React.useState<productDetailsProps[]>([])
-//   const [showDialogForCustom, setShowDialogForCustom] = React.useState(false);
+  const navigate = useNavigate()
   const jwtAxios = useAxiosWithInterceptor();
   const [startDate, setStartDate] = React.useState<Dayjs | null>(null);
   const [endDate, setEndDate] = React.useState<Dayjs | null>(null);
   const below450 = useMediaQuery("(max-width : 450px)")
-  const outlet_id = localStorage.getItem("outlet_id") || ""
+  const {activeOutletId} = useAuthServiceContext();
+  const [outletId, setOutletId] = React.useState("")
 
+  React.useEffect(()=>{
+            if(activeOutletId){
+                setOutletId(String(activeOutletId))
+            }
+                    
+    },[activeOutletId])
+  
+
+
+  const handleProductView = (productId:string)=>{
+   
+      navigate(`/sales_summary/${productId}`)
+
+  }
   
     React.useEffect(() => {
       
@@ -104,11 +133,9 @@ export default function SalesByProductInfoTable({salesProductData, filterOption,
             const EndDateFormate = endDate.format("YYYY-MM-DD")
              try{
                     const response = await jwtAxios.get(
-                    `http://127.0.0.1:8000/api/products_info/?outlet_id=${outlet_id}&end_date_range=${EndDateFormate}&start_date_range=${startDateFormate}`,{
+                    `${BASE_URL}/products_info/?outlet_id=${outletId}&end_date_range=${EndDateFormate}&start_date_range=${startDateFormate}`,{
                         withCredentials:true
                     })
-                
-                    console.log(response.data)
                     const newData = response.data?.date_range ?? [];
                     setOutputedSalesData(newData)
                     handleCloseDialog()
@@ -131,14 +158,15 @@ export default function SalesByProductInfoTable({salesProductData, filterOption,
     outputedSalesDataState.map((item)=>
         createData(
         item.product_name, 
-        item.id, 
-        item.product_name,
-        item.total_qty
+        (item.total_amount <= 0 ? "":`#${item.profit_rank}`), 
+        Number(item.total_amount),
+        item.total_qty,
+        item.id
         )
     )
     const visibleColumns=columns.filter((item) => {
     if(below450){
-        return item.id !== "category"  && item.id !== "code";
+        return item.id !== "sales_revenue" && item.id !== "profit_rank";
 
       }
 
@@ -170,12 +198,12 @@ export default function SalesByProductInfoTable({salesProductData, filterOption,
       <TableContainer component={Paper} sx={{margin:"0px auto", maxHeight: 650,overflowY:"auto", width:below450?280:"auto", overflowX:"hidden" }}>
         <Table stickyHeader aria-label="sticky table">
           <TableHead>
-            <TableRow>
+            <TableRow >
               {visibleColumns.map((column) => (
                 <TableCell
                   key={column.id}
                   align={column.align}
-                  style={{ minWidth: column.minWidth }}
+                  style={{ minWidth: column.minWidth}}
                 >
                   {column.label}
                 </TableCell>
@@ -187,7 +215,7 @@ export default function SalesByProductInfoTable({salesProductData, filterOption,
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((row) => {
                 return (
-                  <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
+                  <TableRow onClick={()=>{handleProductView(String(row.id))}} sx={{cursor:"pointer"}} hover role="checkbox" tabIndex={-1} key={row.id}>
                     {visibleColumns.map((column) => {
                       const value = row[column.id];
                       return (

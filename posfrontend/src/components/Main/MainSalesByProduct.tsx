@@ -6,10 +6,15 @@ import {
 import React, { useEffect, useState } from "react";
 import useAxiosWithInterceptor from "../../helper/jwtinterceptor";
 import SalesByProductInfo from "./salesByProductInfo/SalesByProductInfo";
+import { useAuthServiceContext } from "../../context/AuthContext";
+import { BASE_URL } from "../../congif";
+
 
 interface productDetailsProps{
     id:number;
     product_name:string;
+    total_amount:number;
+    profit_rank:string;
     total_qty:number;
 }
 
@@ -30,7 +35,16 @@ const MainSalesByProduct = () => {
     const [drawerOpen, setDrawerOpen] = React.useState(true);
     const [salesProductData, setSalesProductData] = useState<SalesByProductProps | null>(null)
     const below750 = useMediaQuery("(max-width : 750px)");
-    const outlet_id = localStorage.getItem("outlet_id") || ""
+    const {activeOutletId} = useAuthServiceContext();
+    const [outletId, setOutletId] = useState("")
+    
+    useEffect(()=>{
+                if(activeOutletId){
+                    setOutletId(String(activeOutletId))
+                }
+                        console.log(activeOutletId)
+        },[activeOutletId])
+        
     React.useEffect(() => {
                 const handleDrawerToggle = (e: Event) => {
                 const customEvent = e as CustomEvent;
@@ -43,35 +57,31 @@ const MainSalesByProduct = () => {
     const drawerWidth = drawerOpen ? theme.primaryDraw.width : theme.primaryDraw.closed;
 
    const getSalesDByProductdata = async ()=>{
-        
-
-         try{
-        const response = await jwtAxios.get(
-        `http://127.0.0.1:8000/api/products_info/?outlet_id=${outlet_id}`,{
-            withCredentials:true
-        })
-        console.log(response.data)
-        setSalesProductData(response.data)
-        return response.data
-    }catch(err:any){
-        if (err.response?.status === 400) {
-                throw new Error("400");
-            }
-        throw err;
-        
-    }
+        try{
+            const response = await jwtAxios.get(
+            `${BASE_URL}/products_info/?outlet_id=${outletId}`,{
+                withCredentials:true
+            })
+            console.log(response.data)
+            setSalesProductData(response.data)
+            return response.data
+        }catch(err:any){
+            console.log(err.response)
+            if (err.response?.status === 400) {
+                    throw new Error("400");
+                }
+            throw err;
+            
+        }
     
     }
  
     useEffect(() => {
-       
-        getSalesDByProductdata();
-    }, []);
+       if(outletId === "") return;
 
-     useEffect(() => {
-       
-        console.log(salesProductData)
-    }, [salesProductData]);
+        getSalesDByProductdata();
+    }, [outletId]);
+
 
 
     return (
@@ -79,7 +89,7 @@ const MainSalesByProduct = () => {
             <Container  
             sx={{width:below750?"100%":`calc(100vw - ${drawerWidth}px)`,mt:3, ml:below750?"5px":`${drawerWidth}px`,height:"100%", overflow:"hidden"}}
             >
-            
+                
             
                  {salesProductData && <SalesByProductInfo salesProductData={salesProductData} />}
  

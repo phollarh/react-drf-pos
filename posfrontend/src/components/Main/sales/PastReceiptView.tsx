@@ -13,7 +13,7 @@ import ReceiptSearch from './ReceiptSearch';
 import FilterDateForm from '../../FilterDateForm';
 import DialogForCustomDate from '../salesByProductInfo/DialogForCustomDate';
 import { Dayjs } from 'dayjs';
-import { useReactToPrint } from "react-to-print";
+
 
 
 interface ProductProps{
@@ -74,7 +74,6 @@ export default function PastReceiptView({
   setTempEndDate,setTempStartDate,
   tempEndDate, tempStartDate,handleApplyCustomDate,data,handleChange, inputValue}:UpdateProductDialogueProps) {
   const theme = useTheme();
-  const receiptRef = React.useRef<HTMLDivElement>(null);
   const [open, setOpen] = React.useState(false);
   const [scroll, setScroll] = React.useState<DialogProps['scroll']>('paper');
   const [date ,setDate] = React.useState("")
@@ -121,9 +120,7 @@ export default function PastReceiptView({
 
   };
 
-  const handlePrint = useReactToPrint({
-    contentRef: receiptRef,
-  });
+
 
   const handleClose = () => {
     setOpen(false);
@@ -267,8 +264,6 @@ export default function PastReceiptView({
         
           
             <ReceiptDetailView
-            OnclickPrint={handlePrint}
-            ref={receiptRef}
             data={data}
             amountTenderd={amountTenderd}
             receiptId = {receiptId}

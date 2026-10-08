@@ -11,12 +11,14 @@ import {
 } from "@mui/material";
 
 import useCrud from "../../hooks/useCrud";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Button from '@mui/material/Button';
 import CardActions from '@mui/material/CardActions';
 import useAxiosWithInterceptor from "../../helper/jwtinterceptor"
 import PaymentMethodOption from "../salesSectionComp/PaymentMethodOption";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import { useAuthServiceContext } from "../../context/AuthContext";
+import { BASE_URL } from "../../congif";
 
 interface productType{
     id?:number;
@@ -58,22 +60,32 @@ const MainSection = () => {
     const [remarks, setRemarks] = React.useState('');
     const [balance, setBalance] = React.useState<number>(0)
     const [amountTendered, setAmountTendered] = React.useState<number>(0)
-    const outlet_id:string  = localStorage.getItem("outlet_id") || ""
+    const {activeOutletId} = useAuthServiceContext();
+    const [outletId, setOutletId] = useState("")
+        
+        useEffect(()=>{
+                    if(activeOutletId){
+                        setOutletId(String(activeOutletId))
+                    }
+                            
+            },[activeOutletId])
+            
+    
 
         const url = React.useMemo(() => {
             let base = `/sales_receipt/`;
             const params = new URLSearchParams();
     
-            if (outlet_id !== "") {
-                params.append("outlet_id", outlet_id);
+            if (outletId !== "") {
+                params.append("outlet_id", outletId);
             }
             if(params.toString()){
              base += `?${params.toString()}`
             }
             return base
-        },[outlet_id])
+        },[outletId])
     const { dataCRUD, setDataCRUD } = useCrud<Server>([], url)
-    console.log(dataCRUD)
+    
   const handleChange = (event: SelectChangeEvent) => {
     setPaymentOption(event.target.value);
   };
@@ -83,13 +95,13 @@ const MainSection = () => {
   };
   const handleOrderDelete = async (orderId:number) =>{
     const id=orderId
-    console.log(id)
+    
     try{
         const response = await jwtAxios.delete(
-        `http://127.0.0.1:8000/api/order/${id}/`,{
+        `${BASE_URL}/order/${id}/`,{
             withCredentials:true
         })
-        console.log(response.data)
+        
         setDataCRUD((prevData)=>prevData.map((item)=>
         ({
             ...item,
@@ -201,7 +213,7 @@ const MainSection = () => {
                 }
                 console.log(payload)
         try{
-            const response = await jwtAxios.put(`http://127.0.0.1:8000/api/sales_receipt/${orderId}/`,
+            const response = await jwtAxios.put(`${BASE_URL}/sales_receipt/${orderId}/`,
             payload,
            { withCredentials: true}
         )

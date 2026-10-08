@@ -8,6 +8,7 @@ import useAxiosWithInterceptor from "../../helper/jwtinterceptor";
 import { styled } from '@mui/material/styles';
 import Paper from '@mui/material/Paper';
 import ProgressSign from "../../components/Progress";
+import { BASE_URL_ACCOUNT } from "../../congif";
 
 
 const Item = styled(Paper)(({ theme }) => ({
@@ -33,7 +34,7 @@ const EmailConfirmation = () => {
     const [code, setCode] = useState<string[]>( new Array(5).fill(""))
     const [user, setUser] = useState<null | {username:string, email:string, id:number}>(null)
     const [errorA,setErrorA] = useState<string | null>(null)
-    const {getUserDetails, logout } =  useAuthServiceContext()
+    const {userId,getUserDetails, logout } =  useAuthServiceContext()
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const [timeLeft, setTimeLeft]  = useState (0)
 
@@ -41,11 +42,12 @@ const EmailConfirmation = () => {
     useEffect(()=>{
         const fetchUser = async () => {
         const res = await getUserDetails();
+        
         setUser(res);}
     
 
         fetchUser();
-    }, [])
+    }, [userId])
     const startCooldown = (nextAvailableTime:string) => {
         const remainingSeconds = Math.max(
             0,
@@ -61,7 +63,7 @@ const EmailConfirmation = () => {
         if (!user?.id) return;
         try{
             const res = await jwtAxios.get(
-                `http://127.0.0.1:8000/accounts/api/user/otp_status/?id=${user.id}`,
+                `${BASE_URL_ACCOUNT}/user/otp_status/?id=${user.id}`,
                 {withCredentials:true}
             );
             
@@ -81,7 +83,6 @@ const EmailConfirmation = () => {
     };
 
     useEffect(() => {
-        console.log('caleddddddddddddddddddddddd')
         fetchOtpStatus();
     }, [user]);
 
@@ -123,7 +124,7 @@ const EmailConfirmation = () => {
         }
         
         try{
-                 const response = await jwtAxios.post(`http://127.0.0.1:8000/accounts/api/activate/`,payload,{withCredentials:true}
+                 const response = await jwtAxios.post(`${BASE_URL_ACCOUNT}/activate/`,payload,{withCredentials:true}
         
              )
              if(response.status === 200){
@@ -155,12 +156,12 @@ const EmailConfirmation = () => {
        newCode[index] = value.slice(-1);
        setCode(newCode)
         if (event.target.value && index < code.length - 1) {
-            console.log(inputRefs.current)
+            
             inputRefs.current[index + 1]?.focus();
         }
         if(newCode.every(value=>value !== "")){
             const newCodeStr = newCode.join("")
-            console.log(user?.id)
+            
             handleAccountVeri(user?.id, Number(newCodeStr)) 
         }
 
@@ -199,12 +200,12 @@ const EmailConfirmation = () => {
             try{
                 
                 if(!user?.id) return;
-                console.log(payload)
-                const response = await jwtAxios.patch(`http://127.0.0.1:8000/accounts/api/user/otp_resend_email/`,
+                
+                const response = await jwtAxios.patch(`${BASE_URL_ACCOUNT}/user/otp_resend_email/`,
                     payload,
                     {withCredentials:true})
 
-                    console.log(response.data)
+                    
                     startCooldown(response.data.next_available_time)
                     
                     return response.data
@@ -213,8 +214,8 @@ const EmailConfirmation = () => {
                 formik.setErrors({
                     email: err.response.data.error
                 });
-                console.log(err)
-                throw err
+                
+                throw err.response
             }
             
             //   const status = await register(email,); 

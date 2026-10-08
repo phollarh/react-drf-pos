@@ -32,7 +32,9 @@ const columns: readonly ColumnProps[] = [
   { id: 'code', label: 'Product\u00a0Code', minWidth: 30 },
   { id: 'selling_price', label: 'Selling Price', minWidth: 70,format: (value: number) => `₦${value.toLocaleString()}`, },
   { id: 'category',label: 'Category',minWidth: 70},
-  { id: 'stock_inventory',label: 'Stock Inventory',minWidth: 30,format: (value: number) => value.toLocaleString(),},
+  { id: 'stock_inventory',label: 'Stock Inventory',minWidth: 30,
+    // format: (value: number) => value.toLocaleString(),
+  },
 ];
 
 interface Data {
@@ -64,7 +66,7 @@ export default function CreateSalesTable({dataCRUD,handleClick,handleSearchClick
   const rows = dataCRUD?.map((item)=>
     createData(item.product_name, Number(item.selling_price), item.id, item?.['category'].name, Number(item.stock_inventory))
   )
-  console.log(rows)
+  
 
   const visibleColumns=columns.filter((item) => {
     if(below550){
@@ -145,7 +147,11 @@ export default function CreateSalesTable({dataCRUD,handleClick,handleSearchClick
                     {visibleColumns.map((column) => {
                       const value = row[column.id];
                       return (
-                        <TableCell sx={{whiteSpace:"nowrap",overflow:"hidden",maxWidth:110,cursor:"pointer", textOverflow:"ellipsis"}} onClick={()=>{handleClick(row.code)}} key={column.id} align={column.align}>
+                        <TableCell 
+                        sx={{
+                          whiteSpace:"nowrap",
+                          overflow:"hidden",
+                          maxWidth:110,cursor:"pointer", textOverflow:"ellipsis"}} onClick={()=>{handleClick(row.code)}} key={column.id} align={column.align}>
                            
                               {column.format && typeof value === "number"
                                 ? column.format(value)

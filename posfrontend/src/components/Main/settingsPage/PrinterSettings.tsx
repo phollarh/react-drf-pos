@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Box, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import qz from "qz-tray";
 
@@ -10,15 +10,18 @@ export default function PrinterSettings() {
     const [printerList, setPrinterList]  = React.useState<string[]>([]);
     const [selectedPrinter, setSelectedPrinter] = useState("")
     
-    useEffect(()=>{
-       const printerSelection = localStorage.getItem("selectedPrinter") || ""
-       if(printerSelection !== ""){
-            setSelectedPrinter(printerSelection)
-            setPrinterList((prevValue)=>
-            ([...prevValue, printerSelection])
-            )
-       }
-    }, [])
+    // useEffect(()=>{
+    //   const printerSetup = async ()=>{
+    //     const response = 
+      // }
+      //  const printerSelection = localStorage.getItem("selectedPrinter") || ""
+      //  if(printerSelection !== ""){
+      //       setSelectedPrinter(printerSelection)
+      //       setPrinterList((prevValue)=>
+      //       ([...prevValue, printerSelection])
+      //       )
+      //  }
+    // }, [])
 
     const handlePrinterChange = (event: SelectChangeEvent)=>{
         setSelectedPrinter(event.target.value)

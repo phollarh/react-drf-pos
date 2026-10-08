@@ -11,6 +11,8 @@ import PassCodeDiagUpdate from "../../PassCodeDiagUpdate";
 import PassCodeDiag from "../../PassCodeDiag";
 import { UseoutletNstaffContext } from "../../../context/OutletNStaffsContext";
 import { requestIdProps } from "../../../@types/auth-service";
+import { BASE_URL_ACCOUNT } from "../../../congif";
+import { useAuthServiceContext } from "../../../context/AuthContext";
 
 
 interface outletDataProps{
@@ -73,6 +75,18 @@ const OutletStaffUpdateForm = ({data,setMode,setStaff}:dataPropsB) => {
     const Ref = useRef<HTMLDivElement>(null)
     const [requestId, setRequestId] = useState<requestIdProps | null>(null)
     const {getOutletStaff} = UseoutletNstaffContext()
+    const {activeOutletId} = useAuthServiceContext();
+    const [outletId, setOutletId] = useState("")
+
+    useEffect(()=>{
+            if(activeOutletId){
+                setOutletId(String(activeOutletId))
+            }
+                    
+    },[activeOutletId])
+    
+
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setErrMeg(null);
     setSmessg(null);
@@ -106,7 +120,7 @@ const OutletStaffUpdateForm = ({data,setMode,setStaff}:dataPropsB) => {
           }, [errMeg])
     const handleDelete = async ( )=>{
         try{
-            const response = await jwtAxios.delete(`http://127.0.0.1:8000/accounts/api/outletstaffs/${data?.Employee_id}/`,
+            const response = await jwtAxios.delete(`${BASE_URL_ACCOUNT}/outletstaffs/${data?.Employee_id}/`,
 
                 {
                    headers: {
@@ -191,7 +205,7 @@ const OutletStaffUpdateForm = ({data,setMode,setStaff}:dataPropsB) => {
             setErrMeg(null)
             setIsloading(true)
             const {id,name,email, address,status,pin,phone_number} = values;
-            const outlet= localStorage.getItem("outlet_id") || ""
+            // const outlet= localStorage.getItem("outlet_id") || ""
     
             let apiValues:FormValues = {
                 "name":name,
@@ -210,7 +224,7 @@ const OutletStaffUpdateForm = ({data,setMode,setStaff}:dataPropsB) => {
                     delete apiValues?.["pin"]
                 }
                 
-                const response = await jwtAxios.patch(`http://127.0.0.1:8000/accounts/api/outletstaffs/${id}/?outlet_id=${outlet}`,
+                const response = await jwtAxios.patch(`${BASE_URL_ACCOUNT}/outletstaffs/${id}/?outlet_id=${outletId}`,
                     apiValues,
                     {
                         headers: {

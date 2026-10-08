@@ -16,6 +16,9 @@ import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
 import PaymentMethodOption from "../../salesSectionComp/PaymentMethodOption";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import NumberInput from "./NumberInput";
+import { BASE_URL } from "../../../congif";
+import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
+import { LegendToggleSharp } from "@mui/icons-material";
 
 
 
@@ -68,15 +71,21 @@ interface SalesProps{
     setAmountTendered?: React.Dispatch<React.SetStateAction<number>>;
     setRemarks?: React.Dispatch<React.SetStateAction<string>>;
     setPaymentOption?: React.Dispatch<React.SetStateAction<string>>;
-    showReceiptDetaills: boolean
+    showReceiptDetaills: boolean;
+    inventoryError: {inventory_error: string;product_id: string;} | null;
+    setInventoryError: React.Dispatch<React.SetStateAction<{
+    inventory_error: string;
+    product_id: string;
+    } | null>>
 
 }
 
-const SalesReceipt = ({dataCRUD,paymentOption,setPaymentOption,amountTendered,setAmountTendered,remarks,setRemarks,setDataCRUDReceipt, handleReceiptSubmit}:SalesProps) => {
+const SalesReceipt = ({inventoryError,setInventoryError,dataCRUD,paymentOption,setPaymentOption,amountTendered,setAmountTendered,remarks,setRemarks,setDataCRUDReceipt, handleReceiptSubmit}:SalesProps) => {
     const theme = useTheme();
     const jwtAxios = useAxiosWithInterceptor();
     const [editingField, setEditingField] = useState<"quantity" | "subtotal">("quantity");
     const [balance, setBalance] = React.useState<number>(0)
+    const isOnsalesReceipt = location.pathname === "/sales_receipts"
 
 useEffect(() => {
     const needsInitialization = dataCRUD.some(item =>
@@ -123,13 +132,13 @@ useEffect(() => {
     };
     const handleOrderDelete = async (orderId:number) =>{
     const id=orderId
-    console.log(id)
+    
     try{
         const response = await jwtAxios.delete(
-        `http://127.0.0.1:8000/api/order/${id}/`,{
+        `${BASE_URL}/order/${id}/`,{
             withCredentials:true
         })
-        console.log(response.data)
+        
         setDataCRUDReceipt((prevData)=>prevData.map((item)=>
         ({
             ...item,
@@ -261,6 +270,12 @@ useEffect(() => {
                                                 <Box sx={{width:"100%", m:0, p:0}} key={item.id}>
                                                     
                                                         {item.orders.map((orderItem)=>{
+                                                            let quantityError =
+                                                                String(inventoryError?.product_id) === String(orderItem.product.id)
+                                                                    ? inventoryError?.inventory_error
+                                                                    : undefined;
+                                                                    
+
                                                             return(
                                                                 <Box key={orderItem.id} sx={{
                                                                         display:'flex',
@@ -291,6 +306,7 @@ useEffect(() => {
                                                                     <Typography 
                                                                     variant="body2" 
                                                                     component="div" 
+                                                                    
                                                                     sx={{ 
                                             
                                                                         flex:1,
@@ -301,14 +317,34 @@ useEffect(() => {
                                                                        
                                                                          }}>
                                                                         <NumberInput
+                                                                        sx={{
+                                                                            
+                                                                            
+                                                                    ...(isOnsalesReceipt && 
+                                                                        
+                                                                        {
+                                                                            "& .MuiOutlinedInput-input": {
+                                                                                padding: "5px",
+                                                                            },
+                                                                            "& .MuiFormHelperText-root": {
+                                                                                margin: 0,
+                                                                                textAlign: "center",
+                                                                            }
+                                                                        }),
+                                                                       }}
+                                                                        error={Boolean(quantityError)}
+                                                                        helperText={quantityError}
                                                                         setEditingField={setEditingField}
                                                                         value={orderItem.quantityInput ?? ""}
                                                                         onChange={(value) =>
+                                                                        {
+                                                                            setInventoryError(null)
+                                                                        
                                                                             handleInputValue(
                                                                                 value,
                                                                                 orderItem.product.selling_price,
                                                                                 orderItem.id
-                                                                            )
+                                                                            )}
                                                                         }
                                                                     />
                                                                     </Typography>
@@ -368,7 +404,7 @@ useEffect(() => {
                                                                                 border:`1px solid ${theme.palette.divider}`,
                                                                                 borderRadius:'10px'
                                                                                 }} 
-                                                                        value={orderItem.sub_totalInput}
+                                                                        value={Number(orderItem.sub_totalInput).toFixed(2)}
                                                                         margin="dense" 
                                                                         // type="number" 
                                                                         // value={orderItem.quantity}
@@ -522,7 +558,52 @@ useEffect(() => {
                                     
                                ):
                                (
-                                'No Order please Add new Order'
+                                    <Box
+                                    sx={{
+                                        mt:10,
+                                        minHeight: 240,
+                                        px: 3,
+                                        py: 5,
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        textAlign: "center",
+                                        gap: 1.5,
+                                    }}
+                                >
+                                    <Box
+                                        sx={{
+                                            width: 76,
+                                            height: 76,
+                                            borderRadius: "50%",
+                                            bgcolor: "background.paper",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            mb: 0.5,
+                                        }}
+                                    >
+                                        <ShoppingCartOutlinedIcon
+                                            sx={{
+                                                fontSize: 36,
+                                                color: "text.secondary",
+                                            }}
+                                        />
+                                    </Box>
+
+                                    <Typography
+                                        variant="h6"
+                                        sx={{
+                                            fontWeight: 700,
+                                            color: "text.primary",
+                                        }}
+                                    >
+                                        No orders yet
+                                    </Typography>
+
+                                    
+                                </Box>
                                )
                                }
                                                         

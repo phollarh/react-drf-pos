@@ -18,7 +18,7 @@ const Main: React.FC<Props> = ({ children,showReceiptDetaills }) => {
     if (below720 && !isOnSalesReceipt) {
         width = "100%";
     }else if(above720 && isOnSalesReceipt){
-        width = "auto"
+        width = "60%"
     
     } else if (!showReceiptDetaills && isOnSalesReceipt) {
         width="15%"

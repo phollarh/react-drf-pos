@@ -1,7 +1,8 @@
 import { Box,Typography} from "@mui/material"
 import PinRequestPopOver from "./PinRequestPopOver";
-import { outletsDataProps, outletStaffDataProps } from "../../../@types/outletsNstaff-service";
+import { outletsDataProps, outletStaffDataProps, staffStatusProps } from "../../../@types/outletsNstaff-service";
 import { UseoutletNstaffContext } from "../../../context/OutletNStaffsContext";
+import { useAuthServiceContext } from "../../../context/AuthContext";
 
 interface pinProps {
   
@@ -9,7 +10,7 @@ interface pinProps {
   outletStaff:outletStaffDataProps |null;
   setAssignedStaff?:React.Dispatch<React.SetStateAction<outletStaffDataProps | null>>
   outlet:outletsDataProps | null;
-  staffStatus:{is_active:boolean; session_id:string} | undefined;
+  staffStatus:staffStatusProps | undefined;
   setAssignMess?: React.Dispatch<React.SetStateAction<string | null>>;
   fetchReceipt ?: () => Promise<void>
 }
@@ -17,7 +18,8 @@ interface pinProps {
 export default function ControlledSwitches({outletStaff,setAssignMess,setAssignedStaff,outlet,staffStatus,Employee_id,fetchReceipt}:pinProps) {
   const {filterOption,setFilterOption} = UseoutletNstaffContext()
   const isOnSalesReceipt = location.pathname === "/sales_receipts"
-
+  const {activeOutletId} = useAuthServiceContext();
+  
 
   return (
     <>
@@ -27,7 +29,7 @@ export default function ControlledSwitches({outletStaff,setAssignMess,setAssigne
            <Box sx={{display:"flex",mt:1, justifyContent:"center"}}>
                 {/* <LoginIcon sx={{p:0,mt:1.2, marginRight: "6px", fontSize: "20px" }} />
                 <LogoutIcon sx={{p:0,mt:1.2, marginRight: "6px", fontSize: "20px" }} /> */}
-                {!staffStatus ?
+                {!staffStatus || staffStatus.assigned === false ?
                   (<Typography variant="body2" sx={{fontFamily:"sans-serif",  mt:1.2, p: 0, textTransform: "capitalize" }}>
                       Please Assign to continue
                   </Typography>):
@@ -61,7 +63,7 @@ export default function ControlledSwitches({outletStaff,setAssignMess,setAssigne
         {outlet &&
 
             <Box sx={{display:"flex",mt:1, justifyContent:"center"}}>
-                  {localStorage.getItem("outlet_id") === String(outlet.id)?
+                  {String(activeOutletId) === String(outlet.id)?
                   (<Typography variant="body2" sx={{fontFamily:"sans-serif",  mt:1.2, p: 0, textTransform: "capitalize" }}>
                       Deactivate Outlet
                   </Typography>):

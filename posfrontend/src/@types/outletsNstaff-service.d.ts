@@ -25,12 +25,15 @@ export interface outletStaffDataProps{
 }
 interface staffStatusProps{
     is_active:boolean;
+    staff_id?:string;
     session_id : string;
-    log_in_time:string;
-    last_logIn_time:string
+    log_in_time?:string;
+    last_logIn_time?:string;
+    assigned?:boolean;
+    assigned_time?:string
 }
 interface OutletNstaffsProps{
-     getOutletStaff: () => Promise<any>;
+     getOutletStaff: (outletId?:string) => Promise<any>;
     // createOutlet:outletsDataProps;
     createOutlet: (name: string, email_address: string, city: string, address: string, Facebook: string, Instagram: string, outlet_description: string) => Promise<any>;
     filterOption:string;

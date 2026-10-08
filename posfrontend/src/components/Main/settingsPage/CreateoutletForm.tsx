@@ -5,6 +5,7 @@ import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
 import { useEffect, useRef, useState } from "react";
 import { requestIdProps } from "../../../@types/auth-service";
 import CreatePassCodeDiag from "../../CreatePassCodeDiag";
+import { BASE_URL_ACCOUNT } from "../../../congif";
 
 
 interface dataProps{
@@ -36,13 +37,14 @@ const CreateOutletForm = ({ getOutlets,handleOutletCreated,setCreateOutletObject
     const RefCreate = useRef<HTMLDivElement | null>(null);
     const [requestId, setRequestId] = useState<requestIdProps | null>(null)
      const createIdRef = useRef(crypto.randomUUID());
-    console.log(errMessage)
+    
     useEffect(()=>{ 
     setRequestId(
         {object_details:"outlet",
             id:createIdRef.current
         }
     )
+    
     },[])
 
     useEffect(()=>{
@@ -94,7 +96,7 @@ const CreateOutletForm = ({ getOutlets,handleOutletCreated,setCreateOutletObject
                 }
                 console.log(apiValues, passTokenRef.current)
             try{
-                const response = await jwtAxios.post(`http://127.0.0.1:8000/accounts/api/outlets/`,
+                const response = await jwtAxios.post(`${BASE_URL_ACCOUNT}/outlets/`,
                     apiValues,
                     {
                         headers: {
@@ -104,7 +106,7 @@ const CreateOutletForm = ({ getOutlets,handleOutletCreated,setCreateOutletObject
                     withCredentials:true}
                 
                 )
-                console.log(response.data, response.status)
+                
                 if(response.status === 200){
                     passTokenRef.current=null
                     setCreateOutletObject(false)
@@ -117,12 +119,16 @@ const CreateOutletForm = ({ getOutlets,handleOutletCreated,setCreateOutletObject
                     passTokenRef.current=null
                     setOpen(true)
                 }
+                
                 if(err.response?.status === 403 && err.response?.data.error_admin){
-                    setOpen(true)
+                    setOpen(false)
                     setErrMessage(err.response.data.error_admin || "Error")
                 }
                 if (err.response?.data?.email_address) {
                     formik.setFieldError("email_address", err.response.data.email_address);
+                }
+                if (err.response.status === 400 && err.response?.data?.name) {
+                    formik.setFieldError("name", err.response.data.name);
                 }
                  if (err.response?.data?.pin) {
                     formik.setFieldError("pin", err.response.data.pin);
@@ -134,6 +140,7 @@ const CreateOutletForm = ({ getOutlets,handleOutletCreated,setCreateOutletObject
                     setErrMessage(err.response.data.error || "Error")
                     
                 }
+                
                 setTimeout(() => {
                     setErrMessage(null)
                 },8000);
@@ -172,7 +179,7 @@ const CreateOutletForm = ({ getOutlets,handleOutletCreated,setCreateOutletObject
                             value={formik.values.name}
                             onChange={formik.handleChange}
                             error={!!formik.touched.name && !!formik.errors.name}
-                            // helperText={formik.touched.Facebook && formik.errors.Facebook}
+                            helperText={formik.touched.name && formik.errors.name}
                         >
                         </TextField>
                         

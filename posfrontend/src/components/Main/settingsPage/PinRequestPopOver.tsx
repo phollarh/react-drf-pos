@@ -5,8 +5,10 @@ import Switch from '@mui/material/Switch';
 import { Box, TextField } from '@mui/material';
 import useAxiosWithInterceptor from '../../../helper/jwtinterceptor';
 import ProgressSign from '../../Progress';
-import { outletsDataProps, outletStaffDataProps } from '../../../@types/outletsNstaff-service';
+import { outletsDataProps, outletStaffDataProps, staffStatusProps } from '../../../@types/outletsNstaff-service';
 import { UseoutletNstaffContext } from '../../../context/OutletNStaffsContext';
+import { BASE_URL_ACCOUNT } from '../../../congif';
+import { useAuthServiceContext } from '../../../context/AuthContext';
 
 
 
@@ -15,7 +17,7 @@ interface PinProp {
     outletStaff:outletStaffDataProps | null;
     setAssignedStaff?: React.Dispatch<React.SetStateAction<outletStaffDataProps | null>>
     outlet:outletsDataProps | null;
-    staffStatus:{is_active:boolean, session_id:string} | undefined;
+    staffStatus:staffStatusProps | undefined;
     filterOption:string;
     setFilterOption:React.Dispatch<React.SetStateAction<string>>;
     setAssignMess?: React.Dispatch<React.SetStateAction<string | null>>;
@@ -23,15 +25,29 @@ interface PinProp {
     
 }
 
-export default function PinRequestPopOver({fetchReceipt,Employee_id,outletStaff,setAssignMess,setAssignedStaff,filterOption,setFilterOption, outlet}:PinProp) {
+export default function PinRequestPopOver({fetchReceipt,Employee_id,outletStaff,setAssignMess,setAssignedStaff,staffStatus,filterOption,setFilterOption, outlet}:PinProp) {
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
   const [errorHandling, setErrorHandling] = React.useState<string | null>(null)
   const [isLoading, setIsLoading] = React.useState(false)
   const [pinState, setPin] = React.useState("")
   const [username, setUsername] = React.useState<string|undefined >()
   const isOnSalesReceipt = location.pathname === "/sales_receipts"
+  const isOnsettings = location.pathname === "/settings"
   const jwtAxios = useAxiosWithInterceptor()
-  const {LogStaffOut,getStaffStatus,employeeId,setStaffStatus, staffStatus,staffData} = UseoutletNstaffContext();
+  const {activeOutletId, isOutletActive,getInitialLoggedInValue} = useAuthServiceContext();
+  const [outletId, setOutletId] = React.useState("")
+  const {LogStaffOut,getStaffStatus,employeeId,setStaffStatus,staffData} = UseoutletNstaffContext();
+
+  React.useEffect(()=>{
+                    if(activeOutletId){
+                        setOutletId(String(activeOutletId))
+                        
+                    }
+                   
+                            
+        },[activeOutletId])
+            
+
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
     
@@ -46,11 +62,8 @@ export default function PinRequestPopOver({fetchReceipt,Employee_id,outletStaff,
     setUsername(outletStaff?.username)
   },[outletStaff])
 
-    // const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    //   setChecked(event.target.checked);
-      
-    // };
-console.log(staffStatus, staffData, outletStaff)
+  
+
   const open = Boolean(anchorEl);
   const id = open ? 'simple-popover' : undefined;
 
@@ -63,7 +76,48 @@ console.log(staffStatus, staffData, outletStaff)
     //   }
     //   console.log(staffStatus, "i chnaged")
     // }, [staffStatus])
-    
+  const handleOutletStatus = async (event:React.FormEvent<HTMLFormElement>)=>{
+      event.preventDefault();
+     setErrorHandling(null)
+     setIsLoading(true)
+    const selectedOutletIsActive =isOutletActive && String(activeOutletId) === String(outlet?.id);
+
+      const payLoad = {
+                "desired_status":!selectedOutletIsActive,
+                "outlet_pin":pinState,
+                "outlet_id":outlet?.id
+                }
+      
+    try{
+      const response = await jwtAxios.post(`${BASE_URL_ACCOUNT}/verify_outlet/`,payLoad,{withCredentials:true} )
+        if(response.status === 200 && response.data.is_active){
+
+              setFilterOption(String(response.data.id))
+                setPin("")
+                
+                
+                // localStorage.setItem("outlet_id", `${response.data.id}`)
+                // localStorage.setItem("outIsact", response.data.is_active)  
+            }else{
+                  setFilterOption("")
+                  setPin("")
+                
+                  
+            }
+            handleClose()
+            await getInitialLoggedInValue()
+        return response.data
+
+      }catch(err:any){
+         if(err.response?.data){
+              setErrorHandling(err.response.data.error)
+            }
+            setPin("")
+            throw err.response
+      }finally{
+          setIsLoading(false)
+      }
+  }
   const handleStaffLogin = async (event:React.FormEvent<HTMLFormElement>)=>{
      event.preventDefault();
      setErrorHandling(null)
@@ -71,55 +125,45 @@ console.log(staffStatus, staffData, outletStaff)
      setIsLoading(true)
     
     if(isOnSalesReceipt){
-      const outlet_id = localStorage.getItem("outlet_id") || ""
+      // const outlet_id = localStorage.getItem("outlet_id") || ""
         if(pinState  !== "" ){
               
               const payLoad = {
                   "pin":pinState,
                   "username":username,
-                  "outlet_id":outlet_id
+                  "outlet_id":outletId
                   
                   }
                   console.log(payLoad)
               try{
             
-            const response = await jwtAxios.post('http://127.0.0.1:8000/accounts/api/staffs-login/assign_staff_session/', payLoad,
+            const response = await jwtAxios.post(`${BASE_URL_ACCOUNT}/staffs-login/assign_staff_session/`, payLoad,
                 {withCredentials:true}
             )
             
                 if(response.status === 200){
-                  console.log(response.data)
+                  
                   const staff_status=await getStaffStatus(response.data.employee_id)
 
                   
                   if(staff_status?.is_active === true && response.data?.assigned_status === true){
-                      console.log(response.data)
+                      
                       const assigned_staff : outletStaffDataProps | null  = staffData.find((item)=>String(response.data?.employee_id) === String(item.Employee_id)) ?? null
-                      console.log(assigned_staff)
+                      
                       setAssignedStaff?.(assigned_staff)
                       await fetchReceipt?.()
 
-                      // setAssignMess?.(response.data?.["message"])
-
-                      // setInterval(() => {
-                      //   setAssignMess?.(null)
-                      // }, 15000);
                     
                   }
-                  console.log(response.data)
+                  
                   if(response.data?.assigned_status === false){
                       
                       const assigned_staff : outletStaffDataProps | null  = staffData.find((item)=>String(response.data?.employee_id) === String(item.Employee_id)) ?? null
                       console.log(assigned_staff)
                       setAssignedStaff?.(null)
-                      // setAssignMess?.(response.data?.message)
+                      
                       setStaffStatus(undefined)
                       await fetchReceipt?.()
-                      
-
-                      // setInterval(() => {
-                      //   setAssignMess?.(null)
-                      // },15000);
                     
                   }
 
@@ -129,18 +173,18 @@ console.log(staffStatus, staffData, outletStaff)
                     handleClose()
                     setIsLoading(false)
                     setPin("")
-                    console.log(response.data)
+                    
                 }
                 setIsLoading(false)
                 return response.data
         }catch(error:any){
-          console.log(error)
+          
           setIsLoading(false)
             setPin("")
             if(error.response?.data){
               setPin("")
               setErrorHandling(error.response.data.error)
-              console.log(error.response.data.error)
+              
             }
         }
               
@@ -149,52 +193,57 @@ console.log(staffStatus, staffData, outletStaff)
       }
       return;
     }
-     if(outlet){
+    //  if(outlet){
   
 
-          if(pinState !== ""){
-                const payLoad = {
-                "outlet_pin":pinState,
-                "outlet_id":outlet.id
-                }
+    //       if(pinState !== ""){
+    //             const payLoad = {
+    //             "active_status":localStorage.getItem("outIsact") || "",
+    //             "outlet_pin":pinState,
+    //             "outlet_id":outlet.id
+    //             }
                 
-            try{
-              if(!outlet.id){
-                return !outlet.id
-              }
+    //         try{
+    //           if(!outlet.id){
+    //             return !outlet.id
+    //           }
+    //           console.log('i handle outlet sign in')
               
-              const reponse=await jwtAxios.post('http://127.0.0.1:8000/accounts/api/verify_outlet/',payLoad, 
-                {withCredentials:true}
-              )
-              if(localStorage.getItem("outlet_id")===String(reponse.data.id) && reponse.status === 200 ){
-                localStorage.removeItem("outlet_id")
-                setFilterOption("")
-                setPin("")
-                handleClose()
-                setIsLoading(false)
-              }
-             else{
-                setFilterOption(reponse.data.id)
-                setPin("")
-                handleClose()
-                setIsLoading(false)
-                localStorage.setItem("outlet_id", `${reponse.data.id}`)
-             }
-            }catch(error:any){
-              if(error.response?.data){
-                setErrorHandling(error.response.data.error)
-            }
-            setIsLoading(false)
-            setPin("")
-            throw error
+    //           const reponse=await jwtAxios.post(`${BASE_URL_ACCOUNT}/verify_outlet/`,payLoad, 
+    //             {withCredentials:true}
+    //           )
+              
+    //           if(localStorage.getItem("outlet_id")===String(reponse.data.id) && reponse.status === 200 ){
+    //             localStorage.removeItem("outlet_id")
+    //             localStorage.setItem("outIsact", reponse.data.is_active)
+    //             setFilterOption("")
+    //             setPin("")
+    //             handleClose()
+    //             setIsLoading(false)
+    //           }
+    //          else{
+    //             setFilterOption(reponse.data.id)
+    //             setPin("")
+    //             handleClose()
+    //             setIsLoading(false)
+    //             localStorage.setItem("outlet_id", `${reponse.data.id}`)
+    //             localStorage.setItem("outIsact", reponse.data.is_active)
+    //          }
+    //         }catch(error:any){
+    //           if(error.response?.data){
+    //             setErrorHandling(error.response.data.error)
+    //         }
+    //         setIsLoading(false)
+    //         setPin("")
+    //         throw error
           
-          }
+    //       }
         
-     }
-    }else{
+    //  }
+    if(!outlet){
         if(staffStatus?.is_active === true && employeeId !== ""){
         
-          console.log("called to log u out")
+          
            const response=await LogStaffOut(pinState,employeeId,staffStatus.session_id)
            console.log(response)
          if(response.status === 200){
@@ -220,14 +269,14 @@ console.log(staffStatus, staffData, outletStaff)
           "Employee_id":Employee_id
           }
 
-          console.log("i logged in agagindddd")
+          
   
         try{
             
-            const response = await jwtAxios.post('http://127.0.0.1:8000/accounts/api/staffs-login/', payLoad,
+            const response = await jwtAxios.post(`${BASE_URL_ACCOUNT}/staffs-login/`, payLoad,
                 {withCredentials:true}
             )
-            console.log(response.status)
+            
                 if(response.status === 201){
                   
                   await getStaffStatus(employeeId)
@@ -256,22 +305,22 @@ console.log(staffStatus, staffData, outletStaff)
 
     // console.log(outlet.id, filterOption)
 
-    const outletChecked = outlet !== null
-    // console.log(staffStatus)
+    const outletChecked = outlet !== null && activeOutletId
+    console.log(staffStatus?.assigned, staffStatus?.staff_id ,staffStatus)
     const derChecked=React.useMemo(()=>{
       let checked=false
       if(outletChecked){
-        checked=localStorage.getItem("outlet_id") === String(outlet?.id)? true: false
-        console.log('m called', checked)
-      }
+        checked=String(activeOutletId) === String(outlet?.id)? true: false
+        
+      }else if(staffStatus && isOnSalesReceipt){
       
-      if(staffStatus){
-      
-          checked=staffStatus?.is_active === true? true: false
+          checked=staffStatus?.assigned === true? true: false
+      }else if (staffStatus && isOnsettings){
+        checked=staffStatus?.is_active === true? true: false
       }
       return checked
-    },[outlet?.id, filterOption, staffStatus?.session_id])
-    console.log(derChecked, filterOption)
+    },[outlet?.id, staffData,filterOption,staffStatus?.assigned, staffStatus?.is_active, activeOutletId])
+    
   return (
     <>
       {/* <Button aria-describedby={id} variant="contained" onClick={handleClick}> */}
@@ -302,7 +351,7 @@ console.log(staffStatus, staffData, outletStaff)
           horizontal: 'left',
         }}
       >
-        <Box onSubmit={handleStaffLogin}  display="flex" flexDirection="column" component="form" sx={{m:0.5,p:1, textAlign:"center"}}>
+        <Box onSubmit={outlet ? handleOutletStatus: handleStaffLogin}  display="flex" flexDirection="column" component="form" sx={{m:0.5,p:1, textAlign:"center"}}>
           {isOnSalesReceipt && 
             <TextField  
             maxRows={0.5}
@@ -360,14 +409,14 @@ console.log(staffStatus, staffData, outletStaff)
             {isOnSalesReceipt ? 
               (
                 
-                <Button  disabled={isLoading}  variant="contained" disableElevation sx={{display:"flex",mt:3,textTransform:"none",justifyContent:"space-between", flexWrap:"nowrap",margin:"1px auto",width:isLoading?"150px":"100px", textAlign:"center" }} type="submit">{staffStatus?.is_active===true?'Unassign':'Assign'} {isLoading&&<ProgressSign/>} </Button>
+                <Button  disabled={isLoading}  variant="contained" disableElevation sx={{display:"flex",mt:3,textTransform:"none",justifyContent:"space-between", flexWrap:"nowrap",margin:"1px auto",width:isLoading?"150px":"100px", textAlign:"center" }} type="submit">{staffStatus?.assigned===true?'Unassign':'Assign'} {isLoading&&<ProgressSign/>} </Button>
               )
               : 
               (
 
                 outlet?
             (
-              <Button disabled={isLoading}  variant="contained" disableElevation sx={{display:"flex",justifyContent:"space-between", flexWrap:"nowrap",margin:"1px auto",p:1,width:isLoading?"150px":"100px", textAlign:"center" }} type="submit">{localStorage.getItem("outlet_id") ===String(outlet.id)? 'Deactivate':"Activate"} {isLoading&&<ProgressSign/>} </Button>
+              <Button disabled={isLoading}  variant="contained" disableElevation sx={{display:"flex",justifyContent:"space-between", flexWrap:"nowrap",margin:"1px auto",p:1,width:isLoading?"150px":"100px", textAlign:"center" }} type="submit">{String(activeOutletId) ===String(outlet.id)? 'Deactivate':"Activate"} {isLoading&&<ProgressSign/>} </Button>
             ):
               
             (

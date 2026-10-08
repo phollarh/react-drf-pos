@@ -1,4 +1,4 @@
-import { AppBar, Box, Toolbar, Typography, useTheme } from "@mui/material";
+import { AppBar,Toolbar, Typography, useTheme } from "@mui/material";
 
  import { UseoutletNstaffContext } from "../../../../context/OutletNStaffsContext"
 
@@ -50,9 +50,9 @@ interface SessionProps {
 }
  
  export default function OutletStaffSession({setDataCRUDReceipt,fetchReceipt, assignMess,setAssignMess,setAssignedStaff,assignedStaff}:SessionProps) {
-        console.log(assignedStaff)
+        
         const theme = useTheme()
-        const {staffStatus} = UseoutletNstaffContext()
+        const {staffStatus} = UseoutletNstaffContext();
     React.useEffect(()=>{
         if(!assignedStaff ){
             setDataCRUDReceipt?.([])
@@ -83,25 +83,26 @@ interface SessionProps {
                                             justifyContent:"space-between",
                                             alignItems: "center"
                                         }}>
-                                            {assignMess &&
+                                            {/* {assignMess &&
                                             <Box sx={{ position :"absolute", top:0,p:1, backgroundColor:"red", width:"100%", opacity:0.5}}>
                                                  <Typography sx={{p:1}} color="white" component="span">
                                                 {assignMess}
                                                 </Typography>
                                             </Box>
                                                 
-                                            }
+                                            } */}
                                             
                                             
-                                             <Typography component="span">
-                                                Welcome Attending Staff  <Typography component="span" sx={{fontWeight:600, p:1}}> {assignedStaff?.name.toUpperCase()}</Typography>
+                                             <Typography display={!assignedStaff ? "none":"inherit"} component="div" >
+                                                Welcome Attending Staff  <Typography component="span" sx={{fontWeight:600, pl:2}}> {assignedStaff?.name.toUpperCase()}</Typography>
                                             </Typography>
                                             
                                    
                                     {/* <Typography component="div" >
                                         <UploadAvatars outletStaffSelection={outletStaff}/>
                                     </Typography> */}
-                                    <Typography component="div">
+                                    <Typography flexGrow={1}></Typography>
+                                    <Typography component="div" sx={{mb:7,mr:0, fontSize:"1rem"}} >
                                         
                                         <ControlledSwitches fetchReceipt={fetchReceipt} setAssignMess={setAssignMess} outlet={null} setAssignedStaff={setAssignedStaff} outletStaff={assignedStaff} staffStatus={staffStatus} Employee_id={undefined}/>
                                     </Typography>

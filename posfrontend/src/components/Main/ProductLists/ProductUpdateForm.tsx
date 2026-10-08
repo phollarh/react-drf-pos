@@ -11,6 +11,8 @@ import useCrud from "../../../hooks/useCrud";
 import PassCodeDiagUpdate from "../../PassCodeDiagUpdate";
 import PassCodeDiag from "../../PassCodeDiag";
 import { requestIdProps } from "../../../@types/auth-service";
+import { useAuthServiceContext } from "../../../context/AuthContext";
+import { BASE_URL } from "../../../congif";
 
 
 
@@ -69,18 +71,25 @@ const ProductUpdateForm = ({
     onSuccess
  }:UpdateProductFormProps) => {
     const jwtAxios = useAxiosWithInterceptor();
-    const {outletsData, staffData} = UseoutletNstaffContext();
+    const {outletsData, } = UseoutletNstaffContext();
     const navigate = useNavigate()
     const Ref = useRef<HTMLDivElement>(null)
     const [open, setOpen] = useState(false);
     const [openDel, setOpenDel] = useState(false);
-    const outletId = localStorage.getItem("outlet_id") || ""
+    // const outletId = localStorage.getItem("outlet_id") || ""
     const passTokenRef = useRef<string | null>(null);
     const [updateInventory,setUpdateInventory] = useState(false)
     const [mess, setMess] = useState<null | string>(null)
     const [requestId, setRequestId] = useState<requestIdProps | null>(null)
     const createIdRef = useRef(crypto.randomUUID());
-
+    const {activeOutletId} = useAuthServiceContext();
+    const [outletId, setOutletId] = useState("")
+         useEffect(()=>{
+            if(activeOutletId){
+                setOutletId(String(activeOutletId))
+            }
+                    
+        },[activeOutletId])
     useEffect(()=>{
         if(productId){
             
@@ -102,10 +111,10 @@ const ProductUpdateForm = ({
 
     const handleDelete = async ()=>{
         // if(!productId)return
-        console.log(productId, "called")
+        
         try{
-            console.log("am innnnn")
-            const response = await jwtAxios.delete(`http://127.0.0.1:8000/api/products/${productId}/?outlet_id=${outletId}`,
+            
+            const response = await jwtAxios.delete(`${BASE_URL}/products/${productId}/?outlet_id=${outletId}`,
 
                 {
                    headers: {
@@ -142,17 +151,12 @@ const ProductUpdateForm = ({
             throw err
         }
     }
-    const allowedStatus = ["Supervisor", "Manager"]
-    const filterStaffData = staffData.filter((item)=>
-        allowedStatus.map((itemall)=>
-            itemall === item.status
-        )
-    )
-    console.log(filterStaffData)
+    
     // dataCRUD?.map((item)=>{   
     // soldInData.push(item.sold_In)
     // })
     const url_Soldin = React.useMemo(() => {
+        if(outletId === "") return null;
                 let base = `/measurements_info/`;
                 
                 const params = new URLSearchParams();
@@ -170,6 +174,7 @@ const ProductUpdateForm = ({
                 return base;
             }, [outletId]);
     const url_cat = React.useMemo(() => {
+        if(outletId === "") return null;
                 let base = `/categories_info/`;
                 
                 const params = new URLSearchParams();
@@ -188,7 +193,7 @@ const ProductUpdateForm = ({
             }, [outletId]);
     const { dataCRUD: catData} = useCrud<ServerCat>([], url_cat);
     const { dataCRUD: measuredData} = useCrud<ServerMeasure>([], url_Soldin);
-
+    
     // const uniqueSoldIn = React.useMemo(() =>
     //      [...new Set(dataCRUD?.map(item => item.sold_In))],
     //     [dataCRUD]
@@ -237,6 +242,7 @@ const ProductUpdateForm = ({
             setTouched({
                 cost_price: true,
                 selling_price: true,
+                stock_inventory:true
             });
             setIsLoading(true)
             const { product_name, category,cost_price,selling_price,sold_In,stock_inventory,product_id,outlet } = values;
@@ -260,7 +266,7 @@ const ProductUpdateForm = ({
         try{
             if(product_id && product_id > 0){
                
-                const response = await jwtAxios.patch(`http://127.0.0.1:8000/api/products/${product_id}/?outlet_id=${outletId}`,
+                const response = await jwtAxios.patch(`${BASE_URL}/products/${product_id}/?outlet_id=${outletId}`,
                 payload,
                 { 
                     headers: {
@@ -283,14 +289,15 @@ const ProductUpdateForm = ({
             //         withCredentials: true}
             //     )
             //     }
-            console.log(dataCRUDBack)
+            
                     await onSuccess()
                     onClose()
 
                     return dataCRUDBack
             }
             else{
-                const response = await jwtAxios.post(`http://127.0.0.1:8000/api/products/?outlet_id=${outletId}`, payload, {
+                
+                const response = await jwtAxios.post(`${BASE_URL}/products/?outlet_id=${outletId}`, payload, {
                     headers: {
                     "X-Pass-Token": passTokenRef.current
                     },
@@ -319,7 +326,7 @@ const ProductUpdateForm = ({
             }
              if (error.response?.status === 400) {
                 new Error("400");
-                console.log(error.response.data)
+                
             }
             if(error.response?.data){
                 const backError = error.response?.data
@@ -331,7 +338,7 @@ const ProductUpdateForm = ({
                 setErrors(formattedErrors);
             }
             setIsLoading(false)
-            throw error;
+            throw error.response;
             
         }finally{
             setIsLoading(false)
@@ -598,12 +605,13 @@ const ProductUpdateForm = ({
                         </Button> */}
                            
                            <PassCodeDiag 
-                           passTokenRef={passTokenRef}
-                           open={openDel}
-                           handleClose={() => setOpenDel(false)} 
-                           requestId={requestId}
-                            purpose='product_delete'  handleDelete={handleDelete}/>
-                            <Button  size="small" variant="contained" onClick={()=>{handleDelete()}} disableElevation sx={{textTransform:"none",height:"30px", m:1, backgroundColor:"red" }} >Delete</Button>
+                                passTokenRef={passTokenRef}
+                                open={openDel}
+                                handleClose={() => setOpenDel(false)} 
+                                requestId={requestId}
+                                purpose='product_delete'  handleDelete={handleDelete}
+                            />
+                            {productId && <Button  size="small" variant="contained" onClick={()=>{handleDelete()}} disableElevation sx={{textTransform:"none",height:"30px", m:1, backgroundColor:"red" }} >Delete</Button>}
                            
 
                             <PassCodeDiagUpdate

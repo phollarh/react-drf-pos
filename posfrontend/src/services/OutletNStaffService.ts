@@ -1,7 +1,8 @@
 import React from "react"
 import useAxiosWithInterceptor from "../helper/jwtinterceptor"
 import { outletsDataProps, outletStaffDataProps } from "../@types/outletsNstaff-service"
-import Cookies from "js-cookie";
+import { useAuthServiceContext } from "../context/AuthContext";
+import { BASE_URL_ACCOUNT } from "../congif";
 interface staffStatusProps{
     is_active:boolean;
     session_id : string;
@@ -16,9 +17,9 @@ export const OutletNstaffService = () =>{
     const [staffStatus, setStaffStatus]  = React.useState<staffStatusProps | undefined>(undefined)
     const[employeeId, setEmployeeId] = React.useState<string>("")
     const [filterOption, setFilterOption] = React.useState<string>(() => localStorage.getItem("outlet_id") || "" );
-    const outlet_id = localStorage.getItem("outlet_id") || ""
-    const assigendStaff=Cookies.get("assigned_staff")
-    console.log(outlet_id, assigendStaff)
+    const {isLoggedIn,activeOutletId} = useAuthServiceContext()
+    const outlet_id = localStorage.getItem("outlet_id") ?? String(activeOutletId)
+
     
         const createOutlet =async (
                  name: string,
@@ -41,37 +42,46 @@ export const OutletNstaffService = () =>{
                     "outlet_description": outlet_description
             }
           try{
-               const response= await jwtAxios.post('http://127.0.0.1:8000/accounts/api/outlets/', 
+               const response= await jwtAxios.post(`${BASE_URL_ACCOUNT}/outlets/`, 
                 payLoad,
                 {withCredentials:true})
     
           
                return response.data
           }catch(err:any){
-              console.log(err)
+              console.log(err.response)
+              throw err.response
           }
         }
 
 
         const getOutlets =async ()=>{
           try{
-               const response= await jwtAxios.get('http://127.0.0.1:8000/accounts/api/outlets/', {withCredentials:true})
+               const response= await jwtAxios.get(`${BASE_URL_ACCOUNT}/outlets/`, {withCredentials:true})
                setOutletsData(response.data)
           
                return response.data
           }catch(err:any){
-              console.log(err)
+              console.log(err.response)
+              throw err.response
           }
         }
         React.useEffect(()=>{
+            if(!isLoggedIn){
+                setOutletsData([])
+                return;
+            }
             getOutlets()
-        },[])
+        },[isLoggedIn])
 //
 //get staffs details
-         const getOutletStaff =async ()=>{
-           const outlet_id = localStorage.getItem("outlet_id") || ""
+         const getOutletStaff =async (outletId? : string)=>{
+           let outlet_id = activeOutletId ?? ""
+           if(outletId){
+            outlet_id=outletId
+           }
           try{
-               const response= await jwtAxios.get(`http://127.0.0.1:8000/accounts/api/outletstaffs/?outlet_id=${outlet_id}`, {withCredentials:true})
+               const response= await jwtAxios.get(`${BASE_URL_ACCOUNT}/outletstaffs/?outlet_id=${outlet_id}`, {withCredentials:true})
                setStaffData(response.data)
                console.log(response.data)
                return response.data
@@ -79,18 +89,22 @@ export const OutletNstaffService = () =>{
             if( err.response.status === 403 && err.response.data?.error){
                 setStaffData([])
             }
-              console.log(err.response.data)
+              
               throw err
           }
           
       }
       React.useEffect(()=>{ 
+        if(!isLoggedIn || !outlet_id){
+            setStaffData([])
+            return;
+        }
             getOutletStaff()
-      },[outlet_id])
+      },[outlet_id, isLoggedIn, activeOutletId])
 //get staff individual staff-status 
         const getStaffStatus = async (found:string)=>{
          try{
-          const response = await jwtAxios.get(`http://127.0.0.1:8000/accounts/api/staffs-login/staff-active-status`,
+          const response = await jwtAxios.get(`${BASE_URL_ACCOUNT}/staffs-login/staff-active-status`,
                             {
                               params:{"staff_id":found},
                               withCredentials:true
@@ -99,14 +113,16 @@ export const OutletNstaffService = () =>{
                           setStaffStatus(response.data)
             
                          
-                          // console.log(response.data)
+                          console.log(response.data)
                           
                         return (response.data)
                        }catch(err:any){
+                        console.log(err.response)
                             if(err.response?.data){
                         // setErrorHandling(error.response.data.non_field_errors[0])
-                        console.log(err.response?.data?.non_field_errors[0])
-                        }
+                            console.log(err.response?.data?.non_field_errors[0])
+                            }
+                            throw err.response
                       }
       }
       React.useEffect(()=>{
@@ -127,7 +143,7 @@ export const OutletNstaffService = () =>{
                 "Employee_id":employeeId
                 }
              try{
-                    const response = await jwtAxios.patch(`http://127.0.0.1:8000/accounts/api/staffs-login/${Id}/`, payLoad,
+                    const response = await jwtAxios.patch(`${BASE_URL_ACCOUNT}/staffs-login/${Id}/`, payLoad,
                         {withCredentials:true}
                     )
                         if(response.status === 200){
@@ -152,6 +168,6 @@ export const OutletNstaffService = () =>{
       }
 
   
-      return {getOutlets,getOutletStaff, outletsData,staffData,createOutlet , staffStatus,employeeId,getStaffStatus, setEmployeeId,setStaffStatus ,LogStaffOut,filterOption,setFilterOption}
+      return {isLoggedIn,getOutlets,getOutletStaff, outletsData,staffData,createOutlet , staffStatus,employeeId,getStaffStatus, setEmployeeId,setStaffStatus ,LogStaffOut,filterOption,setFilterOption}
 
 }

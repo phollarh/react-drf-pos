@@ -20,6 +20,46 @@ interface DrawerStyledProps {
 }
 type ChildElement = React.ReactElement<ChildProps>;
 
+  const openedMixin = (theme: Theme): CSSObject => ({
+            transition: theme.transitions.create("width", {
+                easing: theme.transitions.easing.sharp,
+                duration: theme.transitions.duration.enteringScreen,
+            }),
+            overflowX: "hidden",
+            width: theme.primaryDraw.width,
+        });
+
+        const closedMixin = (theme: Theme): CSSObject => ({
+            transition: theme.transitions.create("width", {
+                easing: theme.transitions.easing.sharp,
+                duration: theme.transitions.duration.enteringScreen,
+            }),
+            overflowX: "hidden",
+            width: theme.primaryDraw.closed,
+        });
+   const Drawer = styled(MuiDrawer, {
+    shouldForwardProp: (prop) => prop !== "open",
+        })<DrawerStyledProps>(({ theme, open }) => ({
+        width: theme.primaryDraw.width,
+        whiteSpace: "nowrap",
+        boxSizing: "border-box",
+
+        ...(open
+            ? {
+                ...openedMixin(theme),
+                "& .MuiDrawer-paper": {
+                    ...openedMixin(theme),
+                },
+            }
+                : {
+                    ...closedMixin(theme),
+                    "& .MuiDrawer-paper": {
+                    ...closedMixin(theme),
+                    },
+                }),
+        })); 
+
+
 const PrimaryDraw: React.FC<Props> = ({ children }) => {
     const theme = useTheme()
     const below600 = useMediaQuery("(max-width:750px)")
@@ -46,24 +86,7 @@ const PrimaryDraw: React.FC<Props> = ({ children }) => {
     //     width: theme.primaryDraw.closed
     // });
 
-        const openedMixin = (theme: Theme): CSSObject => ({
-            transition: theme.transitions.create("width", {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.enteringScreen,
-            }),
-            overflowX: "hidden",
-            width: theme.primaryDraw.width,
-        });
-
-        const closedMixin = (theme: Theme): CSSObject => ({
-            transition: theme.transitions.create("width", {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.enteringScreen,
-            }),
-            overflowX: "hidden",
-            width: theme.primaryDraw.closed,
-        });
-
+      
     // const Drawer = styled(MuiDrawer, {})(({ theme, open }) => ({
     //     width: theme.primaryDraw.width,
     //     whiteSpace: "nowrap",
@@ -78,27 +101,6 @@ const PrimaryDraw: React.FC<Props> = ({ children }) => {
     //     }),
     // }));
 
-   const Drawer = styled(MuiDrawer, {
-    shouldForwardProp: (prop) => prop !== "open",
-        })<DrawerStyledProps>(({ theme, open }) => ({
-        width: theme.primaryDraw.width,
-        whiteSpace: "nowrap",
-        boxSizing: "border-box",
-
-        ...(open
-            ? {
-                ...openedMixin(theme),
-                "& .MuiDrawer-paper": {
-                    ...openedMixin(theme),
-                },
-            }
-                : {
-                    ...closedMixin(theme),
-                    "& .MuiDrawer-paper": {
-                    ...closedMixin(theme),
-                    },
-                }),
-        })); 
         
     useEffect(() => {
         setOpen(!below600)
@@ -133,8 +135,8 @@ const PrimaryDraw: React.FC<Props> = ({ children }) => {
                 <Box>
                     <Box sx={{
                         position: "absolute",
-                        top: 0,
-                        right: 0,
+                        top: -30,
+                        right: -15,
                         p: 0,
                         width: open ? "auto" : "100%"
                     }}>

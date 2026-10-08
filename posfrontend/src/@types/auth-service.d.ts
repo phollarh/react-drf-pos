@@ -7,8 +7,13 @@ export interface AuthServiceProps {
         username: string,
         password: string
     ) => any;
-    register: (email: string,first_name: string,last_name: string, password: string) => Promise<any>
+    userId:number | null
+    register: (email: string,first_name: string,last_name: string, password: string) => Promise<any>;
+    authLoading:boolean;
     isLoggedIn: boolean;
+    activeOutletId:number|null;
+    isOutletActive:boolean;
+    getInitialLoggedInValue: () => Promise<AxiosResponse<any, any, {}>>;
     logout: () => void;
     
     AuthenticateUserPass: (

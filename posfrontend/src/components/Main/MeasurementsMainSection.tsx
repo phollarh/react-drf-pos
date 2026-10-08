@@ -10,13 +10,17 @@ import {
     Card,
     CardContent,
     useMediaQuery,
+    Alert,
+    Toolbar,
 } from "@mui/material";
 import useCrud from "../../hooks/useCrud";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ProductionQuantityLimitsOutlinedIcon from '@mui/icons-material/ProductionQuantityLimitsOutlined';
 import UpdateMeasurementDialogue from "./ProductLists/UpdateMeasurementDialogue";
 import useAxiosWithInterceptor from "../../helper/jwtinterceptor";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import { useAuthServiceContext } from "../../context/AuthContext";
+import { BASE_URL } from "../../congif";
 
 
 
@@ -32,15 +36,34 @@ const MeasurementsMainSection = () => {
     const theme = useTheme();
     const [drawerOpen, setDrawerOpen] = React.useState(true);
     const jwtAxios = useAxiosWithInterceptor();
-    const outlet_id = localStorage.getItem("outlet_id") || ""
+    
     const below750 = useMediaQuery("(max-width : 750px)");
+    const {activeOutletId} = useAuthServiceContext();
+    const [outletId, setOutletId] = useState("")
+    const [noOutletError , setNoOutletError] = useState<null | string>(null)
+        
+        useEffect(()=>{
+                    if(activeOutletId === null){
+                         setNoOutletError("No active outlet, please add/activate an outlet to view data")
+                        
+                    }else{
+                        
+                        setOutletId(String(activeOutletId))
+                        setNoOutletError(null)
+                    }
+                            
+            },[activeOutletId])
+        
+  
+    
         const urlMeasure = React.useMemo(() => {
-                let base = `/measurements_info/`;
+            if(outletId === "")return null;
+            let base = `/measurements_info/`;
                 
                 const params = new URLSearchParams();
         
-                if (outlet_id !== "") {
-                    params.append("outlet_id", outlet_id);
+                if (outletId !== "") {
+                    params.append("outlet_id", outletId);
                 }
     
         
@@ -50,9 +73,9 @@ const MeasurementsMainSection = () => {
                 
         
                 return base;
-            }, [outlet_id]);
+            }, [outletId]);
 
-            console.log(urlMeasure)
+            
     React.useEffect(() => {
                 const handleDrawerToggle = (e: Event) => {
                 const customEvent = e as CustomEvent;
@@ -72,7 +95,7 @@ const MeasurementsMainSection = () => {
 
     try{
         const response = await jwtAxios.delete(
-        `http://127.0.0.1:8000/api/measurements_info/${measureId}/?outlet_id=${outlet_id}`,{
+        `${BASE_URL}/measurements_info/${measureId}/?outlet_id=${outletId}`,{
             withCredentials:true
         })
         
@@ -92,9 +115,10 @@ const MeasurementsMainSection = () => {
     return (
         <>
             <Container  sx={{width:below750?"100%":`calc(100vw - ${drawerWidth}px)`,overflowX:"hidden", ml:below750?"auto":`${drawerWidth}px`, height:"100%", overflowY:"auto"}}>
-                <Box sx={{m:2, pt: 2,width:"100%", display:"flex", justifyContent:"space-between" }}>
+                    {noOutletError && <Alert severity="error">{noOutletError}</Alert> }
+                {/* <Box sx={{m:2, pt: 2,width:"100%", display:"flex", justifyContent:"space-between" }}>
                     <Box >
-                    <Typography variant="h4"
+                        <Typography variant="h4"
                         
                         component="h1"
 
@@ -109,15 +133,27 @@ const MeasurementsMainSection = () => {
                             textAlign: { xs: "center", sm: "left" }
                         }}
                     >
-                        {dataCRUD?.length > 0 ? 'Measurement Lists' : "No Measurement Added...Please Add new Measurement"}
+                        {dataCRUD?.length > 0 ? 'Measurement Lists' :
+                          <Alert severity="error">No measurement added. Add to list....</Alert>
+                         }
                         
                     </Typography>
                     </Box>
                     <Box></Box>
                     <Box sx={{m:1}}>
-                        <UpdateMeasurementDialogue outlet_id={outlet_id} dataCRUD={dataCRUD} onSuccess={fetchData} />
+                        <UpdateMeasurementDialogue outlet_id={outletId} dataCRUD={dataCRUD} onSuccess={fetchData} />
                     </Box>
-                </Box>
+                </Box> */}
+                <Toolbar sx={{justifyContent:"space-between",width:"100%", height:"10%",mt:2}}>
+                    <Typography variant="h5" sx={{width:"70%"}}>
+                        {dataCRUD?.length > 0 ? 'Measurement Lists' :
+                          <Alert severity="error">No measurement added. Add to list....</Alert>
+                        }
+                    </Typography>
+                                    <Box >
+                                        <UpdateMeasurementDialogue outlet_id={outletId} dataCRUD={dataCRUD} onSuccess={fetchData} />
+                                    </Box>
+                </Toolbar>
 
 
                 <Grid container spacing={2}>

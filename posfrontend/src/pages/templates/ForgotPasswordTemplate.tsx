@@ -20,7 +20,7 @@ const ForgotPasswordTemplate = () => {
     setClickedOption(null);
 
     if(input === "register"){
-      console.log('caled....')
+      
       setClickedOption(input)
       setShowFormDetailRegister(!showFormDetailRegister)
     }

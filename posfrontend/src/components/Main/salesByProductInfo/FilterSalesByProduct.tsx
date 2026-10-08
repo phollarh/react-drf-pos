@@ -7,10 +7,12 @@ import {useTheme } from "@mui/material";
 type filterOptionType= {
   filterOption:string;
   handleChange:(event: SelectChangeEvent)=>void;
+  productId?:string
 }
 
-export default function FilterSalesByProduct({filterOption, handleChange}:filterOptionType) {
+export default function FilterSalesByProduct({filterOption,productId, handleChange}:filterOptionType) {
     const theme = useTheme();
+    const isOnProductSummary = location.pathname === (String(`/sales_summary/${productId}`))
 
   return (
     <>
@@ -33,12 +35,20 @@ export default function FilterSalesByProduct({filterOption, handleChange}:filter
           <MenuItem 
           onClick={() => {
       
-            handleChange({ target: { value: 'custom' } } as any);
+            handleChange({ target: { value: 'custom'  } } as any);
           }}
-          sx={{borderTop:`1px solid ${theme.palette.divider}`}} value='custom'>Custom</MenuItem>
+          sx={{borderTop:`1px solid ${theme.palette.divider}`, display:!isOnProductSummary?"block":"none"}} value='custom' >Custom</MenuItem>
         {/* </Typography> */}
         
-        
+        <MenuItem
+          onClick={ () =>{
+            handleChange({ target: { value: 'date_range'  } } as any);
+          }}
+            value="date_range"
+            sx={{ display:isOnProductSummary?"block": "none" }}
+        >
+            Custom
+        </MenuItem>
       </Select>
     </FormControl>
 

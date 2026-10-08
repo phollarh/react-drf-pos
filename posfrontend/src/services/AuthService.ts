@@ -1,6 +1,6 @@
 import axios from "axios"
 import { AuthServiceProps } from "../@types/auth-service";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BASE_URL_ACCOUNT } from "../congif";
 import { useNavigate } from "react-router-dom";
 
@@ -12,15 +12,53 @@ export function useAuthService(): AuthServiceProps {
 
     const navigate = useNavigate();
     const [authError, setAuthError] = useState<string | null >(null)
+    const [userId, setUserid] = useState<number|null>(null)
+    const [activeOutletId, setActiveOutletId] = useState<number|null>(null)
+    const [isOutletActive, setIsoutletActive] = useState<boolean>(false)
     const jwtAxios = useAxiosWithInterceptor()
+    const [isLoggedIn, setIsloggedIn] = useState<boolean>((false))
+    const [authLoading, setAuthLoading] = useState<boolean>((true))
 
+    const getInitialLoggedInValue =async () => {
+        // const loggedIn = localStorage.getItem("isLoggedIn");
+        // return loggedIn !== null && loggedIn === "true";
+        
+         try {
 
-    const getInitialLoggedInValue = () => {
-        const loggedIn = localStorage.getItem("isLoggedIn");
-        return loggedIn !== null && loggedIn === "true";
+            const response = await jwtAxios.get(
+                `${BASE_URL_ACCOUNT}/user/is_authenticated/`,
+                {
+                    withCredentials: true
+                }
+            );
+            
+            if(response.status === 200){
+                
+                setIsloggedIn(response.data.is_authenticated)
+                setActiveOutletId(response.data.active_outlet ?? null)
+                setIsoutletActive(response.data?.is_outlet_active)
+                setUserid(response.data?.auth_id)
+                
+            }
+            
+            return response;
+        } catch (err: any) {
+            if(err.response?.status === 401){
+                setIsloggedIn(false);
+                setUserid(null);
+                setActiveOutletId(null);
+                setIsoutletActive(false);
+            }
+            
+            throw err.response;
+        }finally{
+            setAuthLoading(false)
+        }
     };
-    const [isLoggedIn, setIsloggedIn] = useState<boolean>((getInitialLoggedInValue))
-
+    
+    useEffect(()=>{
+        getInitialLoggedInValue()
+    }, [])
     const AuthenticateUserPass = async (
         password:string,
         requestId:null|{}, 
@@ -39,7 +77,7 @@ export function useAuthService(): AuthServiceProps {
         try {
 
             const response = await jwtAxios.post(
-                `http://127.0.0.1:8000/accounts/api/user/authenticate_password/`,payload,
+                `${BASE_URL_ACCOUNT}/user/authenticate_password/`,payload,
                 {
                     withCredentials: true
                 }
@@ -68,11 +106,12 @@ export function useAuthService(): AuthServiceProps {
 
     const getUserDetails = async () => {
         setAuthError(null)
+        if(!userId) return;
         try {
-            const userId = localStorage.getItem("user_id");
+            // const userId = localStorage.getItem("user_id");
             // const accessToken = localStorage.getItem("access_token")
-            const response = await axios.get(
-                `http://127.0.0.1:8000/accounts/api/user/?user_id=${userId}`,
+            const response = await jwtAxios.get(
+                `${BASE_URL_ACCOUNT}/user/?user_id=${userId}`,
                 {
                     // headers: {
                     //     Authorization: `Bearer ${accessToken}`
@@ -81,14 +120,15 @@ export function useAuthService(): AuthServiceProps {
                 }
             );
             const userDetails = response.data;
-            console.log(userDetails)
+            
             return userDetails;
             // localStorage.setItem("username", userDetails.username);
             // localStorage.setItem("isLoggedIn", "true")
         } catch (err: any) {
+            
             setAuthError(err.response.data["error"])
             // localStorage.setItem("isLoggedIn", "false")
-            throw err;
+            throw err.response;
         }
 
     }
@@ -96,6 +136,7 @@ export function useAuthService(): AuthServiceProps {
 
     const login = async (email: string, password: string) => {
         setAuthError(null)
+        
         try {
             const response = await axios.post(
                 `${BASE_URL_ACCOUNT}/token/`, {
@@ -114,6 +155,8 @@ export function useAuthService(): AuthServiceProps {
                 
                 localStorage.setItem("isLoggedIn", "true")
                 localStorage.setItem("user_id", user_id)
+                setUserid(response.data.user_id)
+                setIsloggedIn(true)
                 // setIsloggedIn(true)
                 // const decoded = jwtDecode<CustomJwtPayload>(response.data['access']);
                 // if(decoded.is_verified === false){
@@ -121,7 +164,7 @@ export function useAuthService(): AuthServiceProps {
                 // }
             }
             
-            console.log(response.data)
+            
             return response.data;
         } catch (err: any) {
             setAuthError(err.response.data["error"])
@@ -136,7 +179,7 @@ export function useAuthService(): AuthServiceProps {
             setAuthError(null);
         try {
             const response = await axios.post(
-                "http://127.0.0.1:8000/accounts/api/register/", {
+                `${BASE_URL_ACCOUNT}/register/`, {
 
                 email,
                 first_name,
@@ -170,7 +213,7 @@ export function useAuthService(): AuthServiceProps {
                 `${BASE_URL_ACCOUNT}/token/refresh/`, {}, { withCredentials: true }
             )
         } catch (refreshError :any) {
-            console.log(refreshError.response)
+            
             setAuthError(refreshError.response.data["error"])
             return Promise.reject(refreshError)
 
@@ -187,6 +230,8 @@ export function useAuthService(): AuthServiceProps {
                 `${BASE_URL_ACCOUNT}/logout/`, {}, { withCredentials: true }
             )
             if(response.status === 200){
+                setIsloggedIn(false)
+                setUserid(null)
                 localStorage.removeItem("user_id");
                 localStorage.removeItem("username");
                 localStorage.setItem("isLoggedIn", "false")
@@ -203,6 +248,16 @@ export function useAuthService(): AuthServiceProps {
 
 
     }
-    return { login, isLoggedIn,getUserDetails,AuthenticateUserPass, logout, refreshAccessToken, register, authError }
+    return {
+        userId,
+        authLoading, 
+        login, 
+        isLoggedIn,
+        getUserDetails,
+        AuthenticateUserPass,
+        getInitialLoggedInValue,
+        activeOutletId,
+        isOutletActive,
+         logout, refreshAccessToken, register, authError }
 
 }

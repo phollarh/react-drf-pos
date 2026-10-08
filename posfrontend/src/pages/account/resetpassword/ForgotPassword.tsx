@@ -9,6 +9,7 @@ import ProgressSign from "../../../components/Progress";
 import ResetPasswordDiag from "../../../components/Main/accounts/resetPassword/ResetPasswordDaig";
 import React from "react";
 import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
+import { BASE_URL_ACCOUNT } from "../../../congif";
 
 
 
@@ -50,7 +51,7 @@ const ForgotPassword = () => {
          }
 
         try{
-            const response = await jwtAxios.post('http://127.0.0.1:8000/accounts/api/user/reset_password/',
+            const response = await jwtAxios.post(`${BASE_URL_ACCOUNT}/api/user/reset_password/`,
                              payload,
                 )
                 if(response.status === 200){
@@ -121,7 +122,7 @@ const ForgotPassword = () => {
                 
                 }
             try{
-                const response = await jwtAxios.post('http://127.0.0.1:8000/accounts/api/user/forgot_password_otp_gen/',
+                const response = await jwtAxios.post(`${BASE_URL_ACCOUNT}/user/forgot_password_otp_gen/`,
                     apiValues,
                     
                 

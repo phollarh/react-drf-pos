@@ -26,7 +26,7 @@ const PassCodeForm = ({handleClose,purpose,requestId,formikS,passTokenRef}:passw
     const [sucessMessage, setSucessMessage] = useState<null | string>(null)
     const {AuthenticateUserPass, authError} = useAuthServiceContext()
     const [checked, setChecked] = React.useState(false);
-    console.log(checked)
+    
     const handleCheckedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setChecked(event.target.checked);
     };
@@ -62,8 +62,8 @@ const PassCodeForm = ({handleClose,purpose,requestId,formikS,passTokenRef}:passw
                 
                 await formikS.submitForm();
 
-            }catch (err) {
-                console.log(err);
+            }catch (err:any) {
+                throw err.result
             }
           
          },

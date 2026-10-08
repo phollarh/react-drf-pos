@@ -7,33 +7,15 @@ import {
     SelectChangeEvent
 } from "@mui/material";
 import useCrud from "../../hooks/useCrud";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import PastReceiptView from "./sales/PastReceiptView";
 import PaginationControlled from "../pagination/Pagination";
 import PaginationSizeForm from "../pagination/PaginationSizeForm";
 import { Dayjs } from "dayjs";
+import { useAuthServiceContext } from "../../context/AuthContext";
+import { OrderProps } from "../../@types/server";
 
 
-interface ProductProps{
-    id:number;
-    product_name:string;
-    category:string;
-    cost_price:number;
-    selling_price :number;
-    stock_inventory:number;
-    sold_In:string
-    
-}
-interface OrderProps {
-    id:number;
-    date:string;
-    description:string;
-    paid:boolean;
-    product:ProductProps;
-    quantity:number;
-    sub_total:number
-
-}
 
 interface Server {
     id: number;
@@ -68,16 +50,26 @@ const MainPastReceipts = () => {
     const [tempStartDate, setTempStartDate] = React.useState<Dayjs | null>(null);
     const [tempEndDate, setTempEndDate] = React.useState<Dayjs | null>(null);
     const [searchById, setSearchById] = React.useState<string>("");
-    const outlet_id:string  = localStorage.getItem("outlet_id") || ""
+    const {activeOutletId} = useAuthServiceContext();
+    const [outletId, setOutletId] = useState("")
+    
+    useEffect(()=>{
+                if(activeOutletId){
+                    setOutletId(String(activeOutletId))
+                }
+                        
+    },[activeOutletId])
+        
     
     const url = React.useMemo(() => {
+        if(outletId === "")return null;
         const params = new URLSearchParams();
 
     
         params.append("issued", "true");
 
-        if (outlet_id) {
-            params.append("outlet_id", outlet_id);
+        if (outletId) {
+            params.append("outlet_id", outletId);
         }
         if (filterOption === "custom") {
             if (!startDate || !endDate) return null;
@@ -100,10 +92,10 @@ const MainPastReceipts = () => {
         if (searchById) {
             params.append("search", searchById);
         }
-        console.log(`/sales_receipt/?${params.toString()}`);
+        
         return `/sales_receipt/?${params.toString()}`
     
-    }, [outlet_id,page,filterOption, startDate,endDate,size, searchById]);
+    }, [outletId,page,filterOption, startDate,endDate,size, searchById]);
 
 
     const { dataCRUD,dataCRUDPaginate, fetchData, error } = useCrud<Server>([], url )
@@ -113,7 +105,7 @@ const MainPastReceipts = () => {
             fetchData();
         }, [url]);
 
-    
+    console.log(dataCRUD)
     const handleChangePagination =(_event: React.ChangeEvent<unknown>, value: number) => {
         setPage(value);      
       };
@@ -132,16 +124,12 @@ const MainPastReceipts = () => {
 
     }, [page, size, searchById]);
 
-    const [data, setData] = React.useState<Server[]>([])
-        useEffect(() => {
-            setData(dataCRUD)
-    }, [dataCRUD]);
-    console.log(data)
-        useEffect(() => {
-            console.log(dataCRUDPaginate)
+    // const [data, setData] = React.useState<Server[]>([])
+    //     useEffect(() => {
+    //         setData(dataCRUD)
+    // }, [dataCRUD]);
     
-        }, [dataCRUDPaginate]);
-
+    
     const handleFilterChange=(event: SelectChangeEvent)=>{
         const newValue = event.target.value as string
         
@@ -196,7 +184,7 @@ const MainPastReceipts = () => {
                     handleFilterChange={handleFilterChange} handleApplyCustomDate={handleApplyCustomDate} handleCloseDialog={handleCloseDialog}
                      tempEndDate={tempEndDate} tempStartDate={tempStartDate} setTempStartDate={setTempStartDate} setTempEndDate={setTempEndDate}
                      showDialogForCustom={showDialogForCustom}
-                    filterOption={filterOption} data={data} handleChange={handleSearchClick} inputValue={searchById}/>   
+                    filterOption={filterOption} data={dataCRUD} handleChange={handleSearchClick} inputValue={searchById}/>   
                      
                 </Box>
 

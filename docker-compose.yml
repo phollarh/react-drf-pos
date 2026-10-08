@@ -1,4 +1,3 @@
-version: "3.9"
 services:
 
   db:
@@ -16,7 +15,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+  redis:
+    image: redis:7-alpine
+    container_name: pos-redis
+    restart: unless-stopped
+    networks:
+      - pos-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 
 
@@ -34,10 +43,43 @@ services:
     depends_on:
       - db
       
+  celery:
+    container_name: pos-celery
+    build: ./bukkofpos
+    command: celery -A bukkofpos worker --loglevel=info
+    volumes:
+      - ./bukkofpos:/app
+    env_file:
+      - ./bukkofpos/.env
+    depends_on:
+      - db
+      - redis
+    networks:
+      - pos-network
 
+  celery-beat:
+    container_name: pos-celery-beat
+    build: ./bukkofpos
+    command: >
+      python -m celery
+      -A bukkofpos
+      beat
+      --loglevel=info
+      --schedule=/tmp/celerybeat-schedule
+    volumes:
+      - ./bukkofpos:/app
+    env_file:
+      - ./bukkofpos/.env
+    networks:
+      - pos-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
   frontend:
     networks:
-    - pos-network
+      - pos-network
     container_name : pos-frontend
     volumes:
       - ./posfrontend:/app
