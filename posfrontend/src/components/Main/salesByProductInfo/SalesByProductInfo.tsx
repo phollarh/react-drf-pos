@@ -8,6 +8,8 @@ import SalesByProductInfoTable from './SalesByProductInfoTable';
 interface productDetailsProps{
     id:number;
     product_name:string;
+    total_amount:number;
+    profit_rank:string;
     total_qty:number;
 }
 
@@ -20,6 +22,7 @@ interface SalesByProductProp {
         last_week:productDetailsProps[];
         last_month:productDetailsProps[]   
 }
+
 
 interface SalesByProductProps {
     salesProductData : SalesByProductProp | null      

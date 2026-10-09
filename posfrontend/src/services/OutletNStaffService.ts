@@ -1,14 +1,9 @@
 import React from "react"
 import useAxiosWithInterceptor from "../helper/jwtinterceptor"
-import { outletsDataProps, outletStaffDataProps } from "../@types/outletsNstaff-service"
+import { outletsDataProps, outletStaffDataProps, staffStatusProps } from "../@types/outletsNstaff-service"
 import { useAuthServiceContext } from "../context/AuthContext";
 import { BASE_URL_ACCOUNT } from "../congif";
-interface staffStatusProps{
-    is_active:boolean;
-    session_id : string;
-    log_in_time:string;
-    last_logIn_time:string
-}
+
 
 export const OutletNstaffService = () =>{
     const jwtAxios = useAxiosWithInterceptor()

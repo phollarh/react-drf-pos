@@ -11,7 +11,7 @@ import BarChartMain from "./SalesInfo/BarCharts";
 import LineChartHome from "./SalesInfo/LineChart";
 import useAxiosWithInterceptor from "../../helper/jwtinterceptor";
 import SalesInfo from "./SalesInfo/SalesInfo"
-import { BASE_URL, BASE_URL_CHARTS } from "../../congif";
+import { BASE_URL } from "../../congif";
 import { useAuthServiceContext } from "../../context/AuthContext";
 
 type SaleRecord = { net_sales?: number; gross_sales?: number, cost_of_sales?:number };

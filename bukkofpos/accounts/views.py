@@ -294,7 +294,7 @@ class AuthenticateOutletView(APIView):
             assigned_staff = request.COOKIES.get("assigned_staff")
             print(assigned_staff, "asssss", active_status)
             if assigned_staff:
-                print("madehedgdg")
+                
                 OutletStaffLogin.objects.filter(
                     outlet_staff__Employee_id=assigned_staff, assigned=True
                 ).update(
@@ -695,8 +695,7 @@ class AccountViewSet(viewsets.ViewSet):
         ],
     )
     def end_user_session(self, request):
-        session = request.pos_authorization
-        session_id = request.pos_authorization.get("employee_id")
+        session = request.pos_authorizatio
         role = session.get("role")
         assigned_staff = request.COOKIES.get("assigned_staff")
         current_time = timezone.now()
@@ -743,7 +742,7 @@ class AccountViewSet(viewsets.ViewSet):
         session_role = authorization.get("role")
         session_employee_id = authorization.get("employee_id")
         request_cred = request.data.get("requestId")
-        outlet_id = request.data.get("outlet_id")
+        
         if not request_cred or not purpose:
             return Response(
                 {"error": "Invalid action, try again"},

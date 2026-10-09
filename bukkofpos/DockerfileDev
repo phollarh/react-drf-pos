@@ -15,4 +15,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "bukkofpos.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info"]
+CMD ["uvicorn", "bukkofpos.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--log-level", "debug", "--reload"]

@@ -53,3 +53,6 @@ Thumbs.db
 .mypy_cache/
 
 note.md
+# Include public frontend configuration
+!posfrontend/.env.development
+!posfrontend/.env.production

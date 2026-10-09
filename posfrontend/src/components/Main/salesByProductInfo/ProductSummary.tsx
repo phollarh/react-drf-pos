@@ -10,11 +10,9 @@ import { useParams } from "react-router-dom";
 import AssuredWorkloadIcon from '@mui/icons-material/AssuredWorkload';
 import { BASE_URL } from "../../../congif";
 import SalesByProductChart from "./SalesByProductChart";
-import OutboundIcon from '@mui/icons-material/Outbound';
 import { useAuthServiceContext } from "../../../context/AuthContext";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
-import HorizontalRuleIcon from '@mui/icons-material/HorizontalRule';
 import MinimizeIcon from '@mui/icons-material/Minimize';
 
 interface productDetailsProps{

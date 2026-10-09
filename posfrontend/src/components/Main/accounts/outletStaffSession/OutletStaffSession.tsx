@@ -49,7 +49,7 @@ interface SessionProps {
     assignMess :string | null;
 }
  
- export default function OutletStaffSession({setDataCRUDReceipt,fetchReceipt, assignMess,setAssignMess,setAssignedStaff,assignedStaff}:SessionProps) {
+ export default function OutletStaffSession({setDataCRUDReceipt,fetchReceipt, setAssignMess,setAssignedStaff,assignedStaff}:SessionProps) {
         
         const theme = useTheme()
         const {staffStatus} = UseoutletNstaffContext();

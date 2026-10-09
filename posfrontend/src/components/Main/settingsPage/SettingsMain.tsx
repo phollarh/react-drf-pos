@@ -117,11 +117,11 @@ const SettingsMain = ({mode,setMode,getStaffStatus,handleStaffCreated,setisMainH
                     {staffStatus?.is_active?
                     (
                         <Typography sx={{position:"absolute", fontFamily:"sans-serif",left:"60%",top:"2%",m:0, p:0, fontSize:"10px"}} >
-                            active since: {staffStatus&&formatDistance(new Date(staffStatus.log_in_time), new Date(), { addSuffix: true })};
+                            active since: {staffStatus&&formatDistance(new Date(String(staffStatus?.log_in_time)), new Date(), { addSuffix: true })};
                             </Typography>
                     ):
                     (
-                     <Typography sx={{display:staffStatus?.last_logIn_time ?"inherit":"none", position:"absolute",left:"60%",top:"2%",m:0, p:0, fontSize:"13px"}} component="span">last seen: {staffStatus&&formatDistance(new Date(staffStatus.last_logIn_time), new Date(), { addSuffix: true })};</Typography>
+                     <Typography sx={{display:staffStatus?.last_logIn_time ?"inherit":"none", position:"absolute",left:"60%",top:"2%",m:0, p:0, fontSize:"13px"}} component="span">last seen: {staffStatus&&formatDistance(new Date(String(staffStatus.last_logIn_time)), new Date(), { addSuffix: true })};</Typography>
                     )
                     }
                     <Typography></Typography>

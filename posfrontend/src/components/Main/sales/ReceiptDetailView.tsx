@@ -2,8 +2,7 @@ import { Box, Button, Card, CardActions, CardContent, Container, Divider, List, 
 import { format } from 'date-fns';
 import React, { useState } from 'react';
 import useAxiosWithInterceptor from '../../../helper/jwtinterceptor';
-import { BASE_URL, BASE_URL_CHARTS } from '../../../congif';
-import { UseoutletNstaffContext } from '../../../context/OutletNStaffsContext';
+import { BASE_URL } from '../../../congif';
 import { useAuthServiceContext } from '../../../context/AuthContext';
 import qz from 'qz-tray';
 import { OrderProps } from '../../../@types/server';
@@ -54,7 +53,7 @@ const ReceiptDetailView = (
             const jwtAxios = useAxiosWithInterceptor();
           const theme = useTheme();
           const {activeOutletId} = useAuthServiceContext();
-          const [printerMess,setPrinterMess] = useState<string | null>(null) 
+          const [,setPrinterMess] = useState<string | null>(null) 
             const style = {
                 py: 0,
                 width: '100%',

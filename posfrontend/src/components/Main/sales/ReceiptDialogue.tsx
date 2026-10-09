@@ -93,7 +93,10 @@ export default function ReceiptDialogue( {handleClose,open,receiptData,handleCli
             remarks=''
             dataCRUD={receiptData}
             handleClick={handleClick}
-            setDataCRUDReceipt={setDataCRUDReceipt} showReceiptDetaills={false}/>
+            setDataCRUDReceipt={setDataCRUDReceipt} showReceiptDetaills={false} inventoryError={null} 
+            setInventoryError={function (): void {
+              throw new Error('Function not implemented.');
+            } }/>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Back</Button>
