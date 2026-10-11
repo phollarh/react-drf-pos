@@ -275,6 +275,7 @@ class AuthenticateOutletView(APIView):
             response.set_cookie(
                 "active_outlet",
                 active_outlet,
+                secure=not settings.DEBUG,
                 httponly=True,
                 samesite="Lax",
                 max_age=30 * 24 * 60 * 60,
@@ -292,7 +293,7 @@ class AuthenticateOutletView(APIView):
             )
 
             assigned_staff = request.COOKIES.get("assigned_staff")
-            print(assigned_staff, "asssss", active_status)
+            
             if assigned_staff:
                 
                 OutletStaffLogin.objects.filter(
@@ -590,6 +591,7 @@ class AccountViewSet(viewsets.ViewSet):
             response.set_cookie(
                 "assigned_staff",
                 str(get_staff.Employee_id),
+                secure=not settings.DEBUG,
                 max_age=settings.STAFF_ASSIGNMENT_MAX_AGE,
                 httponly=True,
                 samesite="Lax",
@@ -597,10 +599,11 @@ class AccountViewSet(viewsets.ViewSet):
         response.set_cookie(
             "pos_session",
             session_auth,
+            secure=not settings.DEBUG,
             max_age=settings.STAFF_ASSIGNMENT_MAX_AGE,
             httponly=True,
             samesite="Lax",
-            secure=False,
+            
         )
         response.delete_cookie("pass_token")
         return response
@@ -854,9 +857,10 @@ class AccountViewSet(viewsets.ViewSet):
                 "pass_token",
                 response.data["pass_token"],
                 max_age=15 * 60,
+                secure=not settings.DEBUG,
                 httponly=True,
                 samesite="Lax",
-                # secure=True,
+                
             )
         return response
 
@@ -1928,10 +1932,11 @@ class StaffLoginViewSet(viewsets.ModelViewSet):
         set_max_age = 0
         if not active_login.assignment_expires_at < timezone.now():
             set_max_age = active_login.assignment_expires_at - timezone.now()
-        print(set_max_age.total_seconds())
+        
         response.set_cookie(
             "assigned_staff",
             str(staff.Employee_id),
+            secure=not settings.DEBUG,
             max_age=set_max_age.total_seconds(),
             httponly=True,
             samesite="Lax",
@@ -2030,6 +2035,7 @@ class JWTSetCookieMixin:
                 settings.SIMPLE_JWT["REFRESH_TOKEN_NAME"],
                 response.data["refresh"],
                 max_age=settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"],
+                secure=not settings.DEBUG,
                 httponly=True,
                 samesite=settings.SIMPLE_JWT["JWT_COOKIE_SAMESITE"],
             )
@@ -2039,6 +2045,7 @@ class JWTSetCookieMixin:
                 response.data["access"],
                 max_age=settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"],
                 httponly=True,
+                secure=not settings.DEBUG,
                 samesite=settings.SIMPLE_JWT["JWT_COOKIE_SAMESITE"],
             )
             # if not request.META.get("HTTP_USER_AGENT", "").lower().startswith("swagger"):
