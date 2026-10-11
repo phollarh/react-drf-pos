@@ -99,7 +99,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 class EmailVerification(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    code = models.CharField(max_length=5)
+    code = models.CharField(max_length=255)
     pending_email = models.EmailField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
