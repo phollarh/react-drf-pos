@@ -76,6 +76,7 @@ def activateEmail(request, user, code):
         sent = email.send(fail_silently=False)
         return sent == 1
     except Exception as e:
+        print("callllllelellelelle")
         print("EMAIL ERROR:", str(e))
         print(repr(e), flush=True) 
         raise
