@@ -1107,7 +1107,7 @@ class AccountViewSet(viewsets.ViewSet):
         verification_instance.code = code
         verification_instance.created_at = timezone.now()
         verification_instance.save()
-
+        print("calledjshhsgdg herererere")
         activateEmail(request, code=code, user=user)
         return Response(
             {
