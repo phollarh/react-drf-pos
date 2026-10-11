@@ -61,18 +61,24 @@ from accounts.session_permisson import (
 
 
 def activateEmail(request, user, code):
-    mail_subject = "Activate your user account."
-    message = render_to_string(
-        "activate_account.html",
-        {
-            "user": user.email,
-            "name": user.first_name,
-            "code": code,
-        },
-    )
-    email = EmailMessage(mail_subject, message, to=[user.email])
-    email.content_subtype = "html"
-    email.send()
+    try:
+        mail_subject = "Activate your user account."
+        message = render_to_string(
+            "activate_account.html",
+            {
+                "user": user.email,
+                "name": user.first_name,
+                "code": code,
+            },
+        )
+        email = EmailMessage(mail_subject, message, to=[user.email])
+        email.content_subtype = "html"
+        sent = email.send(fail_silently=False)
+        return sent == 1
+    except Exception as e:
+        print("EMAIL ERROR:", str(e))
+        print(repr(e), flush=True) 
+        raise
 
 
 def PasswordResetEmail(request, user, code):
@@ -93,6 +99,7 @@ def PasswordResetEmail(request, user, code):
 
     except Exception as e:
         print("EMAIL ERROR:", str(e))
+        print(repr(e), flush=True) 
         raise
 
 
