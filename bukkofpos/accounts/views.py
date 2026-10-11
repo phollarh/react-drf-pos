@@ -74,7 +74,10 @@ def activateEmail(request, user, code):
         email = EmailMessage(mail_subject, message, to=[user.email])
         email.content_subtype = "html"
         sent = email.send(fail_silently=False)
-        return sent == 1
+        if sent != 1:
+            raise RuntimeError("Verification email was not sent")
+
+        return True
     except Exception as e:
         print("callllllelellelelle")
         print("EMAIL ERROR:", str(e))
@@ -96,7 +99,9 @@ def PasswordResetEmail(request, user, code):
         email.content_subtype = "html"
         sent = email.send(fail_silently=False)
         print("Email send result:", sent)
-        return sent == 1
+        if  sent != 1:
+            raise RuntimeError("password reset email was not send ")
+        return True
 
     except Exception as e:
         print("EMAIL ERROR:", str(e))
@@ -1085,37 +1090,37 @@ class AccountViewSet(viewsets.ViewSet):
             )
         if User.objects.filter(email=email).exclude(id=user.id).exists():
             return Response({"error": "Email already in use"}, status=400)
+        with transaction.atomic():
+            verification_instance, created = EmailVerification.objects.get_or_create(
+                user=user,
+                defaults={
+                    "pending_email": email,
+                },
+            )
+            if not created:
+                if (
+                    verification_instance.created_at + timezone.timedelta(minutes=5)
+                    > timezone.now()
+                ):
+                    return Response(
+                        {"error": "Please wait a while before requesting another code"},
+                        status=400,
+                    )
+            code = str(secrets.randbelow(90000) + 10000)
 
-        verification_instance, created = EmailVerification.objects.get_or_create(
-            user=user,
-            defaults={
-                "pending_email": email,
-            },
-        )
-        if not created:
-            if (
-                verification_instance.created_at + timezone.timedelta(minutes=5)
-                > timezone.now()
-            ):
-                return Response(
-                    {"error": "Please wait a while before requesting another code"},
-                    status=400,
-                )
-        code = str(secrets.randbelow(90000) + 10000)
-
-        verification_instance.pending_email = email
-        verification_instance.code = code
-        verification_instance.created_at = timezone.now()
-        verification_instance.save()
-        print("calledjshhsgdg herererere")
-        activateEmail(request, code=code, user=user)
-        return Response(
-            {
-                "message": "please check your email for single-use code",
-                "next_available_time": verification_instance.created_at
-                + timezone.timedelta(minutes=5),
-            }
-        )
+            verification_instance.pending_email = email
+            verification_instance.code = code
+            verification_instance.created_at = timezone.now()
+            verification_instance.save()
+            print("calledjshhsgdg herererere")
+            activateEmail(request, code=code, user=user)
+            return Response(
+                {
+                    "message": "please check your email for single-use code",
+                    "next_available_time": verification_instance.created_at
+                    + timezone.timedelta(minutes=5),
+                }
+            )
 
     @action(
         detail=False,
