@@ -140,6 +140,12 @@ const ProtectedRoute = ({
                 setStaffStatus(undefined);
                 setEmployeeId("");
 
+                 console.error("POS session check failed:", {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+    });
+
                 
             }
         };
