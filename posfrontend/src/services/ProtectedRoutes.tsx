@@ -160,6 +160,8 @@ const ProtectedRoute = ({
         location.pathname,
         setStaffStatus,
         setEmployeeId,
+        isLoggedIn,
+        
     ]);
 
     if (authLoading || checkingSession || !session) {
