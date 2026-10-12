@@ -12,6 +12,7 @@ import {
 import useAxiosWithInterceptor from "../helper/jwtinterceptor";
 import { BASE_URL_ACCOUNT } from "../congif";
 import { UseoutletNstaffContext } from "../context/OutletNStaffsContext";
+import { useAuthServiceContext } from "../context/AuthContext";
 
 type SessionRole =
     | "admin"
@@ -59,6 +60,7 @@ const ProtectedRoute = ({
     const navigate = useNavigate();
     const location = useLocation();
     const jwtAxios = useAxiosWithInterceptor();
+    const {isLoggedIn, authLoading } = useAuthServiceContext()
 
     const {
         setStaffStatus,
@@ -158,9 +160,10 @@ const ProtectedRoute = ({
         setEmployeeId,
     ]);
 
-    if (checkingSession || !session) {
+    if (authLoading || checkingSession || !session) {
         return null;
     }
+    if(!isLoggedIn) return null
 
     return <>{children}</>;
 };
