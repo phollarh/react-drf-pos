@@ -145,8 +145,10 @@ const ProtectedRoute = ({
                 });
             }
         };
-
-        getSession();
+        if(isLoggedIn  && !authLoading){
+            getSession();
+        }
+        
 
         return () => {
             ignoreResult = true;
