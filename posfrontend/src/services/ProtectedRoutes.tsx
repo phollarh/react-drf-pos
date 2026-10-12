@@ -134,7 +134,7 @@ const ProtectedRoute = ({
 
                 
 
-                // hasRedirected.current = true;
+                hasRedirected.current = true;
 
                 setSession(null);
                 setStaffStatus(undefined);
