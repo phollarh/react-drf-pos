@@ -165,8 +165,10 @@ const ProtectedRoute = ({
         isLoggedIn,
         authLoading
     ]);
-
-    if (authLoading || checkingSession || !session) {
+    if( checkingSession || !session){
+        return null
+    }
+    if (authLoading) {
         return (
         <Box
             role="status"
