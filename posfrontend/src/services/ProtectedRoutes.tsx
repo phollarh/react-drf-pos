@@ -132,32 +132,15 @@ const ProtectedRoute = ({
                     return;
                 }
 
-                 if (
-                    err.response?.status === 401 ||
-                    (
-                        err.response?.status === 403 &&
-                        err.response?.data?.email_verification_status === false
-                    )
-                ) {
-                    return;
-                }
-                if (
-        err.response?.data.code === "pos_authorization_required" ||
-        err.respose.data.code === "session_expired_please_reauthenticate"
-    ) {
-        
-        return;
-    }
+                
 
-                hasRedirected.current = true;
+                // hasRedirected.current = true;
 
                 setSession(null);
                 setStaffStatus(undefined);
                 setEmployeeId("");
 
-                navigate("/authorization", {
-                    replace: true,
-                });
+                
             }
         };
         if(isLoggedIn  && !authLoading){
@@ -176,6 +159,7 @@ const ProtectedRoute = ({
         setStaffStatus,
         setEmployeeId,
         isLoggedIn,
+        authLoading,
 
     ]);
 

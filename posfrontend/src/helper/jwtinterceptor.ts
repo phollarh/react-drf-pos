@@ -24,9 +24,9 @@ const checkEmailVerificationOnce = () => {
       }
     )
     .then((response) => {
-      if (response.status === 200) {
-        emailIsVerified = true;
-      }
+    //   if (response.status === 200) {
+    //     emailIsVerified = true;
+    //   }
 
       return response;
     })
