@@ -125,16 +125,14 @@ const ProtectedRoute = ({
                 setSession(currentSession);
                 setCheckingSession(false);
             } catch (err: any) {
-                console.log(err.response)
                 if (
                     ignoreResult ||
                     hasRedirected.current
                 ) {
-                    console.log("hold in gerererer")
                     return;
                 }
 
-                
+                console.log(err.response);
 
                 hasRedirected.current = true;
 
@@ -142,23 +140,20 @@ const ProtectedRoute = ({
                 setStaffStatus(undefined);
                 setEmployeeId("");
 
-                 console.error("POS session check failed:", {
-        status: err.response?.status,
-        data: err.response?.data,
-        message: err.message,
-    });
-
-                
+                navigate("/authorization", {
+                    replace: true,
+                });
             }
         };
-        if(isLoggedIn  && !authLoading){
+        if(isLoggedIn){
             getSession();
+            return () => {
+                ignoreResult = true;
+            };
         }
         
 
-        return () => {
-            ignoreResult = true;
-        };
+       
     }, [
         access,
         jwtAxios,
@@ -167,14 +162,13 @@ const ProtectedRoute = ({
         setStaffStatus,
         setEmployeeId,
         isLoggedIn,
-        authLoading,
-
+        authLoading
     ]);
 
     if (authLoading || checkingSession || !session) {
         return null;
     }
-    if(!isLoggedIn) return null
+    
 
     return <>{children}</>;
 };
