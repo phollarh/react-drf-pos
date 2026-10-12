@@ -129,6 +129,7 @@ const ProtectedRoute = ({
                     ignoreResult ||
                     hasRedirected.current
                 ) {
+                    console.log("hold in gerererer")
                     return;
                 }
 
