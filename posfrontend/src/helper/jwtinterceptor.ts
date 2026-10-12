@@ -76,6 +76,7 @@ const useAxiosWithInterceptor = () :AxiosInstance =>{
                         if(refreshError.response?.status === 401){
                              if (window.location.pathname !== "/forgot_password") {
                                     navigate("/login", { replace: true });
+                                    console.log("called")
                                 }
                             
                         }
@@ -96,7 +97,7 @@ const useAxiosWithInterceptor = () :AxiosInstance =>{
                             navigate("/email_confirmation", {replace:true}) 
                             return Promise.reject(emailError);
                         }
-                        if(emailError.response?.status === 400 && emailError.response?.status === 401){
+                        if(emailError.response?.status === 400 || emailError.response?.status === 401){
                             
                                 navigate('/login', {replace:true})
 
