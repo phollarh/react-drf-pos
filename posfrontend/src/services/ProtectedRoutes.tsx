@@ -125,6 +125,7 @@ const ProtectedRoute = ({
                 setSession(currentSession);
                 setCheckingSession(false);
             } catch (err: any) {
+                console.log(err.response)
                 if (
                     ignoreResult ||
                     hasRedirected.current
