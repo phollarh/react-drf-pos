@@ -13,6 +13,7 @@ import useAxiosWithInterceptor from "../helper/jwtinterceptor";
 import { BASE_URL_ACCOUNT } from "../congif";
 import { UseoutletNstaffContext } from "../context/OutletNStaffsContext";
 import { useAuthServiceContext } from "../context/AuthContext";
+import { Box, CircularProgress, Typography } from "@mui/material";
 
 type SessionRole =
     | "admin"
@@ -166,7 +167,52 @@ const ProtectedRoute = ({
     ]);
 
     if (authLoading || checkingSession || !session) {
-        return null;
+        return (
+        <Box
+            role="status"
+            aria-live="polite"
+            sx={{
+                position: "fixed",
+                inset: 0,
+                zIndex: (theme) => theme.zIndex.modal + 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: "background.default",
+                p: 3,
+            }}
+        >
+            <Box
+                sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 2,
+                    px: 5,
+                    py: 4,
+                    borderRadius: 4,
+                    bgcolor: "background.paper",
+                    border: 1,
+                    borderColor: "divider",
+                    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
+                }}
+            >
+                <CircularProgress
+                    size={40}
+                    thickness={3}
+                    aria-label="Checking your session"
+                />
+
+                <Typography variant="subtitle1" fontWeight={600}>
+                    Getting things ready
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary">
+                    Checking your session…
+                </Typography>
+            </Box>
+        </Box>
+        )
     }
     
 
