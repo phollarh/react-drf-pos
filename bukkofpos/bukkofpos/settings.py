@@ -323,6 +323,17 @@ LOGGING = {
         },
     },
 }
+QZ_ALLOWED_ORIGINS = (
+    [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
+    if DEBUG
+    else [
+        "https://firstbukkofpos.com.ng",
+        "https://www.firstbukkofpos.com.ng",
+    ]
+)
 
 QZ_PRIVATE_KEY_PATH = os.getenv(
     "QZ_PRIVATE_KEY_PATH",
