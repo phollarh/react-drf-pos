@@ -57,7 +57,7 @@ const ViewUpdateProfileSection = () => {
 
         try {
             const response = await jwtAxios.patch(
-                "http://127.0.0.1:8000/accounts/api/profile/",
+                `${BASE_URL_ACCOUNT}/profile/`,
                 formData,
             
                 { 
