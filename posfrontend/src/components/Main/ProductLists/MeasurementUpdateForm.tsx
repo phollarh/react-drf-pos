@@ -1,6 +1,7 @@
 import { useFormik } from "formik"
 import { Box, Button, Container, MenuItem, TextField } from "@mui/material";
 import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
+import { BASE_URL } from "../../../congif";
 
 
 
@@ -66,7 +67,7 @@ const MeasurementUpdateForm = ({
         try{
             if(measure_id && measure_id > 0){
                 
-                const response = await jwtAxios.put(`http://127.0.0.1:8000/api/measurements_info/${measure_id}/?outlet_id=${outlet_id}`,
+                const response = await jwtAxios.put(`${BASE_URL}/measurements_info/${measure_id}/?outlet_id=${outlet_id}`,
                 payload,
                 { withCredentials: true}
                 )
@@ -79,7 +80,7 @@ const MeasurementUpdateForm = ({
                     return dataCRUDBack
             }else{
                     console.log(payload)
-                const response = await jwtAxios.post(`http://127.0.0.1:8000/api/measurements_info/?outlet_id=${outlet_id}`, payload, {
+                const response = await jwtAxios.post(`${BASE_URL}/measurements_info/?outlet_id=${outlet_id}`, payload, {
                 withCredentials: true,
                 });
                 setIsLoading(false);
