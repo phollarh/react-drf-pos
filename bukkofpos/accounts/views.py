@@ -62,7 +62,7 @@ from accounts.session_permisson import (
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
-
+import re
 # Create your views here.
 
 class QZSignAPIView(APIView):
@@ -80,18 +80,8 @@ class QZSignAPIView(APIView):
         if not isinstance(message, str) or not message:
             raise ValidationError({"error": "A message is required."})
 
-        try:
-            payload = json.loads(message)
-        except json.JSONDecodeError:
-            raise ValidationError({"error": "Invalid QZ message."})
-
-        if not isinstance(payload, dict):
-            raise ValidationError({"error": "Invalid QZ message."})
-
-        allowed_calls = {"printers.find", "print"}
-
-        if payload.get("call") not in allowed_calls:
-            raise PermissionDenied("This QZ operation is not allowed.")
+        if re.fullmatch(r"[0-9a-fA-F]{64}", message) is None:
+            raise ValidationError({"error": "Invalid QZ signing hash."})
 
         key_bytes = Path(settings.QZ_PRIVATE_KEY_PATH).read_bytes()
 
