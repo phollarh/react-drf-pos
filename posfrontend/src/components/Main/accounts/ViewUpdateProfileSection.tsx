@@ -10,6 +10,7 @@ import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
 import ProfileForm from "./ProfileForm";
 import ProfilePicMenu from "./ProfilePicMenu";
 import ChangePasswordDiag from "./ChangePasswordDiag";
+import { BASE_URL_ACCOUNT } from "../../../congif";
 
 interface dataProps{
     "email":string;
@@ -42,7 +43,7 @@ const ViewUpdateProfileSection = () => {
 
     const getProfile =async ()=>{
         try{
-             const response= await jwtAxios.get('http://127.0.0.1:8000/accounts/api/profile/', {withCredentials:true})
+             const response= await jwtAxios.get(`${BASE_URL_ACCOUNT}/profile/`, {withCredentials:true})
              setData(response.data)
              return response.data
         }catch(err:any){
