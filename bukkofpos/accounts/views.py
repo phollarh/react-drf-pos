@@ -14,8 +14,11 @@ from .models import (
 )
 from datetime import timedelta
 import uuid
+import base64
+import json
+from pathlib import Path
 from django.db import IntegrityError, transaction
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError,PermissionDenied
 from django.conf import settings
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth import get_user_model
@@ -57,7 +60,57 @@ from accounts.session_permisson import (
     IsAdminOrSupervisorOrStaff,
 )
 
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+
 # Create your views here.
+
+class QZSignAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsVerified, ASPermission]
+
+    def post(self, request):
+        
+        origin = request.headers.get("Origin")
+
+        if origin not in settings.QZ_ALLOWED_ORIGINS:
+            raise PermissionDenied("Origin not allowed.")
+
+        message = request.data.get("message")
+
+        if not isinstance(message, str) or not message:
+            raise ValidationError({"error": "A message is required."})
+
+        try:
+            payload = json.loads(message)
+        except json.JSONDecodeError:
+            raise ValidationError({"error": "Invalid QZ message."})
+
+        if not isinstance(payload, dict):
+            raise ValidationError({"error": "Invalid QZ message."})
+
+        allowed_calls = {"printers.find", "print"}
+
+        if payload.get("call") not in allowed_calls:
+            raise PermissionDenied("This QZ operation is not allowed.")
+
+        key_bytes = Path(settings.QZ_PRIVATE_KEY_PATH).read_bytes()
+
+        private_key = serialization.load_pem_private_key(
+            key_bytes,
+            password=None,
+        )
+
+        signature = private_key.sign(
+            message.encode("utf-8"),
+            padding.PKCS1v15(),
+            hashes.SHA512(),
+        )
+
+        response = Response({
+            "signature": base64.b64encode(signature).decode("ascii"),
+        })
+        response["Cache-Control"] = "no-store"
+        return response
 
 
 def activateEmail(request, user, code):
@@ -81,7 +134,7 @@ def activateEmail(request, user, code):
     except Exception as e:
         print("callllllelellelelle")
         print("EMAIL ERROR:", str(e))
-        print(repr(e), flush=True) 
+        print(repr(e), flush=True)
         raise
 
 
@@ -99,13 +152,13 @@ def PasswordResetEmail(request, user, code):
         email.content_subtype = "html"
         sent = email.send(fail_silently=False)
         print("Email send result:", sent)
-        if  sent != 1:
+        if sent != 1:
             raise RuntimeError("password reset email was not send ")
         return True
 
     except Exception as e:
         print("EMAIL ERROR:", str(e))
-        print(repr(e), flush=True) 
+        print(repr(e), flush=True)
         raise
 
 
@@ -306,9 +359,9 @@ class AuthenticateOutletView(APIView):
             )
 
             assigned_staff = request.COOKIES.get("assigned_staff")
-            
+
             if assigned_staff:
-                
+
                 OutletStaffLogin.objects.filter(
                     outlet_staff__Employee_id=assigned_staff, assigned=True
                 ).update(
@@ -571,7 +624,7 @@ class AccountViewSet(viewsets.ViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             currently_assigned = request.COOKIES.get("assigned_staff")
-            
+
             if currently_assigned is not None and str(currently_assigned) != str(
                 get_staff.Employee_id
             ):
@@ -616,7 +669,6 @@ class AccountViewSet(viewsets.ViewSet):
             max_age=settings.STAFF_ASSIGNMENT_MAX_AGE,
             httponly=True,
             samesite="Lax",
-            
         )
         response.delete_cookie("pass_token")
         return response
@@ -758,7 +810,7 @@ class AccountViewSet(viewsets.ViewSet):
         session_role = authorization.get("role")
         session_employee_id = authorization.get("employee_id")
         request_cred = request.data.get("requestId")
-        
+
         if not request_cred or not purpose:
             return Response(
                 {"error": "Invalid action, try again"},
@@ -815,7 +867,7 @@ class AccountViewSet(viewsets.ViewSet):
                     {"error": "You can not perform this action"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            
+
             # for staff in supervisor:
             #     if str(request.pos_authorization['employee_id']) != str(staff.Employee_id):
             #         return Response({"error":"You can not perform this action"}, status=status.HTTP_400_BAD_REQUEST)
@@ -873,7 +925,6 @@ class AccountViewSet(viewsets.ViewSet):
                 secure=not settings.DEBUG,
                 httponly=True,
                 samesite="Lax",
-                
             )
         return response
 
@@ -1199,6 +1250,7 @@ class AccountViewSet(viewsets.ViewSet):
             return Response(
                 {"error": "Invalid User"}, status=status.HTTP_400_BAD_REQUEST
             )
+    
         if not user.email_verified:
             return Response(
                 {
@@ -1838,7 +1890,7 @@ class StaffLoginViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["POST", "GET"], url_path="assign_staff_session")
     def assign_staff_session(self, request):
-        
+
         username = request.data.get("username", "").strip().lower()
         # outlet_id = request.data.get("outlet_id")
         outlet_id = get_active_outlet_id(request)
@@ -1847,7 +1899,7 @@ class StaffLoginViewSet(viewsets.ModelViewSet):
         if request.method == "GET":
 
             assgned_staff = request.COOKIES.get("assigned_staff")
-            
+
             if assgned_staff:
                 login = OutletStaffLogin.objects.filter(
                     outlet_staff__Employee_id=assgned_staff,
@@ -1945,7 +1997,7 @@ class StaffLoginViewSet(viewsets.ModelViewSet):
         set_max_age = 0
         if not active_login.assignment_expires_at < timezone.now():
             set_max_age = active_login.assignment_expires_at - timezone.now()
-        
+
         response.set_cookie(
             "assigned_staff",
             str(staff.Employee_id),

@@ -4,6 +4,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.routers import DefaultRouter
 from notifications.views import NotificationsViewSet
 from notifications.consumers import notificationsConsumer
+from accounts.views import QZSignAPIView
 from pos.views import (
     CheckSalesReceiptStatus,
     MeasuremnetListViewSet,
@@ -54,6 +55,7 @@ urlpatterns = (
         path("admin/", admin.site.urls),
         path("", include("pos.urls")),
         path("accounts/", include("accounts.urls")),
+        path("accounts/api/qz/sign/", QZSignAPIView.as_view(), name="qz-sign"),
         # path("notifications/", include("notifications.urls")),
         path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
         path("api/docs/schema/ui/", SpectacularSwaggerView.as_view()),

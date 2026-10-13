@@ -323,3 +323,8 @@ LOGGING = {
         },
     },
 }
+
+QZ_PRIVATE_KEY_PATH = os.getenv(
+    "QZ_PRIVATE_KEY_PATH",
+    "/run/secrets/qz-private-key.pem",
+)

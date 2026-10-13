@@ -39,6 +39,12 @@ services:
     volumes:
       - media_data:/app/media
       - static_data:/app/assets
+      - type: bind
+        source: ./secrets/qz/private-key.pem
+        target: /run/secrets/qz-private-key.pem
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       - pos-network
     depends_on:

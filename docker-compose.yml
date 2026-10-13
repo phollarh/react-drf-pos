@@ -33,6 +33,12 @@ services:
     container_name : pos-backend
     volumes:
       - ./bukkofpos:/app
+      - type: bind
+        source: ./secrets/qz/private-key.pem
+        target: /run/secrets/qz-private-key.pem
+        read_only: true
+        bind:
+          create_host_path: false
     build:
       context: ./bukkofpos
       dockerfile: DockerfileDev
@@ -48,7 +54,9 @@ services:
       
   celery:
     container_name: pos-celery
-    build: ./bukkofpos
+    build: 
+      context: ./bukkofpos
+      dockerfile: DockerfileDev
     command: celery -A bukkofpos worker --loglevel=info
     volumes:
       - ./bukkofpos:/app
@@ -62,7 +70,9 @@ services:
 
   celery-beat:
     container_name: pos-celery-beat
-    build: ./bukkofpos
+    build:
+      context: ./bukkofpos
+      dockerfile: DockerfileDev
     command: >
       python -m celery
       -A bukkofpos

@@ -15,15 +15,14 @@ import LoginTemplate from './pages/LoginTemplate';
 import ConfirmationTemplate from './pages/templates/ConfirmationTemplate';
 import ForgotPasswordTemplate from './pages/templates/ForgotPasswordTemplate';
 import { useEffect, useState } from 'react';
-import qz from "qz-tray";
+
 import DetailedProductSummary from './pages/DetailedProductSummary';
 import UserGuide from './pages/UserGuide';
 import AuthorizationPage from './pages/AuthorizationPage';
 import Snackbar from '@mui/material/Snackbar';
 import { Alert } from '@mui/material';
 import ProtectedRoute from './services/ProtectedRoutes';
-
-
+import qz from "./helper/qzSetup";
 
 
 
@@ -31,17 +30,27 @@ import ProtectedRoute from './services/ProtectedRoutes';
 function App() {
     const [protectionMessage, setProtectionMessage] = useState<null | string>(null)
     useEffect(() => {
-
-        async function connectPrinter() {
-
-            if (!qz.websocket.isActive()) {
-                await qz.websocket.connect();
-                 console.log("QZ Connected");
+        const connectPrinter = async ()=>{
+            try{
+                if (!qz.websocket.isActive()) {
+                    await qz.websocket.connect()
+                }
+                  console.log("QZ connected");
+            } catch (error) {
+                console.error("QZ connection failed:", error);
             }
-
+           
         }
+    // async function connectPrinter() {
 
-        connectPrinter();
+    //         if (!qz.websocket.isActive()) {
+    //             await qz.websocket.connect();
+    //              console.log("QZ Connected");
+    //         }
+
+    //     }
+
+      void connectPrinter();
 
     }, []);
     useEffect(()=>{

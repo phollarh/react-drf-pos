@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Box, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Tooltip, Typography, useMediaQuery } from '@mui/material';
-import qz from "qz-tray";
+import qz from "../../../helper/qzSetup"
 
 
 
