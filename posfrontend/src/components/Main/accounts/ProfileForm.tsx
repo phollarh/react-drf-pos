@@ -4,6 +4,7 @@ import "react-phone-input-2/lib/material.css";
 import { Box, Button, Container, Paper, TextField,useTheme } from "@mui/material";
 import axios from "axios";
 import './ProfileForm.css'
+import { BASE_URL_ACCOUNT } from "../../../congif";
 
 interface dataProps{
     "email":string;
@@ -46,15 +47,15 @@ const ProfileForm = ({data}:dataPropsB) => {
                 "last_name":last_name
                 }
             try{
-                const response = await axios.put('http://127.0.0.1:8000/accounts/api/profile/',
+                const response = await axios.put(`${BASE_URL_ACCOUNT}/profile/`,
                     apiValues,
                     {withCredentials:true}
                 
                 )
-                console.log(response.data)
+                
                 return (response.data)
             }catch(err:any){
-                console.log(err)
+                throw err.response;
             }
             // const status = await login(email, password);
           

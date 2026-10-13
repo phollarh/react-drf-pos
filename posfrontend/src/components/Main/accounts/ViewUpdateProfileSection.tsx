@@ -11,6 +11,7 @@ import ProfileForm from "./ProfileForm";
 import ProfilePicMenu from "./ProfilePicMenu";
 import ChangePasswordDiag from "./ChangePasswordDiag";
 import { BASE_URL_ACCOUNT } from "../../../congif";
+import { useAuthServiceContext } from "../../../context/AuthContext";
 
 interface dataProps{
     "email":string;
@@ -27,7 +28,7 @@ const ViewUpdateProfileSection = () => {
     const [drawerOpen, setDrawerOpen] = React.useState(true);
     const jwtAxios = useAxiosWithInterceptor();
     const isDarkMode = theme.palette.mode === "dark"
-   
+   const {isLoggedIn, authLoading} = useAuthServiceContext();
     React.useEffect(() => {
                 const handleDrawerToggle = (e: Event) => {
                 const customEvent = e as CustomEvent;
@@ -47,13 +48,13 @@ const ViewUpdateProfileSection = () => {
              setData(response.data)
              return response.data
         }catch(err:any){
-            console.log(err)
+            throw err.response
         }
     }
    const handleImageUpload = async (file: File) => {
              const formData = new FormData();
         formData.append("image", file);
-        console.log(formData)
+        
 
         try {
             const response = await jwtAxios.patch(
@@ -67,11 +68,10 @@ const ViewUpdateProfileSection = () => {
             );
 
             setData(response.data); 
-            console.log(formData)
-            console.log(response.data)
+
             return response.data
-        } catch (err) {
-          console.log(err);
+        } catch (err : any) {
+          throw err.response
         }
     };
    
@@ -79,15 +79,11 @@ const ViewUpdateProfileSection = () => {
 
 
     useEffect(()=>{
-
+        if(!isLoggedIn || authLoading)return ;
         getProfile()
-    }, [])
+    }, [isLoggedIn, authLoading])
 
-    useEffect(() => {
-           
-            console.log(data)
-    }, [data]);
-
+  
  
     
 
