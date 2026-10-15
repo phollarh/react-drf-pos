@@ -28,7 +28,7 @@ interface productType{
     outlet:string;
     user?:number;
     product_name:string;
-    sold_in:string;
+    sold_In?:{measurement_type: string, id:number, value:string}
     cost_price: number;
     selling_price:number;
     stock_inventory:number;
@@ -84,7 +84,8 @@ const SalesNReceipt = () => {
   const [assignedStaff, setAssignedStaff]  = React.useState<outletStaffDataProps | null >(null)
   const {getStaffStatus, setStaffStatus,staffData} = UseoutletNstaffContext();
   const [searchByproductName, setSearchByproductName] = React.useState<string>("");
-  const [inventoryError,setInventoryError] = useState<{inventory_error:string, product_id:string}|null>(null)
+  const [inventoryError,setInventoryError] = useState<{inventory_error:string; product_id:string}|null>(null)
+  const [soldInError,setSoldInError] = useState<{sold_in_error:string ; product_id:string ; order_id :string}|null>(null)
     const {activeOutletId, userId} = useAuthServiceContext();
     const [, setUserId] = useState("")
     const [outlet_id, setOutletId] = useState("")
@@ -116,7 +117,7 @@ const SalesNReceipt = () => {
                 )
                 
                 if(response.status === 200){
-                    console.log("I only set cos is 200")
+                    
                      const staff_status=await getStaffStatus(response.data.assigned_staff)
                      const IsItAssigne =  staffData?.find((item)=>String(response.data.assigned_staff) === String(item.Employee_id)) ?? null
                      if(IsItAssigne && staff_status.is_active === true){
@@ -156,11 +157,11 @@ const SalesNReceipt = () => {
   React.useEffect(() => {
                 const handleDrawerToggle = (e: Event) => {
                 const customEvent = e as CustomEvent;
-                  console.log(customEvent.detail)
+                  
                 setDrawerOpen(customEvent.detail);
                 };
                 window.addEventListener("drawer-toggle", handleDrawerToggle);
-                console.log(window.Event)
+                
                 return () => window.removeEventListener("drawer-toggle", handleDrawerToggle);
     }, []);
 
@@ -219,6 +220,7 @@ const SalesNReceipt = () => {
                        receiptData.flatMap((item)=>
                         item.orders.map((orderItem)=>{
                             return( {
+                                "order_id":orderItem.id,
                                 'product': orderItem.product.id,
                                 'quantity':orderItem.quantity,
                                 'sub_total':orderItem.sub_total
@@ -234,12 +236,12 @@ const SalesNReceipt = () => {
                     }
             try{
                 if(outlet_id === "") return;
-                
+                console.log(payload)
                 const response = await jwtAxios.put(`${BASE_URL}/sales_receipt/${receipt_id}/?outlet_id=${outlet_id}`,
                 payload,
                { withCredentials: true}
             )
-            
+                
                 const dataCRUDBack = response.data
                 // setData(dataCRUDBack)
                 if(response.status === 200){
@@ -275,6 +277,9 @@ const SalesNReceipt = () => {
             }catch(error:any){
                 if(error.response?.status === 400 && error.response?.data?.inventory_error){
                     setInventoryError(error.response?.data)
+                }
+                if(error.response?.status === 400 && error.response?.data?.sold_in_error){
+                    setSoldInError(error.response?.data)
                 }
                 if (error.response?.status === 404) {
                 setErrorOrder(error.response?.data.detail)
@@ -657,6 +662,8 @@ const SalesNReceipt = () => {
                                     }  
                                     <Box flexGrow={1} sx={{height:"95%",m:0.5, overflowY:"auto", overflowX:"hidden"}}>
                                         <SalesReceipt 
+                                        soldInError={soldInError}
+                                        setSoldInError={setSoldInError}
                                         setInventoryError={setInventoryError}
                                         inventoryError={inventoryError}
                                       setAmountTendered={setAmountTendered} amountTendered={amountTendered}
@@ -684,7 +691,9 @@ const SalesNReceipt = () => {
                     ):
                     (
                         <Box flexGrow={1} sx={{width:{lg:"100%",md:"100%", sm:"100%" }, height:"100%",m:0.5 ,overflow:"auto"}}>
-                            <SalesReceipt 
+                            <SalesReceipt
+                            soldInError={soldInError}
+                            setSoldInError={setSoldInError} 
                             inventoryError={inventoryError}
                             setInventoryError={setInventoryError}
                             showReceiptDetaills={showReceiptDetaills}

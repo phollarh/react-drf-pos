@@ -150,6 +150,8 @@ const MeasurementUpdateForm = ({
                             <MenuItem value='g'>gram</MenuItem>
                             <MenuItem value='kg'>kilogram</MenuItem>
                             <MenuItem value='ltr'>litre</MenuItem>
+                            <MenuItem value='carton'>carton</MenuItem>
+                            <MenuItem value='pack'>pack</MenuItem>
                         </TextField>
                     
                         <Button variant="contained" disableElevation sx={{ maxWidth: "50%", mt: 1, mb: 2 }} type="submit">{formik.values.measure_id && formik.values.measure_id > 0 ? "Update" : "Create"}</Button>

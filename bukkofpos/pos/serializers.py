@@ -72,6 +72,7 @@ class ProductSerializers(serializers.ModelSerializer):
         return {
             "measurement_type": obj.sold_In.measurement_type,
             "id": obj.sold_In.id if obj.sold_In else None,
+            "value": obj.sold_In.value if obj.sold_In else None,
         }
 
     def get_category(self, obj):
@@ -364,10 +365,11 @@ class SalesReceiptSerializer(serializers.ModelSerializer):
 class SalesReceiptCreateSerializer(serializers.ModelSerializer):
     class UpdateOrderSerializer(serializers.ModelSerializer):
         product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+        order_id = serializers.IntegerField()
 
         class Meta:
             model = Order
-            fields = ("product", "quantity", "sub_total")
+            fields = ("product", "quantity", "sub_total", "order_id")
 
     hold = serializers.BooleanField(
         required=False,
@@ -383,6 +385,7 @@ class SalesReceiptCreateSerializer(serializers.ModelSerializer):
     )
 
     def update(self, instance, validated_data):
+
         orderItem_data = validated_data.pop("orders", None)
         payment_option_bc = validated_data.pop("payment_option", None)
         amount_tenderd = validated_data.pop("amount_tenderd", None)
@@ -390,9 +393,13 @@ class SalesReceiptCreateSerializer(serializers.ModelSerializer):
 
         with transaction.atomic():
             instance = super().update(instance, validated_data)
+
             if orderItem_data is not None:
 
-                receipt = SalesReceipt.objects.get(id=instance.id)
+                #  = SalesReceipt.objects.get(id=instance.id)
+                receipt = SalesReceipt.objects.select_for_update().get(
+                    id=instance.id
+                 )
                 receipt.orders.all().delete()
 
                 # order_items = [
@@ -408,15 +415,22 @@ class SalesReceiptCreateSerializer(serializers.ModelSerializer):
 
                 # new_order_item = Order.objects.bulk_create(order_items)
                 new_order_items = []
+                
+                new_order_item_list = [item.copy() for item in orderItem_data]
 
-                for order_item_data in orderItem_data:
+                for item in new_order_item_list:
+                    item.pop("order_id")
+                    # for item in order_item_data.items():
+                    #     print(item, "item")
                     new_order = Order(
                         user=self.context["request"].user,
-                        **order_item_data,
+                        **item,
                     )
-
+                    # new_order.full_clean()
                     new_order.save()
                     new_order_items.append(new_order)
+
+                
                 for new_order in new_order_items:
                     receipt.add_order(
                         order=new_order,
@@ -436,13 +450,18 @@ class SalesReceiptCreateSerializer(serializers.ModelSerializer):
                     receipt.payment.save()
                     receipt.full_clean()
                     receipt.save()
-
+                    
                     for x in orderItem_data:
-
+                    
                         product = x["product"]
+                        quantity = Decimal(str(x["quantity"]))
+                        sold_in = product.sold_In
+                        inventory_quantity = quantity * Decimal(str(sold_in.value))
                         inventory_update = Product.objects.filter(
-                            id=product.id, stock_inventory__gte=x["quantity"]
-                        ).update(stock_inventory=F("stock_inventory") - x["quantity"])
+                            id=product.id, stock_inventory__gte=inventory_quantity
+                        ).update(
+                            stock_inventory=F("stock_inventory") - inventory_quantity
+                        )
                         if inventory_update == 0:
                             raise serializers.ValidationError(
                                 {
@@ -450,6 +469,24 @@ class SalesReceiptCreateSerializer(serializers.ModelSerializer):
                                     "product_id": product.id,
                                 }
                             )
+                        if product.sold_In.measurement_type.strip().lower() in {
+                            "carton",
+                            "pack",
+                        }:
+                            if (
+                                inventory_quantity
+                                != inventory_quantity.to_integral_value()
+                            ):
+                                raise serializers.ValidationError(
+                                    {
+                                        "sold_in_error": (
+                                            "This quantity would contain a fractional item. "
+                                            "Choose a quantity that gives whole items."
+                                        ),
+                                        "product_id": product.id,
+                                        "order_id": x["order_id"]
+                                    }
+                                )
 
         return instance
 

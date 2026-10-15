@@ -27,7 +27,7 @@ interface dataCRUDProps{
 
 
 interface ColumnProps {
-  id: 'product_name' | 'code'|'selling_price' | 'category' | 'stock_inventory';
+  id: 'product_name' | 'code'|'selling_price' | 'category' | 'stock_inventory' | "sold_in";
   label: string;
   minWidth?: number;
   align?: 'left';
@@ -36,6 +36,7 @@ interface ColumnProps {
 
 const columns: readonly ColumnProps[] = [
   { id: 'product_name', label: 'Product Name', minWidth: 70, },
+  { id: 'sold_in',label: 'Sold In',minWidth: 70},
   { id: 'code', label: 'Product\u00a0Code', minWidth: 30 },
   { id: 'selling_price', label: 'Selling Price', minWidth: 70,format: (value: number) => `₦${value.toLocaleString()}`, },
   { id: 'category',label: 'Category',minWidth: 70},
@@ -46,6 +47,7 @@ const columns: readonly ColumnProps[] = [
 
 interface Data {
   product_name: string;
+  sold_in : string;
   selling_price:number;
   code: number;
   category?:string
@@ -53,9 +55,9 @@ interface Data {
 
 }
 
-function createData(product_name:string,selling_price:number,code:number,category:string,stock_inventory:number): Data
+function createData(product_name:string,sold_in : string,selling_price:number,code:number,category:string,stock_inventory:number): Data
  {
-  return { product_name,selling_price ,code,category, stock_inventory };
+  return { product_name,sold_in,selling_price ,code,category, stock_inventory };
 }
 
 
@@ -73,17 +75,17 @@ export default function ProductListTable({setOpen,dataObject,setDataObject,onSuc
   
 
   const rows = dataCRUD?.map((item)=>
-    createData(item.product_name, Number(item.selling_price), item.id, item['category'].name, Number(item.stock_inventory))
+    createData(item.product_name,`${item.sold_In["measurement_type"]} of ${item.sold_In["value"]}`, Number(item.selling_price), item.id, item['category'].name, Number(item.stock_inventory))
   )
   
 
   const visibleColumns=columns.filter((item) => {
     if(below550){
-        return item.id !== "category" && item.id !== "stock_inventory" && item.id !== "code";
+        return item.id !== "category" && item.id !== "stock_inventory" && item.id !== "code" && item.id !== "sold_in";
 
       }
   if (below1200) {
-    return item.id !== "category" && item.id !== "stock_inventory"
+    return item.id !== "category" && item.id !== "stock_inventory" && item.id !== "code";
   }
 
 
@@ -149,14 +151,18 @@ export default function ProductListTable({setOpen,dataObject,setDataObject,onSuc
                         {row.product_name}
                       </Typography>
                       <Typography variant='body2'>
+                        sold in - {row.sold_in}
+                      </Typography>
+                      <Typography variant='body2'>
                         {row.stock_inventory} in Stock
                       </Typography>
                       <Typography variant='body2'>
                         {row.category}
                       </Typography>
-                          <Typography variant='body2'>
-                        {row.code}
+                      <Typography variant='body2'>
+                        product-id - {row.code}
                       </Typography>
+                      
                       </>
                       
                     } 

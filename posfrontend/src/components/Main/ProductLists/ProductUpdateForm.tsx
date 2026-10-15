@@ -41,6 +41,7 @@ interface ServerCat{
 interface ServerMeasure {
     id:number;
     measurement_type:string;
+    value:string;
 }
 type payloadProps ={
     "product_name":string;
@@ -496,7 +497,7 @@ const ProductUpdateForm = ({
                              <Divider/>
                            {measuredData.map((item) => (
                                 <MenuItem key={item.id} value={item.id}>
-                                    {item.measurement_type}
+                                    {item.measurement_type} of {item.value}
                                 </MenuItem>
                             ))}
                         </TextField>

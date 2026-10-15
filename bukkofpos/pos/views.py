@@ -88,6 +88,9 @@ from io import BytesIO
 from reportlab.lib.enums import TA_CENTER
 from reportlab.platypus import HRFlowable
 
+from django.conf import settings
+from zoneinfo import ZoneInfo
+
 # Create your views here.
 
 
@@ -284,9 +287,9 @@ class ProductListViewSet(viewsets.ModelViewSet):
             product_instance = serializer.save(user=request.user)
             quantity = request.data.get("quantity")
             action = request.data.get("action")
-            # print(quantity,action)
+
             if quantity is not None and action is not None:
-                message_title = f"Inventory Update"
+                message_title = "Inventory Update"
                 message = (
                     f"Inventory stock of {product_instance.product_name} was updated "
                 )
@@ -431,7 +434,10 @@ class InventoryViewset(viewsets.ViewSet):
             },
             status=status.HTTP_200_OK,
         )
+
+
 from django.core.exceptions import ValidationError as DjangoValidationError
+
 
 def create_inventory_log(authorizer, product, quantity, action):
     User = get_user_model()
@@ -449,11 +455,11 @@ def create_inventory_log(authorizer, product, quantity, action):
         product_instance.full_clean()
         product_instance.save()
     except DjangoValidationError:
-        
+
         raise ValidationError(
             {"stock_inventory": ["stock_inventory cannot be negative"]}
         )
-    
+
     log = {
         "product": product_instance,
         "quantity": quantity_dec,
@@ -826,54 +832,6 @@ class SalesInfoChartAPIView(APIView):
         )
 
 
-# class WeeklySalesChartInfoAPIView(APIView):
-#     permission_classes = [
-#         IsAuthenticated,
-#         IsVerified,
-#         ASPermission,
-#         IsAdminOrSupervisor,
-#     ]
-
-#     def get(self, request):
-#         current_day = timezone.now().date()
-#         current_year = timezone.now().year
-#         active_outlet_id = get_active_outlet_id(request)
-
-#         if not active_outlet_id:
-#             return Response(
-#                 {"error": "Please activate an outlet"},
-#                 status=status.HTTP_400_BAD_REQUEST,
-#             )
-#         receipts = SalesReceipt.objects.filter(
-#             issued=True,
-#             date__year=current_year,
-#             sales_receipt_order__order__product__outlet=active_outlet_id
-#         )
-#         start_of_week = current_day - timedelta(days=current_day.weekday())
-#         days_in_the_week_sales = {}
-
-#         for i in range(7):
-#             key = start_of_week + timedelta(days=i)
-#             key_str = key.strftime("%A")
-#             days_in_the_week_sales[key_str] = (
-#                 SalesReceiptOrder.objects.filter(
-#                     sales_receipt__in=receipts,order__user=request.user, order__date__date=key
-#                 ).aggregate(daily_sales=Sum("order__sub_total"))["daily_sales"]
-#                 or 0
-#             )
-
-
-#         updated_daily_sales = [{"daily_sales": days_in_the_week_sales}]
-#         print(updated_daily_sales)
-#         return Response(updated_daily_sales)
-
-
-# class OrderViewSet(viewsets.ViewSet):
-#     queryset = Order.objects.select_related("user", "product")
-#     serializer_class = CreateOrderSerializer
-#     permission_classes = [IsAuthenticated]
-
-
 class SalesReceiptPagePagination(PageNumberPagination):
     page_size = 5
     page_size_query_param = "size"
@@ -1020,13 +978,6 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
         )
     ).order_by("-date")
 
-    # r = SalesReceipt.objects.all()
-
-    # # all_receipt = [receipt for receipt in r]
-    # for x in r:
-    #     if x.orders.exists():
-    #         x.delete()
-
     serializer_class = SalesReceiptSerializer
     permission_classes = [
         IsAuthenticated,
@@ -1072,7 +1023,12 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
             response_serializer = SalesReceiptSerializer(
                 instance, context=self.get_serializer_context()
             )
-            token = signing.dumps({"receipt_id": instance.id})
+            token = signing.dumps(
+                {
+                    "receipt_id": instance.id,
+                    "timezone": timezone.get_current_timezone_name(),
+                }
+            )
             response = response_serializer.data
             response["pdf_url"] = (
                 request.build_absolute_uri(
@@ -1108,7 +1064,12 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
             return Response(
                 {"error": "receipt not found"}, status=status.HTTP_404_NOT_FOUND
             )
-        token = signing.dumps({"receipt_id": instance.id})
+        token = signing.dumps(
+            {
+                "receipt_id": instance.id,
+                "timezone": timezone.get_current_timezone_name(),
+            }
+        )
         response = {
             "pdf_url": (
                 request.build_absolute_uri(
@@ -1169,6 +1130,7 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
         issued = self.request.query_params.get("issued")
         if issued is not None:
             now = timezone.localtime()
+
             start_of_today = timezone.make_aware(
                 datetime.combine(now.date(), datetime.min.time())
             )
@@ -1184,7 +1146,7 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
             date_range = self.request.query_params.get("dateRange")
             start_date = self.request.query_params.get("startDate")
             end_date = self.request.query_params.get("endDate")
-            print(start_date, end_date)
+
             if start_date and end_date:
                 queryset = queryset.filter(
                     issued_at__date__gte=start_date,
@@ -1679,6 +1641,10 @@ class PrinterSetUpViewSet(viewsets.ViewSet):
         return Response({"message": "paper size updated"}, status=status.HTTP_200_OK)
 
 
+from xml.sax.saxutils import escape
+from reportlab.lib.styles import ParagraphStyle
+
+
 # # generate receipt pdf reportlab
 def generate_sales_receipt_pdf(pk, payment_option, total, balance, remarks=None):
     Receipt = SalesReceipt.objects.get(pk=pk, issued=True)
@@ -1736,14 +1702,14 @@ def generate_sales_receipt_pdf(pk, payment_option, total, balance, remarks=None)
     time_style.fontSize = 8
     time_style.fontName = "Times-Bold"
 
-    Amount_tenderd = " {0}".format(Receipt.payment.amount_tenderd)
+    Amount_tenderd = f"{Receipt.payment.amount_tenderd:,.2f}"
     Amount_tenderd_style = getSampleStyleSheet()["Normal"]
     Amount_tenderd_style.fontSize = 9
     Amount_tenderd_style.alignment = 1
     Amount_tenderd_style.fontName = "Times-Bold"
     Amount_tenderd_paragraph = Paragraph(Amount_tenderd, Amount_tenderd_style)
 
-    Remarks = f"Thank you for your patronage"
+    Remarks = "Thank you for your patronage"
     Remarks_style = getSampleStyleSheet()["Normal"]
     Remarks_style.fontSize = 8
     Remarks_style.fontName = "Times-Bold"
@@ -1752,50 +1718,88 @@ def generate_sales_receipt_pdf(pk, payment_option, total, balance, remarks=None)
     items_details_style = getSampleStyleSheet()["Normal"]
     items_details_style.fontSize = 9
     items_details_style.fontName = "Times-Roman"
-
+    product_style = ParagraphStyle(
+        "ReceiptProduct",
+        fontName="Times-Bold",
+        fontSize=9,
+        leading=11,
+    )
     # Create a table to display the receipt data
-    receipt_data = [["Product", "Qty", "Price"]]
+    # receipt_data = [["Product", "Qty", "Price"]]
+    receipt_data = []
+    row_styles = []
 
     for product in Receipt.orders.all():
+        row = len(receipt_data)
+        line_total = product.sub_total
+
         receipt_data.append(
             [
-                f"{product.product_name_at_sale}",
-                f"{product.quantity}",
-                f" {product.unit_selling_price}",
+                Paragraph(escape(product.product_name_at_sale), product_style),
+                f"{line_total:,.1f}",
+            ]
+        )
+        outputed_sales_desc = (
+            f"({product.quantity:.2f} x {product.measurement_value_at_sale.split(".")[0]}/{product.measurement_type_at_sale}) x {product.unit_selling_price:,.2f}"
+            if Decimal(product.measurement_value_at_sale) > 1
+            else f"{product.quantity:.3f}/{product.measurement_type_at_sale} X {product.unit_selling_price:,.2f}"
+        )
+        receipt_data.append(
+            [
+                outputed_sales_desc,
+                "",
             ]
         )
 
-    receipt_table = Table(receipt_data, colWidths=[1.3 * inch, 0.3 * inch, 0.6 * inch])
+        row_styles.extend(
+            [
+                ("SPAN", (0, row + 1), (-1, row + 1)),
+                ("FONTNAME", (0, row), (-1, row), "Times-Bold"),
+                ("BOTTOMPADDING", (0, row), (-1, row), 2),
+                ("BOTTOMPADDING", (0, row + 1), (-1, row + 1), 7),
+                ("LINEBELOW", (0, row + 1), (-1, row + 1), 0.3, colors.lightgrey),
+            ]
+        )
+
+    receipt_table = Table(
+        receipt_data,
+        colWidths=[1.25 * inch, 0.65 * inch],
+        hAlign="CENTER",
+    )
+
+    # receipt_table = Table(receipt_data, colWidths=[1.3 * inch, 0.3 * inch, 0.6 * inch])
     receipt_table.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.white),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ("FONTNAME", (0, 0), (-1, 0), "Times-Bold"),
+                ("FONTNAME", (0, 0), (-1, -1), "Times-Roman"),
                 ("FONTSIZE", (0, 0), (-1, -1), 9),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 15),
-                ("BACKGROUND", (0, 1), (-1, -1), colors.white),
-                ("FONTNAME", (0, 1), (-1, -1), "Times-Bold"),
-                ("GRID", (0, 0), (-1, -1), 1, colors.white),
-                ("WORDWRAP", (0, 0), (-1, -1), 1),
-                ("BOTTOMPADDING", (0, 1), (-1, -1), 15),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ALIGN", (0, 0), (0, -1), "LEFT"),
+                ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 2),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+                *row_styles,
             ]
         )
     )
 
-    receipt_data_summary = [["", "Mode", ""]]
-    receipt_data_summary.append([f"Total Amount ", f"", total])
+    receipt_data_summary = []
+    receipt_data_summary.append(["Total Amount", f"{total:,.1f}"])
     receipt_data_summary.append(
         [
-            f" Amount Tendered",
-            f"{payment_option}",
+            "Amount Tendered",
             (Amount_tenderd_paragraph),
         ]
     )
-    receipt_data_summary.append([f" Change Due", f"", balance])
+    receipt_data_summary.append(
+        [
+            "payment option",
+            payment_option,
+        ]
+    )
+    receipt_data_summary.append(["Change Due", f"{balance:,.1f}"])
     receipt_table_summary = Table(
-        receipt_data_summary, colWidths=[1.3 * inch, 0.3 * inch, 0.6 * inch]
+        receipt_data_summary, colWidths=[1 * inch, 1.1 * inch, 0 * inch]
     )
     receipt_table_summary.setStyle(
         TableStyle(
@@ -1859,12 +1863,13 @@ def sales_receipt_pdf(request, pk):
 
     if payload["receipt_id"] != pk:
         return Response(status=403)
-    receipt = SalesReceipt.objects.get(pk=pk)
-    serializer = SalesReceiptSerializer(receipt)
+    with timezone.override(ZoneInfo(payload.get("timezone", settings.TIME_ZONE))):
+        receipt = SalesReceipt.objects.get(pk=pk)
+        serializer = SalesReceiptSerializer(receipt)
 
-    return generate_sales_receipt_pdf(
-        serializer.data["id"],
-        serializer.data["payment_option"],
-        serializer.data["total"],
-        serializer.data["balance_due"],
-    )
+        return generate_sales_receipt_pdf(
+            serializer.data["id"],
+            serializer.data["payment_option"],
+            serializer.data["total"],
+            serializer.data["balance_due"],
+        )

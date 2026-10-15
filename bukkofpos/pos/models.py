@@ -124,14 +124,16 @@ class Measurement(models.Model):
         GRAM = "g", "gram"
         KILOGRAM = "kg", "kilogram"
         LITRE = "ltr", "litre"
+        PACK = "pack", "pack"
+        CARTON = "carton", "carton"
 
     value = models.DecimalField(
         default=1, decimal_places=4, max_digits=6, null=True, blank=True
     )
-    measurement_type = models.CharField(max_length=4, choices=Typechoices.choices)
+    measurement_type = models.CharField(max_length=50, choices=Typechoices.choices)
 
     def __str__(self):
-        return f" {self.measurement_type}"
+        return f" {self.measurement_type} of {self.value}"
 
 
 class Order(models.Model):
@@ -175,7 +177,7 @@ class Order(models.Model):
             if self.product.sold_In:
                 self.measurement_type_at_sale = self.product.sold_In.measurement_type
                 self.measurement_value_at_sale = self.product.sold_In.value
-        self.sub_total = self.quantity * self.product.selling_price
+        self.sub_total = (self.quantity * self.product.sold_In.value) * self.product.selling_price
 
         super().save(*args, **kwargs)
 

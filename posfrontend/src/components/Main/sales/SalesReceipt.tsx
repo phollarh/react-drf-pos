@@ -27,7 +27,7 @@ interface productType{
     user?:number;
     outlet:string;
     product_name:string;
-    sold_in:string;
+    sold_In?:{measurement_type: string, id:number, value:string}
     cost_price: number;
     selling_price:number;
     stock_inventory:number;
@@ -77,16 +77,25 @@ interface SalesProps{
     inventory_error: string;
     product_id: string;
     } | null>>
-
+    soldInError: {
+        sold_in_error: string;
+        product_id: string;
+        order_id :string;
+    } | null;
+    setSoldInError: React.Dispatch<React.SetStateAction<{
+        sold_in_error: string;
+        product_id: string;
+        order_id :string;
+    } | null>>
 }
 
-const SalesReceipt = ({inventoryError,setInventoryError,dataCRUD,paymentOption,setPaymentOption,amountTendered,setAmountTendered,remarks,setRemarks,setDataCRUDReceipt, handleReceiptSubmit}:SalesProps) => {
+const SalesReceipt = ({inventoryError,setInventoryError,soldInError, setSoldInError,dataCRUD,paymentOption,setPaymentOption,amountTendered,setAmountTendered,remarks,setRemarks,setDataCRUDReceipt, handleReceiptSubmit}:SalesProps) => {
     const theme = useTheme();
     const jwtAxios = useAxiosWithInterceptor();
     const [editingField, setEditingField] = useState<"quantity" | "subtotal">("quantity");
     const [balance, setBalance] = React.useState<number>(0)
     const isOnsalesReceipt = location.pathname === "/sales_receipts"
-
+console.log(dataCRUD)
 useEffect(() => {
     const needsInitialization = dataCRUD.some(item =>
         item.orders.some(order => order.quantityInput === undefined)
@@ -161,11 +170,11 @@ useEffect(() => {
         acc + num.orders.length
     ,0)
    
-    function handleInputValue(value:string, sellingPrice:number, id?:number){
+    function handleInputValue(value:string, sellingPrice:number, id?:number, soldInValue?:number){
             if(editingField === "subtotal" )return;
-            
+            const soldIn = soldInValue ?? 1
             const quantity = value === "" ? 0 : parseFloat(value);
-            const subTotalVal = quantity * sellingPrice
+            const subTotalVal = quantity * (sellingPrice * soldIn)
             
                 setDataCRUDReceipt((prevData)=>
                     prevData.map((item)=>
@@ -189,8 +198,9 @@ useEffect(() => {
             
                
         }
-            function handleInputSubtotalChange(e:React.ChangeEvent<HTMLInputElement| HTMLTextAreaElement>, sellingPrice:number, id?:number){
+            function handleInputSubtotalChange(e:React.ChangeEvent<HTMLInputElement| HTMLTextAreaElement>, sellingPrice:number, id?:number, soldInValue?:number){
             if(editingField === "quantity") return
+            const soldIn = soldInValue ?? 1
             const value = e.currentTarget.value
             
               if (!/^\d*\.?\d*$/.test(value)) {
@@ -198,7 +208,7 @@ useEffect(() => {
                 }
                 const newSubTotal=value === ""? 0 : Number(value);
                 // const newQuantity =  Math.trunc((newSubTotal / sellingPrice)* 100)/100
-                const newQuantity =  newSubTotal / sellingPrice
+                const newQuantity =  newSubTotal / (sellingPrice * soldIn)
 
             
                 setDataCRUDReceipt((prevData)=>
@@ -274,16 +284,21 @@ useEffect(() => {
                                                                 String(inventoryError?.product_id) === String(orderItem.product.id)
                                                                     ? inventoryError?.inventory_error
                                                                     : undefined;
-                                                                    
-
+                                                            let soldInErrorP =  String(soldInError?.order_id) === String(orderItem.id)
+                                                                    ? soldInError?.sold_in_error
+                                                                    : undefined;
+                                                            let soldInValue = Number(orderItem.product.sold_In?.value) > 1 ? Number(orderItem.product.sold_In?.value) : undefined
                                                             return(
                                                                 <Box key={orderItem.id} sx={{
                                                                         display:'flex',
+                                                                        position:"relative",
+                                                                        p:soldInErrorP ? 0.5 : 0,
                                                                         // alignContent:'center',
                                                                         alignItems:'center',
                                                                         justifyContent:'space-between',
                             
                                                                         }} >
+                                                                            {soldInErrorP &&<Typography sx={{color:"#fd0202",backgroundColor:"#e6d2d2" ,fontSize:"0.8rem", position:"absolute", top:30}}component="div">{soldInErrorP}</Typography>}
                                                                     <Tooltip arrow placement="top-start"  title={orderItem.product.product_name}>
                                                                         <Typography variant="body2" 
                                                                         sx={{
@@ -309,7 +324,7 @@ useEffect(() => {
                                                                     
                                                                     sx={{ 
                                             
-                                                                        flex:1,
+                                                                        flex:.8,
                                                                         overflow:'hidden',
                                                                         textOverflow:'ellipsis',
                                                                         maxWidth:'120px',
@@ -325,6 +340,7 @@ useEffect(() => {
                                                                         {
                                                                             "& .MuiOutlinedInput-input": {
                                                                                 padding: "5px",
+                                                                                width:"40px"
                                                                             },
                                                                             "& .MuiFormHelperText-root": {
                                                                                 margin: 0,
@@ -332,47 +348,64 @@ useEffect(() => {
                                                                             }
                                                                         }),
                                                                        }}
-                                                                        error={Boolean(quantityError)}
+                                                                        error={Boolean(quantityError) || Boolean(soldInErrorP)}
                                                                         helperText={quantityError}
                                                                         setEditingField={setEditingField}
                                                                         value={orderItem.quantityInput ?? ""}
                                                                         onChange={(value) =>
                                                                         {
                                                                             setInventoryError(null)
-                                                                        
+                                                                            setSoldInError(null)
                                                                             handleInputValue(
                                                                                 value,
                                                                                 orderItem.product.selling_price,
-                                                                                orderItem.id
+                                                                                orderItem.id,
+                                                                                soldInValue
                                                                             )}
                                                                         }
                                                                     />
+                                                                    
                                                                     </Typography>
-                                                                    <Typography
+                                                                    {/* <Typography
                                                                         variant="body2" 
                                                                         sx={{ 
+                                                                            m:0,
+                                                                            p:0,
                                                                             color: 'text.secondary',
-                                                                            flex:0.5,
+                                                                            flex:0.2,
                                                                             overflow:'hidden',
                                                                             whiteSpace:'nowrap',
                                                                             textAlign:'center',
                                                                             fontSize:"12px"
                                                                              }}>
                                                                         X
-                                                                    </Typography>
-                                                                    <Typography  
-                                                                        variant="body2" 
-                                                                        sx={
-                                                                            {
-                                                                                maxWidth:'120px',
-                                                                                flex:1,
-                                                                                overflow:'hidden',
-                                                                                whiteSpace:'nowrap',
-                                                                                fontSize:"12px"
+                                                                    </Typography> */}
+                                                                    
+                                                                    <Tooltip placement="top" title={Number(orderItem.product.sold_In?.value) > 1 ? `1 ${orderItem.product.sold_In?.measurement_type} contains ${orderItem.product.sold_In?.value} base units` : ""} >
+                                                                        <>
+                                                                        
+                                                                            <Typography  
+                                                        
+                                                                        
+                                                                            variant="body2" 
+                                                                            sx={
+                                                                                {
+                                                                                    maxWidth:'120px',
+                                                                                    cursor:"pointer",
+                                                                                    flex:1.4,
+                                                                                    overflow:'hidden',
+                                                                                    whiteSpace:'nowrap',
+                                                                                    fontSize:"12px"
                                                                             
-                                                                             }}>
-                                                                        {Number(orderItem.product.selling_price.toLocaleString())}
-                                                                    </Typography>
+                                                                                }}>
+                                                                           {Number(orderItem.product.sold_In?.value) > 1 ? `(${Number(orderItem.product.selling_price.toLocaleString())} x ${orderItem.product.sold_In?.value})/${orderItem.product.sold_In?.measurement_type}` : `${Number(orderItem.product.selling_price.toLocaleString())} / ${orderItem.product.sold_In?.measurement_type}`  } 
+                                                                           
+                                                                        </Typography>
+                                                                        
+                                                                        </>
+                                                                        
+                                                                    </Tooltip>
+                                                                    
                                                                     <Typography  
                                                                     component="div"
                                                                         variant="body2" 
@@ -391,7 +424,7 @@ useEffect(() => {
                                                                         <Input 
                                                                         size="small"
                                                                         onFocus={()=>{setEditingField("subtotal")}}
-                                                                            onChange={(e)=>handleInputSubtotalChange(e, orderItem.product.selling_price, orderItem.id)}
+                                                                            onChange={(e)=>handleInputSubtotalChange(e, orderItem.product.selling_price, orderItem.id, soldInValue)}
                                                                             disableUnderline
                                                                              sx={{
                                                                                 width:'100%',

@@ -11,7 +11,7 @@ interface productType{
     outlet:string;
     user?:number;
     product_name:string;
-    sold_in:string;
+    sold_In?:{measurement_type: string, id:number, value:string}
     cost_price: number;
     selling_price:number;
     stock_inventory:number;

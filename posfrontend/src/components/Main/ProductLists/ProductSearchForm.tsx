@@ -30,7 +30,7 @@ export default function ReceiptSearch(
         sx={{ ml: 1, flex: 1 }}
         value={inputValue}
         onChange={handleChange}
-        placeholder= {isOnSalesReceipt?"search product using name/id":"product name e.g cooking gas"}
+        placeholder= {isOnSalesReceipt?"search product using name/id":" search id /product name e.g cooking "}
         // inputProps={{ 'aria-label': 'search google maps' }}
       />
       <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />

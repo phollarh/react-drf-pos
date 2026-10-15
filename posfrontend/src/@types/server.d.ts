@@ -9,7 +9,7 @@ export interface Server {
     id: number;
     outlet:string
     product_name: string;
-    sold_In: {id:number; measurement_type:string;}
+    sold_In: {id:number; measurement_type:string; value?:string;}
     selling_price: number;
     stock_inventory: number
     category: {name:string, id: number}
