@@ -369,6 +369,10 @@ class LogOutAPIVIEW(APIView):
 
     def post(self, request, format=None):
         response = Response("Logged out successfully")
+        response.delete_cookie("active_outlet")
+        response.delete_cookie("assigned_staff")
+        response.delete_cookie("pass_token")
+        response.delete_cookie("pos_session")
         response.set_cookie("refresh_token", "", expires=0)
         response.set_cookie("access_token", "", expires=0)
 
