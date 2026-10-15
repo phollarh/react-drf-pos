@@ -13,7 +13,7 @@ interface productType{
     user?:number;
     outlet:string;
     product_name:string;
-    sold_in:string;
+    sold_In?:{measurement_type: string, id:number, value:string}
     cost_price: number;
     selling_price:number;
     stock_inventory:number;
@@ -93,8 +93,10 @@ export default function ReceiptDialogue( {handleClose,open,receiptData,handleCli
             remarks=''
             dataCRUD={receiptData}
             handleClick={handleClick}
-            setDataCRUDReceipt={setDataCRUDReceipt} showReceiptDetaills={false} inventoryError={null} 
+            setDataCRUDReceipt={setDataCRUDReceipt} showReceiptDetaills={false} inventoryError={null}
             setInventoryError={function (): void {
+              throw new Error('Function not implemented.');
+            } } soldInError={null} setSoldInError={function (): void {
               throw new Error('Function not implemented.');
             } }/>
         </DialogContent>
