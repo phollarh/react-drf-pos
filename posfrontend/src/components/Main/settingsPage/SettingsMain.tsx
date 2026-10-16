@@ -49,6 +49,7 @@ const SettingsMain = ({mode,setMode,getStaffStatus,handleStaffCreated,setisMainH
                 position:"relative",
                 m:0,
                 p:0,
+                zIndex:2000,
                 // backgroundColor:"red",
                 height: `calc(100vh - ${theme.primaryAppBar.height}px)`,
                 overflow:"auto"
@@ -56,7 +57,7 @@ const SettingsMain = ({mode,setMode,getStaffStatus,handleStaffCreated,setisMainH
             }} >
                 
                 {(!isMainHidden && isBelow750) &&
-                     <Box display="flex" sx={{position:"sticky", top:0,mt:2,justifyContent:"flex-end"}}>
+                     <Box display="flex" sx={{position:"sticky", top:0,mt:2,zIndex:2000,justifyContent:"flex-end", backgroundColor:theme.palette.primary.light}}>
                         <Tooltip title="back" placement="top">
                     <Box 
                     sx={{
@@ -65,6 +66,7 @@ const SettingsMain = ({mode,setMode,getStaffStatus,handleStaffCreated,setisMainH
                         p:0.5,
                         cursor:"pointer",
                         ":hover":{backgroundColor:theme.palette.primary.main}}} component="button" onClick={()=>{setisMainHidden(!isMainHidden)}}>
+                            
                         <ArrowBackIosNewIcon/>
                     </Box>
                     </Tooltip>
