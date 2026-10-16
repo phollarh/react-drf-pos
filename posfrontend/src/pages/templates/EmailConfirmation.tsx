@@ -1,7 +1,7 @@
 import { useFormik } from "formik"
 import { useNavigate } from "react-router-dom"
 
-import { Box, Button, Input, Stack, TextField, Typography, useTheme } from "@mui/material";
+import { Box, Button, Input, Stack, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { useAuthServiceContext } from "../../context/AuthContext";
 import { useEffect, useRef, useState } from "react";
 import useAxiosWithInterceptor from "../../helper/jwtinterceptor";
@@ -37,11 +37,12 @@ const EmailConfirmation = () => {
     const {userId,getUserDetails, logout } =  useAuthServiceContext()
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const [timeLeft, setTimeLeft]  = useState (0)
-
+    const below500 = useMediaQuery("(max-width : 550px)")
 
     useEffect(()=>{
         const fetchUser = async () => {
         const res = await getUserDetails();
+        
         
         setUser(res);}
     
@@ -189,8 +190,6 @@ const EmailConfirmation = () => {
         onSubmit: async (values) => {
             if(timeLeft > 0) return;
             const { email,} = values;
-            console.log
-            ("valled.....")
             
 
             const payload={
@@ -260,14 +259,14 @@ const EmailConfirmation = () => {
                         noWrap
                         component="h1"
                         sx={{
-                            fontSize:{xs:"1.3rem"},
+                            fontSize:{xs:  "1.3rem"  },
                             fontWeight: 500,
                             pb: 2
                         }}
 
                     >Confirm Your Email</Typography>
                     <Box component="form" sx={{width:"100%", display: "flex", alignItems: "center", flexDirection: "column", mt: 1 }} onSubmit={formik.handleSubmit}>
-                        <Typography sx={{fontSize:{md:"20px", xs:"15px"}}} component="h2"> Please check Your Inbox to complete Your Registration, Did not receive Code? 
+                        <Typography sx={{fontSize:{md:"20px", xs:"14px"}}} component="h2"> Please check Your Inbox to complete Your Registration, Did not receive Code? 
                             <Typography sx={{fontWeight:700}} component="span"> Check Your Spam Folder</Typography>
                         </Typography>
                         <div>
@@ -283,7 +282,7 @@ const EmailConfirmation = () => {
                                             }} value={item} onChange={(e)=>{handleChange(index, e)}} 
                                             size="small" 
                                             disableUnderline  
-                                            sx={{color:"blue",width:"35px" , m:0, p:0, '& .MuiInput-input':{textAlign:"center !important",fontSize:"1.9rem" }}}/>
+                                            sx={{color:"blue",width:below500?"20px":"35px" , m:0, p:0, '& .MuiInput-input':{textAlign:"center !important",fontSize:below500?"1.5rem":"1.9rem" }}}/>
                                     </Item>
                             
                                     </>
@@ -296,11 +295,11 @@ const EmailConfirmation = () => {
                            
                             </Stack>
                             {errorA && <Box><Typography color="red" component="span">{errorA}</Typography></Box>}
-                            <Paper sx={{mt:2, width:"100%"}} elevation={1}>
+                            <Paper sx={{mt:2,p:0, width:"100%"}} elevation={1}>
                                <TextField
                                size="small"
-                                sx={{height:40, "& .MuiOutlinedInput-notchedOutline":{border:"none !important" ,height:"50px !important" },
-                                    "& .MuiOutlinedInput-input":{fontSize:"1.4rem !important"}
+                                sx={{height:40,p:0, "& .MuiOutlinedInput-notchedOutline":{border:"none !important" },
+                                    "& .MuiOutlinedInput-input":{fontSize:"1.1rem !important"}
                                 }}
                                 fullWidth
                                 margin="normal"

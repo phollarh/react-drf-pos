@@ -11,7 +11,7 @@ import EmailConfirmation from "./EmailConfirmation";
 const ConfirmationTemplate = () => {
   const theme = useTheme()
   const below1200 = useMediaQuery("(max-width : 1200px)");
-  const [sideMenu, SetsideMenu] = React.useState(false);
+  // const [sideMenu, SetsideMenu] = React.useState(false);
   const [showFormDetails, setShowFormDetails] = React.useState(false)
   const [showFormDetailRegister, setShowFormDetailRegister] = React.useState(false)
   const [, setClickedOption] =useState<string|null|undefined>(null)
@@ -22,7 +22,7 @@ const ConfirmationTemplate = () => {
     setClickedOption(null);
 
     if(input === "register"){
-      console.log('caled....')
+      
       setClickedOption(input)
       setShowFormDetailRegister(!showFormDetailRegister)
     }
@@ -42,10 +42,11 @@ const ConfirmationTemplate = () => {
         overflow: "hidden",}}>
         <CssBaseline/>
         <PrimaryAppBarHome
-        handleFormClickOnBigScreen={()=>{return}}
-        showForm={showForm}
-         sideMenu={sideMenu} 
-         SetsideMenu={SetsideMenu} 
+          handleFormClickOnBigScreen={() => { return; } }
+          showForm={showForm}
+          sideMenu={false} SetsideMenu={function (): void {
+            throw new Error("Function not implemented.");
+          } }         
         //  handleCloseForm ={handleCloseForm} 
          />
         

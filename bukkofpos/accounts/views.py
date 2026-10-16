@@ -757,7 +757,7 @@ class AccountViewSet(viewsets.ViewSet):
         ],
     )
     def end_user_session(self, request):
-        session = request.pos_authorizatio
+        session = request.pos_authorization
         role = session.get("role")
         assigned_staff = request.COOKIES.get("assigned_staff")
         current_time = timezone.now()
