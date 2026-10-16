@@ -46,6 +46,7 @@ const SettingsMain = ({mode,setMode,getStaffStatus,handleStaffCreated,setisMainH
         <Box 
         sx={{
                 flexFlow:1,
+                position:"relative",
                 m:0,
                 p:0,
                 // backgroundColor:"red",
@@ -55,7 +56,7 @@ const SettingsMain = ({mode,setMode,getStaffStatus,handleStaffCreated,setisMainH
             }} >
                 
                 {(!isMainHidden && isBelow750) &&
-                     <Box display="flex" sx={{mt:2,justifyContent:"flex-end"}}>
+                     <Box display="flex" sx={{position:"sticky", top:0,mt:2,justifyContent:"flex-end"}}>
                         <Tooltip title="back" placement="top">
                     <Box 
                     sx={{

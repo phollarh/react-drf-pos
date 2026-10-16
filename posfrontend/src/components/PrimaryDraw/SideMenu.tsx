@@ -65,6 +65,7 @@ const SideMenu: React.FC<Props> = ({ open }: Props) => {
     const {setEmployeeId, setStaffStatus}=UseoutletNstaffContext()
     const [activeSession, setActiveSession] =useState<ActiveSession | null>(null);
     const below600 = useMediaQuery("(max-width:750px)")
+    const below500 = useMediaQuery("(max-width:500px)")
     const isDarkMode = theme.palette.mode === "dark"
     const navigate = useNavigate();
     const getSession = async ()=>  {
@@ -129,6 +130,7 @@ const SideMenu: React.FC<Props> = ({ open }: Props) => {
             <Box sx={{
                 maxHeight:below600?`80px`:`${theme.primaryAppBar.height}px`,
                 width:'100%',
+                overflow:"hidden",
                 borderBottom:`1px solid ${theme.palette.divider}`,
                 p:below600?0: 2,
                 display: "flex",
@@ -180,7 +182,9 @@ const SideMenu: React.FC<Props> = ({ open }: Props) => {
             </Box>
             <Box display={!activeSession? "none":"block"}
                         sx={{
-                            height:90,
+                            height:70,
+                            width:"100%",
+                            overflow:"hidden",
                             mt:"auto",
                             position:"sticky",
                             bottom:0,
@@ -192,9 +196,10 @@ const SideMenu: React.FC<Props> = ({ open }: Props) => {
                             
                         }}>
                    
-                    <Box display="flex" justifyContent="end" sx={{mt:0.5}}>
+                    <Box display="flex" justifyContent="end" sx={{mt:0, p:0}}>
                         <Box component="button" onClick={handleEndSession}
                         sx={{
+                           
                             color:'#ff0000',
                             ml:0.5,
                             backgroundColor:"transparent",
@@ -204,30 +209,30 @@ const SideMenu: React.FC<Props> = ({ open }: Props) => {
                             borderRadius:1,
                             p:0.5
                             }}>
-                            <LogoutIcon sx={{fontSize:"0.8rem"}}/>
+                            <LogoutIcon sx={{fontSize:"0.8rem", m:0}}/>
                         </Box>
                     </Box>
-                    <Typography component="div" sx={{color:theme.palette.primary.light,justifyContent:"space-between", display:"flex", m:1}}>
-                        <Typography sx={{mt:2}}>
+                    <Typography component="div" sx={{color:theme.palette.primary.light,justifyContent:"space-between", display:"flex", m:0.5}}>
+                        <Typography sx={{mt:0.5, fontSize:"0.8rem"}}>
                             active user : 
                         </Typography>
-                         <Typography sx={{mt:2}}>
+                         <Typography sx={{mt:0.5, fontSize:"0.8rem"}}>
                             {activeSession?.role === "admin" ? "Admin": `${activeSession?.user_session_name}`}
                         </Typography>
-                        <Typography component="div" sx={{mt:0.5}}>
+                        <Typography component="div" sx={{mt:0}}>
                             {activeSession?.avatar ? 
                             (
                                  <Avatar sx={{
-                                     width:"40px",
-                                    height:"40px",
+                                     width:below500?"30px":"40px",
+                                    height:below500?"30px":"40px",
                                     bgcolor: deepOrange[500]
                                  }} alt="session avatar" src={activeSession.avatar}/>
                             ):
                             (
                                  <Avatar alt="session avatar"
                                  sx={{
-                                     width:"40px",
-                                    height:"40px",
+                                     width:below500?"30px":"40px",
+                                    height:below500?"30px":"40px",
                                     bgcolor: deepOrange[500]
                                  }} >
                                     {activeSession?.username?.charAt(0).toLocaleUpperCase()}

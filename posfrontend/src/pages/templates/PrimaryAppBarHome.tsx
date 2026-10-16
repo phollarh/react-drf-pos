@@ -40,6 +40,7 @@ const PrimaryAppBarHome = ({ handleFormClickOnBigScreen,showForm,sideMenu,Setsid
 
        <AppBar 
         sx={{
+                zIndex:2000,
                 borderBottom:`1px solid ${theme.palette.divider}`,
                 backgroundColor:isDarkMode?"transparent" :theme.palette.primary.light
             }}

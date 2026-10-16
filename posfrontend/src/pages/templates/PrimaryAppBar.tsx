@@ -56,7 +56,8 @@ const PrimaryAppBar = () => {
 
        <AppBar 
         sx={
-            {
+            {   
+                zIndex:2000,
                 borderBottom:`1px solid ${theme.palette.divider}`,
                 backgroundColor:isDarkMode?"transparent" :theme.palette.primary.light
             }}
@@ -102,8 +103,8 @@ const PrimaryAppBar = () => {
             </Box>
             )}
             
-        <Drawer anchor="left" onClose={toggleDrawer(false)} open={sideMenu}>
-
+                <Drawer anchor="left" onClose={toggleDrawer(false)} open={sideMenu}>
+                        
                     <SideMenu open={sideMenu} />
                 </Drawer>
             
