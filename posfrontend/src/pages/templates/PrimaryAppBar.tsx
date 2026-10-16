@@ -20,8 +20,9 @@ const PrimaryAppBar = () => {
     const isOnSettings = location.pathname === "/settings";
     const isOnguide = location.pathname === "/guide";
     const isSmallScreenSettings = useMediaQuery("(max-width : 1000px)")
-    
     const theme = useTheme();
+    const isDarkMode = theme.palette.mode === "dark";
+    
     const below850 =  useMediaQuery("(max-width:1000px)")
     const isSmallScreen =  useMediaQuery("(max-width:750px)")
     React.useEffect(() => {
@@ -57,6 +58,7 @@ const PrimaryAppBar = () => {
         sx={
             {
                 borderBottom:`1px solid ${theme.palette.divider}`,
+                backgroundColor:isDarkMode?"transparent" :theme.palette.primary.light
             }}
             >
                 

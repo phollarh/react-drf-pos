@@ -21,6 +21,8 @@ const PrimaryAppBarHome = ({ handleFormClickOnBigScreen,showForm,sideMenu,Setsid
     const location = useLocation();
     const isOnSalesReceipt = location.pathname === "/sales_receipts";
     const theme = useTheme();
+    const isDarkMode = theme.palette.mode === "dark";
+    
     const isSmallScreen =  useMediaQuery("(max-width:750px)")
 
     React.useEffect(() => {
@@ -39,6 +41,7 @@ const PrimaryAppBarHome = ({ handleFormClickOnBigScreen,showForm,sideMenu,Setsid
        <AppBar 
         sx={{
                 borderBottom:`1px solid ${theme.palette.divider}`,
+                backgroundColor:isDarkMode?"transparent" :theme.palette.primary.light
             }}
             >
                 

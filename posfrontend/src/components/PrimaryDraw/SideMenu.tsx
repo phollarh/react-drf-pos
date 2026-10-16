@@ -23,6 +23,7 @@ import { BASE_URL_ACCOUNT } from "../../congif";
 import { deepOrange } from "@mui/material/colors";
 import { useNavigate } from "react-router-dom";
 import { UseoutletNstaffContext } from "../../context/OutletNStaffsContext";
+import LogoutIcon from '@mui/icons-material/Logout';
 
 interface ActiveSession {
     role: "admin" | "supervisor" | "staff";
@@ -183,7 +184,7 @@ const SideMenu: React.FC<Props> = ({ open }: Props) => {
                             mt:"auto",
                             position:"sticky",
                             bottom:0,
-                            backgroundColor:isDarkMode?"#403c3c":"#c51162",
+                            backgroundColor:isDarkMode?"#403c3c":"#c6bec2",
                             // minHeight: theme.primaryAppBar.height,
                             // height: theme.primaryAppBar.height,
                             // display: "flex",
@@ -194,7 +195,7 @@ const SideMenu: React.FC<Props> = ({ open }: Props) => {
                     <Box display="flex" justifyContent="end" sx={{mt:0.5}}>
                         <Box component="button" onClick={handleEndSession}
                         sx={{
-                            color:theme.palette.primary.light,
+                            color:'#ff0000',
                             ml:0.5,
                             backgroundColor:"transparent",
                             cursor:"pointer", 
@@ -203,7 +204,7 @@ const SideMenu: React.FC<Props> = ({ open }: Props) => {
                             borderRadius:1,
                             p:0.5
                             }}>
-                            end session
+                            <LogoutIcon sx={{fontSize:"0.8rem"}}/>
                         </Box>
                     </Box>
                     <Typography component="div" sx={{color:theme.palette.primary.light,justifyContent:"space-between", display:"flex", m:1}}>
