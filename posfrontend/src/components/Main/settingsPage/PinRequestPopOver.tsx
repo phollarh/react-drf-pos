@@ -342,6 +342,7 @@ export default function PinRequestPopOver({fetchReceipt,Employee_id,outletStaff,
         />
       {/* </Button> */}
       <Popover
+      sx={{zIndex:2001}}
         id={id}
         open={open}
         anchorEl={anchorEl}

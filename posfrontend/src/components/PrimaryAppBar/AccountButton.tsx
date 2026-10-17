@@ -45,6 +45,7 @@ const AccountButton = ({handleFormClickOnBigScreen, showForm}:accountProps) => {
             open={isMenuOpen}
             keepMounted
             onClose={handleMenuClose}
+             sx={{ zIndex: 2001 }}
 
         >
 
@@ -114,7 +115,7 @@ const AccountButton = ({handleFormClickOnBigScreen, showForm}:accountProps) => {
                                                     m:0
                                                     }} 
                                                 >
-                                                    Terms and Condition
+                                                    guide
                                                 </Typography>
                                 </Box>
                             </>
@@ -138,7 +139,7 @@ const AccountButton = ({handleFormClickOnBigScreen, showForm}:accountProps) => {
     
     return (
         <>
-            <Box  sx={{display:"flex" , justifyContent:"space-between"}}>
+            <Box  sx={{display:"flex" , justifyContent:"space-between" }}>
                 {(isOnHome || isOnHomeR) &&(
                     <Box sx={{display:"flex",justifyContent:below750?"space-between":"flex-start", flexGrow:1,}}>
                         {menuPages.map((item, index)=>{
@@ -165,21 +166,21 @@ const AccountButton = ({handleFormClickOnBigScreen, showForm}:accountProps) => {
                 
                 
                     
-                    <Box   sx={{mt:1, display:isOnHome && below750 ?"none":"block"}}>
+                    <Box   sx={{mt:1, display:isOnHome && below750 ?"none":"block", zIndex:2001}}>
 
-                    <Notifications/>
-                    <IconButton
-                        sx={{ml:2}}
-                        edge="end"
-                        color="inherit"
-                        onClick={handleProfileMenuOpen}
+                        <Notifications/>
+                        <IconButton
+                            sx={{ml:2}}
+                            edge="end"
+                            color="inherit"
+                            onClick={handleProfileMenuOpen}
 
-                    >
-                        <AccountCircle />
-                    </IconButton>
+                        >
+                            <AccountCircle />
+                        </IconButton>
                         {renderMenu}
 
-                </Box>
+                    </Box>
                 
 
                 

@@ -48,6 +48,7 @@ const PrimaryAppBarHome = ({ handleFormClickOnBigScreen,showForm,sideMenu,Setsid
                 
         <Toolbar variant='dense'  sx={{
                 // ml:isSmallScreen ?"0px":`${theme.primaryDraw.width}px`,
+                
                 height: theme.primaryAppBar.height,
                 minHeight: theme.primaryAppBar.height,
             }}>
@@ -68,7 +69,7 @@ const PrimaryAppBarHome = ({ handleFormClickOnBigScreen,showForm,sideMenu,Setsid
                     <SideMenuHome showForm={showForm} open={sideMenu} />
         </Drawer>
         
-          <Typography variant="h6" color='textPrimary' component="div" sx={{ flexGrow: 1 }}>
+          <Typography  variant="h6" color='textPrimary' component="div" sx={{ flexGrow: 1 }}>
 
             <AccountButton handleFormClickOnBigScreen={handleFormClickOnBigScreen} showForm={showForm} />
           </Typography>

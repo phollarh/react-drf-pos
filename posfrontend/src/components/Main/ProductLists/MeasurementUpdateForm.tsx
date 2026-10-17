@@ -1,5 +1,5 @@
 import { useFormik } from "formik"
-import { Box, Button, Container, MenuItem, TextField } from "@mui/material";
+import { Box, Button, Container, MenuItem, TextField, useMediaQuery } from "@mui/material";
 import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
 import { BASE_URL } from "../../../congif";
 
@@ -36,6 +36,7 @@ const MeasurementUpdateForm = ({
     onSuccess
  }:UpdateMeasureFormProps) => {
     const jwtAxios = useAxiosWithInterceptor();
+    const isBelow500 =useMediaQuery("(max-width : 500px)")
     // const {activeOutletId} = useAuthServiceContext();
     // const [outletId, setOutletId] = useState("");
     //      useEffect(()=>{
@@ -117,7 +118,7 @@ const MeasurementUpdateForm = ({
                     <Box component="form" sx={{ display: "flex",maxWidth:"100%", alignItems: "center", flexDirection: "column"}} onSubmit={formik.handleSubmit}>
                        
                         <TextField
-                            sx={{width:"400px"}}
+                            sx={{width:isBelow500?"200":"400px"}}
                             autoFocus
                             fullWidth
                             id="value"

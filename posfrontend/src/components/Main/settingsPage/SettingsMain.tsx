@@ -156,15 +156,15 @@ const SettingsMain = ({mode,setMode,getStaffStatus,handleStaffCreated,setisMainH
                             justifyContent:"space-between",
                             alignItems: "center"
                         }}>
-                    <Typography component="span">
-                         {selectedOutletObject?.name.charAt(0).toLocaleUpperCase()}{selectedOutletObject?.name.slice(1)}
-                    </Typography>
-                    <Typography component="div" >
-                        <UploadAvatars outletSelection={selectedOutletObject}/>
-                    </Typography>
-                    <Typography component="div">
-                        <ControlledSwitches outlet={selectedOutletObject} outletStaff={outletStaff} staffStatus={staffStatus} Employee_id={outletStaff?.Employee_id}/>
-                    </Typography>
+                            <Typography component="span">
+                                {selectedOutletObject?.name.charAt(0).toLocaleUpperCase()}{selectedOutletObject?.name.slice(1)}
+                            </Typography>
+                            <Typography component="div" >
+                                <UploadAvatars outletSelection={selectedOutletObject}/>
+                            </Typography>
+                            <Typography zIndex={2001} component="div">
+                                <ControlledSwitches outlet={selectedOutletObject} outletStaff={outletStaff} staffStatus={staffStatus} Employee_id={outletStaff?.Employee_id}/>
+                            </Typography>
                     
                     
                     </Toolbar>

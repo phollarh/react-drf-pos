@@ -26,7 +26,7 @@ export default function Notifications() {
     
   return (
     <>
-        <Tooltip title="toggle notification" placement="top">
+        <Tooltip sx={{zIndex:2001}} title="toggle notification" placement="top">
             <IconButton  onClick={handleClick} aria-label="show 4 unread messages">
             <Badge variant="standard" badgeContent={setNotifyBadge} color="warning">
                  <NotificationsNoneIcon sx={{color:"blueviolet"}} />

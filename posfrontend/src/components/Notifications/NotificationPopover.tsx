@@ -57,7 +57,8 @@ export default function NotificationsPop({anchorEl,handleClose,
                         display="block" 
                         sx={{ 
                             width:isBelow500?"100%":undefined,
-                            border:"none", backgroundColor:"transparent", cursor:"pointer"
+                            border:"none", backgroundColor:"transparent", cursor:"pointer",
+                            zIndex:2001,
                             
                              }}>
                             <ListItem sx={{ width:"100%",
@@ -111,15 +112,18 @@ export default function NotificationsPop({anchorEl,handleClose,
   return (
     <>
          <Popover
+         sx={{zIndex:2001}}
             slotProps={{
             paper:{
                 sx:{
                     borderRadius:2,
                     width:isBelow500?"90%":"auto",
-                    maxHeight:400
+                    maxHeight:400,
+                    
                 }
             }
         }} 
+        
         id={id}
         open={open}
         anchorEl={anchorEl}
