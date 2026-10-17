@@ -10,6 +10,7 @@ import { useTheme } from "@mui/material/styles";
 import React from "react";
 import DarkModeSwitch from "../PrimaryAppBar/DarkModeSwitch";
 import { Link } from "react-router-dom";
+import { useAuthServiceContext } from "../../context/AuthContext";
 
 
 
@@ -19,10 +20,11 @@ type Props = {
 }
 
 
-const SideMenuHome: React.FC<Props> = ({ open,showForm }: Props) => {
+const SideMenuHome: React.FC<Props> = ({showForm }: Props) => {
     const theme = useTheme()
     const below600 = useMediaQuery("(max-width:750px)")
     const isDarkMode = theme.palette.mode === "dark"
+    const {isLoggedIn, logout} = useAuthServiceContext()
     return (
         <>
             <Box sx={{
@@ -36,10 +38,8 @@ const SideMenuHome: React.FC<Props> = ({ open,showForm }: Props) => {
                 flex: "1 1 100%",
                 
             }}>
-                {/* <Typography sx={{ display: open ? "block" : "none" }}>
-                    Home
-                </Typography> */}
-                <Box sx={{ display: open ? "block" : "none" }}>
+               
+                {/* <Box sx={{ display: open ? "block" : "none" }}>
 
                         
                             
@@ -51,23 +51,27 @@ const SideMenuHome: React.FC<Props> = ({ open,showForm }: Props) => {
                         
                         
 
-                </Box>
+                </Box> */}
             </Box>
-            <Box sx={{display:"flex", flexDirection:"column", height:"100%"}}>
+           
+            <Box sx={{display:"flex", flexDirection:"column", height:"100%", minWidth:250}}>
                  
-                                   
-                <Box component="button" sx={{border:"none",textAlign:"left", p:0,m:0, cursor:"pointer", 
+                 {!isLoggedIn ? 
+                 (
+                        <>
+                        <Box component="button" sx={{border:"none",textAlign:"left", p:0,m:0, cursor:"pointer", 
                     backgroundColor:isDarkMode?theme.palette.primary.dark:theme.palette.primary.contrastText}} 
                     onClick={()=>{showForm('login')}}>
                     <Typography
-                     sx={{
+                        sx={{
                         ":hover":{backgroundColor:isDarkMode?theme.palette.primary.main:theme.palette.primary.light,},
                         fontFamily:"serif",
                         color:isDarkMode?"white":"auto",
                         p:1,
                         m:0
                         }} 
-                    >Login</Typography>
+                        >Login
+                    </Typography>
                 </Box>
                  <Box component="button" sx={{border:"none",textAlign:"left",m:0,p:0, cursor:"pointer", 
                     backgroundColor:isDarkMode?theme.palette.primary.dark:theme.palette.primary.contrastText}} onClick={()=>{showForm('register')}}>
@@ -77,17 +81,35 @@ const SideMenuHome: React.FC<Props> = ({ open,showForm }: Props) => {
                         color:isDarkMode?"white":"auto",
                         p:1,
                         m:0
-                        }} >Register</Typography>
+                        }} >Register
+                    </Typography>
                 </Box>
-                 {/* <Box component="button" onClick={showRegFormIn}>
-                    <Typography variant="h6">Register</Typography>
-                </Box> */}
+
+                        </>
+                 ):
+                 (
+                    <>
+                        <Link style={{textDecoration:"none", color:"inherit"}} to='/profile' ><MenuItem  >Profile</MenuItem></Link>
+                        <Link style={{textDecoration:"none", color:"inherit"}} to="/settings"><MenuItem>Settings</MenuItem></Link>
+                        <Link style={{textDecoration:"none", color:"inherit"}} to="/settings"><MenuItem>User guide</MenuItem></Link>
+                        <MenuItem 
+                            onClick={()=>{ logout()}}
+                        >
+                            Logout
+                        </MenuItem>
+                    </>
+                 )
+                }                  
+                
                 
                 
                 <Box flexGrow={1}></Box>
                 <Box sx={{borderTop:`1px solid ${theme.palette.divider}`, m:1,p:2}}>
-
-                    <Link style={{textDecoration:"none", color:"inherit"}} to="/login"></Link><MenuItem>Terms and Condition</MenuItem>
+                    <Box display="flex" justifyContent="space-between" alignContent="center">
+                        <Typography mt={2} component="span"> Mode Switch</Typography> 
+                        <DarkModeSwitch />  
+                    </Box>
+                    
                 </Box>
                 
 

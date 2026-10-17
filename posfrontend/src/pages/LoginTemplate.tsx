@@ -4,20 +4,24 @@ import SecondaryDrawLog from "./templates/SecondaryDrawLog";
 import WelcomePage from "./account/WelcomePage";
 import MainLog from "./templates/MainLog";
 import PrimaryAppBarHome from "./templates/PrimaryAppBarHome";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import React from "react";
 import Register from "./Register";
+import { useAuthServiceContext } from "../context/AuthContext";
+
 
 
 
 const LoginTemplate = () => {
   const below1200 = useMediaQuery("(max-width : 1200px)");
+  const {isLoggedIn} = useAuthServiceContext()
   const [sideMenu, SetsideMenu] = React.useState(false);
   const [showFormDetails, setShowFormDetails] = React.useState(false);
   const [showFormDetailRegister, setShowFormDetailRegister] = React.useState(false);
   const [clickedOption, setClickedOption] =useState<string|null|undefined>(null);
   const [showLFormOnBigScreen, setShowLFormOnBigScreen] = useState(true);
   const [showRFormOnBigScreen, setShowRFormOnBigScreen] = useState(false);
+  const aboutRef = useRef<HTMLDivElement>(null)
 
 
   const handleFormClickOnBigScreen = (value:string)=>{
@@ -59,18 +63,23 @@ const LoginTemplate = () => {
         display:below1200?"block":"flex",
         width: "100%",
         height: "100vh",
-        overflow: "hidden",}}>
+        // overflow: "hidden",
+        }}>
         <CssBaseline/>
         <PrimaryAppBarHome
+        aboutRef={aboutRef}
         handleFormClickOnBigScreen={handleFormClickOnBigScreen}
         showForm={showForm}
          sideMenu={sideMenu} 
-         SetsideMenu={SetsideMenu}  />
-        
+         SetsideMenu={SetsideMenu}  
+         />
+
             <SecondaryDrawLog >
-              <WelcomePage/>
+              <WelcomePage aboutRef = {aboutRef}/>
             </SecondaryDrawLog>
-            <MainLog showFormDetailRegister={showFormDetailRegister} showFormDetails={showFormDetails} handleCloseForm={showForm} clickedOption={clickedOption}>
+            {(!isLoggedIn) &&
+              <>
+                <MainLog showFormDetailRegister={showFormDetailRegister} showFormDetails={showFormDetails} handleCloseForm={showForm} clickedOption={clickedOption}>
    
                 {!below1200 ?
                   (
@@ -92,6 +101,8 @@ const LoginTemplate = () => {
                 ):
                 (
                   <>
+                    
+
                     <Login showForm={showForm} handleFormClickOnBigScreen={handleFormClickOnBigScreen}  showFormDetails={showFormDetails}/>  
                     <Register  showForm={showForm} handleFormClickOnBigScreen={handleFormClickOnBigScreen} showFormDetailRegister={showFormDetailRegister}/>   
                   </>
@@ -99,6 +110,10 @@ const LoginTemplate = () => {
                 }
                   
             </MainLog>
+              </>
+
+            }
+            
       
         
       

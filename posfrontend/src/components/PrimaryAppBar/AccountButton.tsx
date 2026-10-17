@@ -1,7 +1,7 @@
 import { AccountCircle } from "@mui/icons-material";
 
 import { Box, IconButton, Menu, MenuItem, Typography, useMediaQuery, useTheme } from "@mui/material";
-import { Link, useLocation} from "react-router-dom";
+import { Link, useLocation,} from "react-router-dom";
 
 import React, { useState } from "react";
 import DarkModeSwitch from "./DarkModeSwitch";
@@ -11,10 +11,11 @@ import Notifications from "../Notifications/Notifications";
 interface accountProps {
     showForm: (input:string) => void;
     handleFormClickOnBigScreen: (value:string) => void;
+    aboutRef?: React.RefObject<HTMLDivElement>
 }
 
-    const menuPages = ["Home","Product", "About","Blog"]
-const AccountButton = ({handleFormClickOnBigScreen, showForm}:accountProps) => {
+    const menuPages = ["Home","Product", "About","POS"]
+const AccountButton = ({handleFormClickOnBigScreen, showForm, aboutRef}:accountProps) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const location = useLocation();
     const isMenuOpen = Boolean(anchorEl);
@@ -146,8 +147,23 @@ const AccountButton = ({handleFormClickOnBigScreen, showForm}:accountProps) => {
                             return(
                             <Box 
                                 sx={{border:"none",
+                                
                                 cursor:"pointer",textTransform:"uppercase", 
                                 m:below400?0:1, p:0.5, backgroundColor:"inherit"}} 
+                                onClick={()=>{
+                                    let location = item.trim().toLowerCase()
+                                    if(location==="pos"){
+                                        window.location.href=("/")
+                                    }else if(location === "home"){
+                                        window.location.href="/login"
+                                    }else if (location === "about"){
+                                        aboutRef?.current?.scrollIntoView({
+                                            behavior:"smooth",
+                                            block:"center"
+                                            
+                                        })
+                                    }
+                                }}
                                 component="button" key={index}>
                                     <Typography sx={{fontFamily:"sans-serif",fontSize:below400?"0.9rem":"auto", fontWeight:500, color:theme.palette.primary.dark}}>{item} </Typography>
                             </Box>)

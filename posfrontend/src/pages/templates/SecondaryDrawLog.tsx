@@ -18,7 +18,7 @@ const SecondaryDrawLog = ({ children}: SecondaryDrawProps) => {
             left: 0,
             width:below1200?"100%":"70%",
             height: `calc(100vh - ${theme.primaryAppBar.height}px)`,
-            overflow: "hidden",
+            overflowY: "auto",
             zIndex: 1,
             borderRight: `1px solid ${theme.palette.divider}`,
             

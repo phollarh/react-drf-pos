@@ -66,7 +66,6 @@ const PrimaryAppBar = () => {
         <Toolbar variant='dense'  sx={{
                 height: theme.primaryAppBar.height,
                 minHeight: theme.primaryAppBar.height,
-                zIndex:2000
             }}>
                 <Box sx={{ml:0, display:below850 && isOnSalesReceipt ? "block" :  "none" , }}>
                     <IconButton
@@ -75,7 +74,7 @@ const PrimaryAppBar = () => {
                         color="primary"
                         aria-label="open drawer"
                         edge="start"
-                        sx={{ mr: 2, zIndex:2001 }} >
+                        sx={{ mr: 2 }} >
                         <MenuIcon />
                     </IconButton>
             </Box>

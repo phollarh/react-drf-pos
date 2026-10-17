@@ -123,9 +123,12 @@ const PrimaryDraw: React.FC<Props> = ({ children }) => {
             <Drawer open={open} variant={!below600 ? "permanent" : "temporary"}
                 PaperProps={{
                     sx: {
+                        
                        // mt: `${theme.primaryAppBar.height}px`,
                         // height: `calc(100vh - ${theme.primaryAppBar.height}px)`,
                         width: theme.primaryDraw.width,
+                        zIndex:2001,
+                        overflow:"hidden",
                         // filter: isDarkMode ?,
                         backgroundColor:isDarkMode ?"none":`${theme.palette.primary.light}`
 

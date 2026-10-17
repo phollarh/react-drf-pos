@@ -29,6 +29,10 @@ const Main: React.FC<Props> = ({ children,clickedOption,showFormDetails,showForm
             backgroundColor:isDarkMode?"auto": below1200
             ? "rgba(138, 162, 229, 0.15)" 
             : "#dbe6f0",
+            display:
+    below1200 && !showFormDetails && !showFormDetailRegister
+        ? "none"
+        : "block",
 
         }}>
             {below1200 && showFormDetails && (

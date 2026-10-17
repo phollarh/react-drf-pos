@@ -10,6 +10,7 @@ import { useLocation } from "react-router-dom";
 import SideMenuHome from '../../components/PrimaryDraw/sideMenuHome';
 
 interface HomeProps{
+    aboutRef?: React.RefObject<HTMLDivElement>
    sideMenu:boolean;
    SetsideMenu: React.Dispatch<React.SetStateAction<boolean>>;
    showForm: (input: string | null | undefined) => void;
@@ -17,7 +18,7 @@ handleFormClickOnBigScreen: (value:string) => void;
    
 }
 
-const PrimaryAppBarHome = ({ handleFormClickOnBigScreen,showForm,sideMenu,SetsideMenu}:HomeProps) => {
+const PrimaryAppBarHome = ({ handleFormClickOnBigScreen,showForm,sideMenu,SetsideMenu, aboutRef}:HomeProps) => {
     const location = useLocation();
     const isOnSalesReceipt = location.pathname === "/sales_receipts";
     const theme = useTheme();
@@ -71,7 +72,7 @@ const PrimaryAppBarHome = ({ handleFormClickOnBigScreen,showForm,sideMenu,Setsid
         
           <Typography  variant="h6" color='textPrimary' component="div" sx={{ flexGrow: 1 }}>
 
-            <AccountButton handleFormClickOnBigScreen={handleFormClickOnBigScreen} showForm={showForm} />
+            <AccountButton aboutRef={aboutRef} handleFormClickOnBigScreen={handleFormClickOnBigScreen} showForm={showForm} />
           </Typography>
         </Toolbar>
       </AppBar>
