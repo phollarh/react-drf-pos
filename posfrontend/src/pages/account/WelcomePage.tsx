@@ -11,7 +11,8 @@ import {
   CheckCircleRounded,
   ArrowForwardRounded,
 } from "@mui/icons-material";
-import About from "../about";
+import About from "../AboutPOS";
+
 
 const blue = "#0648ed";
 const navy = "#071d42";
