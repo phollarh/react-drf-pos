@@ -376,6 +376,7 @@ const ProductUpdateForm = ({
                         </TextField>
                         <TextField
                         size="small"
+                         slotProps={{select:{MenuProps:{sx:{zIndex:2001}}}}}
                             margin="normal"
                             fullWidth
                             id="outlet"
@@ -402,6 +403,7 @@ const ProductUpdateForm = ({
                         </TextField>
 
                         <TextField
+                        slotProps={{select:{MenuProps:{sx:{zIndex:2001}}}}}
                         size="small"
                             margin="normal"
                             fullWidth
@@ -468,6 +470,7 @@ const ProductUpdateForm = ({
                         >
                         </TextField>
                         <TextField
+                            slotProps={{select:{MenuProps:{sx:{zIndex:2001}}}}}
                             size="small"
                             margin="normal"
                             fullWidth
