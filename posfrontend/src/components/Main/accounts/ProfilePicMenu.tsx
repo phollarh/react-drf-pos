@@ -80,7 +80,7 @@ const ProfilePicMenu = ({data,onUpload}:dataP) => {
 
                 >
                      <img src={data?.image} alt="profile picture" 
-                    style={{ width: 100, height: 100, borderRadius: "50%" }}
+                    style={{ width: 70, height: 70, borderRadius: "50%" }}
                     />
                 </IconButton>
                 {renderMenu}

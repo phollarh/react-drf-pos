@@ -103,7 +103,7 @@ const PrimaryAppBar = () => {
             </Box>
             )}
             
-                <Drawer anchor="left" onClose={toggleDrawer(false)} open={sideMenu}>
+                <Drawer sx={{zIndex:2001}} anchor="left" onClose={toggleDrawer(false)} open={sideMenu}>
                         
                     <SideMenu open={sideMenu} />
                 </Drawer>

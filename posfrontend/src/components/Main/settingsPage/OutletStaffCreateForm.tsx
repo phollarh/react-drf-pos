@@ -1,5 +1,5 @@
 import { useFormik } from "formik"
-import { Box, Button, Container, FormControl, FormHelperText, InputLabel, MenuItem, Select, TextField, Typography, useTheme } from "@mui/material";
+import { Box, Button, Container,MenuItem,TextField, Typography, useTheme } from "@mui/material";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
 import '../accounts/ProfileForm.css'
@@ -165,7 +165,7 @@ const OutletStaffCreateForm = ({mode,handleStaffCreated, setStaff,getStaffStatus
                 //     formik.setFieldError("status", err.response.data['outlet'][0]);
                 // }
                 if (err.response?.data.status) {
-                    console.log(err.response.data.status)
+                    
                     formik.setFieldError("status", err.response.data?.status);
                 }
                  if(err.response?.data.error){
@@ -175,7 +175,7 @@ const OutletStaffCreateForm = ({mode,handleStaffCreated, setStaff,getStaffStatus
                     }, 9000)
                      
                 }
-                
+                throw err.response
             }
             
             }
@@ -196,6 +196,7 @@ const OutletStaffCreateForm = ({mode,handleStaffCreated, setStaff,getStaffStatus
                     {
                         marginTop: 1,
                         display: "flex",
+                        // zIndex:2001,
                         // alignItems: "center",
                         // justifyContent: "center",
                         flexDirection: 'column',
@@ -228,33 +229,38 @@ const OutletStaffCreateForm = ({mode,handleStaffCreated, setStaff,getStaffStatus
                             helperText={formik.touched.email && formik.errors.email}
                         >
                         </TextField>
-                        <FormControl fullWidth sx={{mt:4, fontFamily:"sans-serif", minWidth: 150 }} size="small">
-                              
+                        {/* <FormControl fullWidth sx={{mt:4, fontFamily:"sans-serif", minWidth: 150 }} size="small">    
+                            <InputLabel id="demo-select-small-label">Status</InputLabel> */}
+                            <TextField
                             
-                            <InputLabel id="demo-select-small-label">Status</InputLabel>
-                                <Select
-                                    name="status"
-                                    value={formik.values.status}
-                                    onChange={formik.handleChange}
-                                    label="Status"
+                            slotProps={{select:{MenuProps:{sx:{zIndex:2001}}}}}
+                            size="small"
+                            select
+                            name="status"
+                            value={formik.values.status}
+                            onChange={formik.handleChange}
+                            label="Status"
+                            error={!!formik.touched.status && !!formik.errors.status}
+                            helperText={formik.touched.status && formik.errors.status}
+                            >     
                                     
-                                   
-                                    >
                                         <MenuItem value="">
                                             <em>None</em>
                                         </MenuItem>
                                         
                                         <MenuItem value="Supervisor">Supervisor</MenuItem>
-                                        {/* <MenuItem value="Manager">Manager</MenuItem> */}
+                                        
                                         <MenuItem value="Staff">Staff</MenuItem>
                                                         
-                                </Select>
-                                {formik.touched.status && formik.errors.status && (
+                                
+                            </TextField>
+                                
+                                {/* {formik.touched.status && formik.errors.status && (
                                     <FormHelperText style={{color:"red"}}>
                                         {formik.errors.status}
                                     </FormHelperText>
                                 )}
-                        </FormControl>
+                        </FormControl> */}
                           {/* <FormControl fullWidth sx={{mt:4, fontFamily:"sans-serif", minWidth: 150 }} size="small">
                             
                             <InputLabel id="demo-select-small-label">Outlet</InputLabel>

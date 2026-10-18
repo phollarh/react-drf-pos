@@ -44,6 +44,7 @@ export default function UpdateProductDialogue({handleOrderDelete,onSuccess,dataO
   return (
     <React.Fragment>
       <Dialog
+      sx={{zIndex:2001, }}
         open={open}
         onClose={handleClose}
         scroll={scroll}

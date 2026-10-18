@@ -232,6 +232,8 @@ export function useAuthService(): AuthServiceProps {
             if(response.status === 200){
                 setIsloggedIn(false)
                 setUserid(null)
+                setActiveOutletId(null)
+                setIsoutletActive(false)
                 localStorage.removeItem("user_id");
                 localStorage.removeItem("username");
                 localStorage.setItem("isLoggedIn", "false")

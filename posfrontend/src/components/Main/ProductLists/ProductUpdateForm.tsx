@@ -355,7 +355,7 @@ const ProductUpdateForm = ({
                 
                 <Box sx={
                     {   
-                        width:"300px",
+                        // width:{lg:"300px",md:"400px", xs:"200px",}
 
                     }}>
                     <Box  component="form" sx={{ display: "flex",maxWidth:"100%",flexGrow:1, alignItems: "center", flexDirection: "column",}} onSubmit={formik.handleSubmit}>

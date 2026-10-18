@@ -3,7 +3,8 @@ import {
     Typography,
     useTheme,
     Container,
-    Paper
+    Paper,
+    useMediaQuery
 } from "@mui/material";
 import React, {useEffect} from "react";
 import useAxiosWithInterceptor from "../../../helper/jwtinterceptor";
@@ -27,6 +28,7 @@ const ViewUpdateProfileSection = () => {
     const theme = useTheme();
     const [drawerOpen, setDrawerOpen] = React.useState(true);
     const jwtAxios = useAxiosWithInterceptor();
+    const isBelow750 = useMediaQuery("(max-width : 750px)")
     const isDarkMode = theme.palette.mode === "dark"
    const {isLoggedIn, authLoading} = useAuthServiceContext();
     React.useEffect(() => {
@@ -89,10 +91,10 @@ const ViewUpdateProfileSection = () => {
 
     return (
         <>
-            <Container  sx={{width:`calc(100vw - ${drawerWidth}px)`, ml:`${drawerWidth}px`}}>
+            <Container  sx={{width:isBelow750? "100%":`calc(100vw - ${drawerWidth}px)`, ml:isBelow750?0:`${drawerWidth}px`}}>
             <Box sx={{display:"flex" ,backgroundColor:isDarkMode?"none":theme.palette.primary.light,m:3,borderRadius:"10px", justifyContent:"space-between"}}>
                 <Box>
-                    <Typography sx={{p:3}} gutterBottom variant="h4">{`${data?.first_name.charAt(0).toUpperCase()}${data?.first_name.slice(1)}'s Profile`}</Typography>
+                    <Typography sx={{p:3, fontSize:{xs:"1rem", md:"1.5rem"}}} gutterBottom variant="h4">{`${data?.first_name.charAt(0).toUpperCase()}${data?.first_name.slice(1)}'s Profile`}</Typography>
                 </Box>
                 <Box></Box>
                 <Box>

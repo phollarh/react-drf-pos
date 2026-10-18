@@ -1,5 +1,5 @@
 import { useFormik } from "formik"
-import { Box, Button, Container, FormControl, FormHelperText, InputLabel, MenuItem, Select, TextField, Typography, useTheme } from "@mui/material";
+import { Box, Button, Container,MenuItem, TextField, Typography, useTheme } from "@mui/material";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
 import '../accounts/ProfileForm.css'
@@ -143,7 +143,7 @@ const OutletStaffUpdateForm = ({data,setMode,setStaff}:dataPropsB) => {
                     setMode(undefined)
                    
                 }
-                console.log(response.data)
+                
                 return response.data
         }catch(err:any){
             console.log(err)
@@ -255,7 +255,7 @@ const OutletStaffUpdateForm = ({data,setMode,setStaff}:dataPropsB) => {
                 }
                 if(err.response?.status === 403){
                     setErrMeg(err.response?.data.error)
-                    console.log(err.response?.data.error)
+                    
                 }
                 
                 if(err.response?.data.error){
@@ -265,8 +265,8 @@ const OutletStaffUpdateForm = ({data,setMode,setStaff}:dataPropsB) => {
                     }, 9000)
                      
                 }
-                console.log(err)
-                throw err
+                
+                throw err.response
                
             }
             // const status = await login(email, password);
@@ -323,11 +323,13 @@ const OutletStaffUpdateForm = ({data,setMode,setStaff}:dataPropsB) => {
                             helperText={formik.touched.email && formik.errors.email}
                         >
                         </TextField>
-                        <FormControl fullWidth sx={{mt:4, fontFamily:"sans-serif", minWidth: 150 }} size="small">
+                        {/* <FormControl fullWidth sx={{mt:4, fontFamily:"sans-serif", minWidth: 150 }} size="small"> */}
                               
                             
-                            <InputLabel id="demo-select-small-label">Status</InputLabel>
-                                <Select
+                            
+                                <TextField
+                                slotProps={{select:{MenuProps:{sx:{zIndex:2001}}}}}
+                                select
                                     name="status"
                                     value={formik.values.status}
                                     onChange={formik.handleChange}
@@ -342,13 +344,13 @@ const OutletStaffUpdateForm = ({data,setMode,setStaff}:dataPropsB) => {
                                         <MenuItem value="Manager">Manager</MenuItem>
                                         <MenuItem value="Staff">Staff</MenuItem>
                                                         
-                                </Select>
-                                {formik.touched.status && formik.errors.status && (
+                                </TextField>
+                                {/* {formik.touched.status && formik.errors.status && (
                                     <FormHelperText style={{color:"red"}}>
                                         {formik.errors.status}
                                     </FormHelperText>
                                 )}
-                        </FormControl>
+                        </FormControl> */}
                           {/* <FormControl fullWidth sx={{mt:4, fontFamily:"sans-serif", minWidth: 150 }} size="small">
                             
                             <InputLabel id="demo-select-small-label">Outlet</InputLabel>
