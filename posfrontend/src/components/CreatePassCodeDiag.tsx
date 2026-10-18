@@ -23,7 +23,7 @@ export default function CreatePassCodeDiag({formik,requestId,open,passTokenRef,p
   
       <Dialog
       maxWidth="xs"
-      
+        sx={{zIndex:2002}}
         open={open}
         onClose={handleDaigClose}
         aria-labelledby="alert-dialog-title"

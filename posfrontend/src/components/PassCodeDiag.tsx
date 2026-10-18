@@ -31,7 +31,7 @@ export default function PassCodeDiag({handleClose,passTokenRef,handleDelete,purp
   
       <Dialog
       maxWidth="xs"
-      
+        sx={{zIndex:2002}}
         open={open}
         onClose={handleClose}
         aria-labelledby="alert-dialog-title"
