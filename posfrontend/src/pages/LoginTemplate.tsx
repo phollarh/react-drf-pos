@@ -57,6 +57,7 @@ const LoginTemplate = () => {
 
   }
   
+  
   return(
     <>
       <Box sx={{position:"relative",
@@ -74,12 +75,12 @@ const LoginTemplate = () => {
          SetsideMenu={SetsideMenu}  
          />
 
-            <SecondaryDrawLog >
+            <SecondaryDrawLog isLoggedIn={isLoggedIn} >
               <WelcomePage aboutRef = {aboutRef}/>
             </SecondaryDrawLog>
             {(!isLoggedIn) &&
               <>
-                <MainLog showFormDetailRegister={showFormDetailRegister} showFormDetails={showFormDetails} handleCloseForm={showForm} clickedOption={clickedOption}>
+                <MainLog isLoggedIn={isLoggedIn} showFormDetailRegister={showFormDetailRegister} showFormDetails={showFormDetails} handleCloseForm={showForm} clickedOption={clickedOption}>
    
                 {!below1200 ?
                   (

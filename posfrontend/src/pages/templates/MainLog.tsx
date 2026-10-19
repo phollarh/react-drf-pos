@@ -7,11 +7,12 @@ type Props = {
     showFormDetails:boolean;
     handleCloseForm:((input: string | undefined | null) => void);
     clickedOption: string | null | undefined;
-    showFormDetailRegister: boolean
+    showFormDetailRegister: boolean;
+    isLoggedIn: boolean
 }
 
 
-const Main: React.FC<Props> = ({ children,clickedOption,showFormDetails,showFormDetailRegister,handleCloseForm}) => {
+const Main: React.FC<Props> = ({ children,isLoggedIn,clickedOption,showFormDetails,showFormDetailRegister,handleCloseForm}) => {
     const theme = useTheme()
     const below1200 = useMediaQuery("(max-width : 1200px)")
     const isDarkMode = theme.palette.mode === "dark"
@@ -22,7 +23,7 @@ const Main: React.FC<Props> = ({ children,clickedOption,showFormDetails,showForm
             mt:below1200?"auto": `${theme.primaryAppBar.height}px`,
              position: below1200 ? "absolute" : "relative",
             zIndex:showFormDetailRegister || showFormDetails ? theme.zIndex.appBar + 1:5,
-            width:below1200?"100%": "30%",
+            width:below1200?"100%":isLoggedIn? "0": "30%",
             height:below1200?"100vh": `calc(100vh - ${theme.primaryAppBar.height}px)`,
             justifyContent: "center",
             alignItems: "center",
