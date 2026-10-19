@@ -40,7 +40,7 @@ const SettingsMain = ({mode,setMode,getStaffStatus,handleStaffCreated,setisMainH
     staffStatus,setSelectedOutletObject, getOutlets,selectedOutletObject,createOutletObject,outlets, outletStaff, setStaff}:dataProps) => {
     const theme = useTheme();
     const isBelow750 = useMediaQuery("(max-width : 750px)")
-    
+    console.log(outletStaff,outlets,selectedOutletObject,isMainHidden)
     return (
         <>
         <Box 

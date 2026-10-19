@@ -31,6 +31,7 @@ interface settingsProps{
         handleCreate:()=>void;
     };
     outletStaff:{
+        setEmployeeId: React.Dispatch<React.SetStateAction<string>>
          outletStaffData:outletStaffDataProps[];
         selectedEmployeeId:string| undefined;
         handleOutletStaffClick:(event: SelectChangeEvent)=>void;
@@ -51,17 +52,22 @@ const SettingSecondary = (
         isMainHidden,
         
         outlets:{outletsData ,handleClick,outletId},
-        outletStaff:{outletStaffData,selectedEmployeeId,handleOutletStaffClick}
+        outletStaff:{outletStaffData,selectedEmployeeId,handleOutletStaffClick,setEmployeeId}
     }:settingsProps) => {
     const isBelow750 = useMediaQuery("(max-width: 750px)")  
     const jwtAxios= useAxiosWithInterceptor() ;
     const [printerSetup,setPrinterSetup] = useState<printerSetupProps | null>(null)
     const {activeOutletId} = useAuthServiceContext();
     const theme = useTheme();
+    useEffect(()=>{
+        if(selectedEmployeeId){
+            setEmployeeId("")
+        }
+    },[])
     const getPrinterSetup = async ()=>{
         try{
             const response = await jwtAxios.get(`${BASE_URL}/printer_setup`, {params:{"outlet_id":activeOutletId},withCredentials:true})
-            console.log(response.data)
+            
             if(response.status === 200){
                 
                     setPrinterSetup(response.data)
@@ -80,11 +86,12 @@ const SettingSecondary = (
       getPrinterSetup()
     
     },[activeOutletId])
+    console.log(outletId)
      const handleSetPaperSize = async (event: SelectChangeEvent)=>{
         const paperSize = event.target.value
         try{
             const response = await jwtAxios.patch(`${BASE_URL}/printer_setup/${printerSetup?.id}/`, {"paper_size":paperSize, "outlet_id":printerSetup?.outlet}, {withCredentials:true})
-            console.log(response.data)
+            
             await getPrinterSetup()
             return response.data
         }catch(err:any){

@@ -144,6 +144,7 @@ const Settings = () => {
                  }
       }
       const handleOutletStaffClick = async (event: SelectChangeEvent)=>{
+        
          if(isBelow750){
           setisMainHidden(false)
         }
@@ -213,6 +214,7 @@ const Settings = () => {
             }}
             outletStaff={{
               outletStaffData:staffData,
+              setEmployeeId:setEmployeeId,
               selectedEmployeeId:employeeId,
               handleOutletStaffClick:handleOutletStaffClick
             }}
