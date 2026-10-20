@@ -22,7 +22,7 @@ export function useAuthService(): AuthServiceProps {
     const getInitialLoggedInValue =async () => {
         // const loggedIn = localStorage.getItem("isLoggedIn");
         // return loggedIn !== null && loggedIn === "true";
-        
+        setAuthLoading(true)
          try {
 
             const response = await jwtAxios.get(
@@ -67,6 +67,7 @@ export function useAuthService(): AuthServiceProps {
         checked?:boolean
     ) => {
         setAuthError(null)
+        setAuthLoading(true)
         const payload = {
             "requestId":requestId,
             "password":password,
@@ -99,6 +100,8 @@ export function useAuthService(): AuthServiceProps {
                 setAuthError(null);
             }, 5000);
             throw err.response;
+        }finally{
+            setAuthLoading(false)
         }
 
     }
@@ -107,6 +110,7 @@ export function useAuthService(): AuthServiceProps {
     const getUserDetails = async () => {
         setAuthError(null)
         if(!userId) return;
+        setAuthLoading(true)
         try {
             // const userId = localStorage.getItem("user_id");
             // const accessToken = localStorage.getItem("access_token")
@@ -129,6 +133,8 @@ export function useAuthService(): AuthServiceProps {
             setAuthError(err.response.data["error"])
             // localStorage.setItem("isLoggedIn", "false")
             throw err.response;
+        }finally{
+            setAuthLoading(false)
         }
 
     }
@@ -171,12 +177,15 @@ export function useAuthService(): AuthServiceProps {
             setIsloggedIn(false)
             localStorage.setItem("isLoggedIn", "false")
             return err.response.status;
+        }finally{
+            setAuthLoading(false)
         }
 
     }
 
     const register = async (email: string,first_name:string, last_name:string, password: string ) => {
             setAuthError(null);
+            setAuthLoading(true)
         try {
             const response = await axios.post(
                 `${BASE_URL_ACCOUNT}/register/`, {
@@ -202,6 +211,8 @@ export function useAuthService(): AuthServiceProps {
             }
             return { status: 500, data: { message: "Network or server error" } };
             
+        }finally{
+        setAuthLoading(false)
         }
 
     }
@@ -245,6 +256,8 @@ export function useAuthService(): AuthServiceProps {
         } catch (logError) {
             
             return Promise.reject(logError)
+        }finally{
+            setAuthLoading(false)
         }
 
 

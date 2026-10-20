@@ -44,8 +44,8 @@ const otherSideMenu = [
     { label: 'Past Receipts',link:"/past_receipts", icon: <HistoryIcon /> },
     { label: 'Settings',link:"/settings" ,icon: <SettingsIcon /> },
   
-    { label: 'About',link:"/about", icon: <InfoIcon /> },
-    { label: 'User Guide',link:"/feedback", icon: <FeedbackIcon /> },
+    { label: 'About',link:"/", icon: <InfoIcon /> },
+    { label: 'User Guide',link:"/guide", icon: <FeedbackIcon /> },
 ];
 
 
@@ -77,11 +77,10 @@ const SideMenu: React.FC<Props> = ({ open }: Props) => {
             
                 setActiveSession(response.data)
             }
-                console.log(response)
                 
                 return response.data
             }catch(err:any){
-                console.log(err.response)
+                
                 
                 throw err.response
             }
@@ -126,6 +125,7 @@ const SideMenu: React.FC<Props> = ({ open }: Props) => {
             height: "100vh",
             display: "flex",
             flexDirection: "column",
+            zIndex:2001
         }}>
             <Box sx={{
                 maxHeight:below600?`80px`:`${theme.primaryAppBar.height}px`,

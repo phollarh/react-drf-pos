@@ -71,7 +71,7 @@ const CategoryUpdateForm = ({
                 "outlet":outletId,
                 "name": name,
                 }
-                console.log(payload)
+                
         try{
             if(category_id && category_id > 0){
                 const response = await jwtAxios.patch(`${BASE_URL}/categories_info/${category_id}/?outlet_id=${outletId}`,
@@ -103,12 +103,10 @@ const CategoryUpdateForm = ({
             }
           
         }catch(error:any){
-             if (error.response?.status === 400) {
-                new Error("400");
-            }
+
 
             setIsLoading(false)
-            throw error;
+            throw error.response;
         }
         },
     })

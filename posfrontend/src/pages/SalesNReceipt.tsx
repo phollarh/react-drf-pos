@@ -130,7 +130,7 @@ const SalesNReceipt = () => {
                 
                 return response.data
             }catch(err:any){
-                 console.log(err.response)
+                 
                 if(err.response?.status === 404){
                     setStaffStatus(undefined)
                     setAssignedStaff(null)
@@ -236,7 +236,7 @@ const SalesNReceipt = () => {
                     }
             try{
                 if(outlet_id === "") return;
-                console.log(payload)
+                
                 const response = await jwtAxios.put(`${BASE_URL}/sales_receipt/${receipt_id}/?outlet_id=${outlet_id}`,
                 payload,
                { withCredentials: true}
@@ -384,7 +384,7 @@ const SalesNReceipt = () => {
             if (err.response?.status === 400) {
                 new Error("400");
             }
-            throw err;
+            throw err.response;
         }
     }
 
@@ -464,7 +464,7 @@ const SalesNReceipt = () => {
             setErrorOrder(error.response?.data.error_len)
         }
             if (error.response?.status === 400) {
-                console.log(error.response)
+            
                 new Error("400");
                 setShowReceiptDetaills(false)
                 setErrorOrder(error?.response.data.error);

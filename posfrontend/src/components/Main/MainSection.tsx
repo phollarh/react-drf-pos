@@ -59,7 +59,7 @@ const MainSection = () => {
     const drawerWidth = drawerOpen ? theme.primaryDraw.width : theme.primaryDraw.closed;
     
     const handleCreateNewProduct = ()=>{
-        console.log("hererer")
+        
         setDataObject(null)
         setCreateProduct(true);
         setOpen(true)
@@ -87,7 +87,7 @@ const MainSection = () => {
         return base;
     }, [filterOption, searchByproductName]);
     
-    const { dataCRUD, fetchData,setDataCRUD, deleteData } = useCrud<Server>([], url)
+    const { dataCRUD, fetchData,setDataCRUD, deleteData, isLoading} = useCrud<Server>([], url)
 
 
 
@@ -119,8 +119,8 @@ const MainSection = () => {
                     
                     <>
                         <Typography variant="h4" sx={{fontSize:below350?"25px !important": "inherit", textAlign:"center", m:1}}>
-                        {dataCRUD?.length > 0 ? ('Product Lists')
-                         : <Alert severity="error">No product added. Add to list....</Alert>
+                        {  (!isLoading && dataCRUD?.length === 0) ?  <Alert severity="error">No product added. Add to list....</Alert>
+                         : ('Product Lists')
                           }
                     </Typography>
                     <Box component="button" onClick={handleCreateNewProduct}  sx={{display:"block",margin:below350?"0.5px auto !important":"auto",border:"none",textAlign:"center", backgroundColor:isDarkMode?theme.palette.primary.dark:theme.palette.primary.contrastText}}>

@@ -31,7 +31,7 @@ type typeSales = {
 const HomeMainSection = () => {
     const theme = useTheme();
     const jwtAxios = useAxiosWithInterceptor();
-    const [drawerOpen, setDrawerOpen] = React.useState(true);
+    const [, setDrawerOpen] = React.useState(true);
     const [xLabelsMonthlySales , SetxLabelsMonthlySales] = useState<string[]>([])
     const [labelsDataMonthlySales , SetlabelsDataMonthlySales] = useState<number[]>([])
     const [xLabelsDailySales , setXLabelsDailySales] = useState<string[]>([])
@@ -53,7 +53,7 @@ const HomeMainSection = () => {
     },[activeOutletId])
     
     React.useEffect(() => {
-        console.log(drawerOpen)
+        
                 const handleDrawerToggle = (e: Event) => {
                 const customEvent = e as CustomEvent;
                 setDrawerOpen(customEvent.detail);
@@ -64,7 +64,7 @@ const HomeMainSection = () => {
     
 
    const getSalestData = async ()=>{
-        console.log("called")
+        
          try{
         const response = await jwtAxios.get(
         `${BASE_URL}/sales_info/?outlet_id=${outletId}`,{
@@ -111,7 +111,7 @@ const HomeMainSection = () => {
         setLabelsDataDailySales(dailyLablesData)
 
         const monthlySalesData = response.data['monthly_sales']
-        console.log(monthlySalesData)
+        
         const MonthlyLablesData :number[]= []
         const MonthlyLables:string[] = []
         for(let x in monthlySalesData){
@@ -124,10 +124,10 @@ const HomeMainSection = () => {
         return response.data
     }catch(err:any){
         if (err.response?.status === 400) {
-            console.log(err.response)
+            
                 throw new Error("400");
             }
-            console.log(err.response)
+            
         throw err.response;
         
     }

@@ -41,15 +41,6 @@ function App() {
             }
            
         }
-    // async function connectPrinter() {
-
-    //         if (!qz.websocket.isActive()) {
-    //             await qz.websocket.connect();
-    //              console.log("QZ Connected");
-    //         }
-
-    //     }
-
       void connectPrinter();
 
     }, []);
@@ -205,9 +196,16 @@ function App() {
             {/* <Route path='/settings' element={<Settings/>} /> */}
             
             
-            
             <Route path='/login' element={<LoginTemplate/>} />
-            <Route path='/guide' element={<UserGuide/>} />
+             
+             <Route  path='/guide' element={ 
+              <ProtectedRoute access="adminOrSupervisor">
+                  <UserGuide/> 
+              </ProtectedRoute>
+              
+              }
+            />
+            {/* <Route path='/guide' element={<UserGuide/>} /> */}
             <Route path='/authorization' element={<AuthorizationPage/>} />
             
           </Routes> 

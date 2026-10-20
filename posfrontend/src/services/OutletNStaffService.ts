@@ -44,7 +44,6 @@ export const OutletNstaffService = () =>{
           
                return response.data
           }catch(err:any){
-              console.log(err.response)
               throw err.response
           }
         }
@@ -57,7 +56,6 @@ export const OutletNstaffService = () =>{
           
                return response.data
           }catch(err:any){
-              console.log(err.response)
               throw err.response
           }
         }
@@ -78,14 +76,13 @@ export const OutletNstaffService = () =>{
           try{
                const response= await jwtAxios.get(`${BASE_URL_ACCOUNT}/outletstaffs/?outlet_id=${outlet_id}`, {withCredentials:true})
                setStaffData(response.data)
-               console.log(response.data)
                return response.data
           }catch(err:any){
             if( err.response.status === 403 && err.response.data?.error){
                 setStaffData([])
             }
               
-              throw err
+              throw err.response
           }
           
       }
@@ -106,17 +103,9 @@ export const OutletNstaffService = () =>{
                             }                  
                           )
                           setStaffStatus(response.data)
-            
-                         
-                          console.log(response.data)
                           
                         return (response.data)
                        }catch(err:any){
-                        console.log(err.response)
-                            if(err.response?.data){
-                        // setErrorHandling(error.response.data.non_field_errors[0])
-                            console.log(err.response?.data?.non_field_errors[0])
-                            }
                             throw err.response
                       }
       }
@@ -145,18 +134,12 @@ export const OutletNstaffService = () =>{
                            
                             await getStaffStatus(employeeId)
                             
-                            console.log(response.data)
-
-
                         }
-                        console.log(response)
                         return response
             }catch(error:any){
             //   setIsLoading(false)
             //     setErrorHandling("")
                 if(error.response?.data){
-                    console.log(error.response?.data)
-                    
                   return(error.response.data.non_field_errors[0])
                 }
             }

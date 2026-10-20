@@ -86,6 +86,8 @@ const ProductUpdateForm = ({
     const {activeOutletId} = useAuthServiceContext();
     const [outletId, setOutletId] = useState("")
          useEffect(()=>{
+
+            if(activeOutletId)return;
             if(activeOutletId){
                 setOutletId(String(activeOutletId))
             }
@@ -541,6 +543,7 @@ const ProductUpdateForm = ({
 
                         <Box ref={Ref}>
                         <TextField
+                        
                         size="small"
                             inputProps={{ inputMode: "decimal" }}
                              onKeyDown={(e) => {
@@ -573,6 +576,7 @@ const ProductUpdateForm = ({
                             >
                      </TextField>    
                     <TextField
+                    slotProps={{select:{MenuProps:{sx:{zIndex:2001}}}}}
                         size="small"
                             margin="normal"
                             fullWidth

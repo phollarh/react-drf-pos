@@ -14,7 +14,7 @@ import { useAuthServiceContext } from "../context/AuthContext";
 
 const LoginTemplate = () => {
   const below1200 = useMediaQuery("(max-width : 1200px)");
-  const {isLoggedIn} = useAuthServiceContext()
+  const {isLoggedIn, authLoading} = useAuthServiceContext()
   const [sideMenu, SetsideMenu] = React.useState(false);
   const [showFormDetails, setShowFormDetails] = React.useState(false);
   const [showFormDetailRegister, setShowFormDetailRegister] = React.useState(false);
@@ -78,7 +78,7 @@ const LoginTemplate = () => {
             <SecondaryDrawLog isLoggedIn={isLoggedIn} >
               <WelcomePage aboutRef = {aboutRef}/>
             </SecondaryDrawLog>
-            {(!isLoggedIn) &&
+            {(!isLoggedIn && !authLoading) &&
               <>
                 <MainLog isLoggedIn={isLoggedIn} showFormDetailRegister={showFormDetailRegister} showFormDetails={showFormDetails} handleCloseForm={showForm} clickedOption={clickedOption}>
    

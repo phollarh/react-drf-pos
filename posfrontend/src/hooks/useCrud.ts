@@ -36,6 +36,7 @@ const useCrud = <T>(initialData: T[], apiURL: string|null): IuseCrud<T> => {
 
      const fetchData =React.useCallback( async () => {
         if (!apiURL) return;
+        setIsloading(true)
         try {
             const response = await jwtAxios.get(`${BASE_URL}${apiURL}`, {
              
@@ -45,7 +46,7 @@ const useCrud = <T>(initialData: T[], apiURL: string|null): IuseCrud<T> => {
             
             
             const data = response.data;
-            console.log(apiURL, data)
+            
             if (Array.isArray(data)) {
                 setError(null)
                 setDataCRUD(data);
@@ -67,7 +68,7 @@ const useCrud = <T>(initialData: T[], apiURL: string|null): IuseCrud<T> => {
     },[apiURL]);
 
     const deleteData = async (id:number) => {
-        
+        setIsloading(true)
         const apiURLDel = `${apiURL?.split("/")[1]}/${id}/${apiURL?.split("/")[2]}`
         
         try {
@@ -82,6 +83,8 @@ const useCrud = <T>(initialData: T[], apiURL: string|null): IuseCrud<T> => {
             }
             throw error;
            
+        }finally{
+            setIsloading(false)
         }
     };
 

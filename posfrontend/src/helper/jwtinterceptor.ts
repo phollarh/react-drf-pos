@@ -40,7 +40,7 @@ const checkEmailVerificationOnce = () => {
 const userTimeZone =
     Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-console.log(userTimeZone);
+
 
 const useAxiosWithInterceptor = () :AxiosInstance =>{
     const navigate = useNavigate();
@@ -76,7 +76,7 @@ const useAxiosWithInterceptor = () :AxiosInstance =>{
                         if(refreshError.response?.status === 401){
                              if (window.location.pathname !== "/forgot_password") {
                                     navigate("/login", { replace: true });
-                                    console.log("called")
+                                    
                                 }
                             
                         }

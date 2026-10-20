@@ -55,7 +55,7 @@ const AuthorizationPage = () => {
         outletsData.some((item)=>String(item.id) === getoutlet)
     ,[outletsData, getoutlet]) 
     const selectOption = selectedOutletExists ? getoutlet : ""
-    console.log(activeOutletId, selectedOutletExists,selectOption)
+    
     const handleAuthorize =async (event:React.FormEvent<HTMLFormElement>)=>{
         event.preventDefault();
         setError(null)
@@ -90,10 +90,10 @@ const AuthorizationPage = () => {
             }
 
             setPassCodeErr(err.response?.data?.error_passcode)
-            console.log(err.response)
             if(err.response.status === 409){
                 setError(err.response?.data.error)
             }
+            throw err.response
         }finally{
             setTimeout(() => {
                 setError(null)
@@ -101,11 +101,7 @@ const AuthorizationPage = () => {
         }
             
     }
-    useEffect(()=>{
-       
-        console.log(staffData)
-        
-    }, [staffData])
+
  return (
     <>
         <CssBaseline />

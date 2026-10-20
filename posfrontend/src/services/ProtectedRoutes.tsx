@@ -106,7 +106,7 @@ const ProtectedRoute = ({
                 const roleIsAllowed =permittedRoles.includes(
                         currentSession.role
                     );
-                console.log(permittedRoles)
+                
                 if (!roleIsAllowed) {
                     if (hasRedirected.current) {
                         return;
@@ -133,7 +133,7 @@ const ProtectedRoute = ({
                     return;
                 }
 
-                console.log(err.response);
+                
 
                 hasRedirected.current = true;
 
@@ -144,6 +144,7 @@ const ProtectedRoute = ({
                 navigate("/authorization", {
                     replace: true,
                 });
+                throw err.response
             }
         };
         if(isLoggedIn){

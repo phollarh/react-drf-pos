@@ -76,8 +76,8 @@ const SettingSecondary = (
             
             return response.data
         }catch(err:any){
-            console.log(err.response)
-            throw err
+            
+            throw err.response
         }
       }
     useEffect(()=>{
@@ -86,7 +86,7 @@ const SettingSecondary = (
       getPrinterSetup()
     
     },[activeOutletId])
-    console.log(outletId)
+    
      const handleSetPaperSize = async (event: SelectChangeEvent)=>{
         const paperSize = event.target.value
         try{

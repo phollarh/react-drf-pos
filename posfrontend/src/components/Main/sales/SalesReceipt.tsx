@@ -95,7 +95,7 @@ const SalesReceipt = ({inventoryError,setInventoryError,soldInError, setSoldInEr
     const [editingField, setEditingField] = useState<"quantity" | "subtotal">("quantity");
     const [balance, setBalance] = React.useState<number>(0)
     const isOnsalesReceipt = location.pathname === "/sales_receipts"
-console.log(dataCRUD)
+
 useEffect(() => {
     const needsInitialization = dataCRUD.some(item =>
         item.orders.some(order => order.quantityInput === undefined)
@@ -161,7 +161,7 @@ useEffect(() => {
         if (err.response?.status === 400) {
                 new Error("400");
             }
-        throw err;
+        throw err.response;
         
     }
     
