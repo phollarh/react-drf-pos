@@ -87,7 +87,7 @@ const ProductUpdateForm = ({
     const [outletId, setOutletId] = useState("")
          useEffect(()=>{
 
-            if(activeOutletId)return;
+            
             if(activeOutletId){
                 setOutletId(String(activeOutletId))
             }
@@ -136,10 +136,10 @@ const ProductUpdateForm = ({
                   
                    
                 }
-                console.log(response.data)
+                
                 return response.data
         }catch(err:any){
-            console.log(err)
+            
             if(err.response?.status === 403 && err.response?.data.error_token){
                 setOpenDel(true)
             }
@@ -151,7 +151,7 @@ const ProductUpdateForm = ({
                 },6000)
             }
             
-            throw err
+            throw err.response
         }
     }
     
@@ -309,7 +309,7 @@ const ProductUpdateForm = ({
                 });
                 
                 // onSuccess()
-                console.log(response.status)
+                
                 if(response.status === 200){
                      onSuccess();
                     onClose();
