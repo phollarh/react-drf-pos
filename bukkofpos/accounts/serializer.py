@@ -14,7 +14,7 @@ from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.password_validation import validate_password
-
+from rest_framework.exceptions import AuthenticationFailed
 
 class RegisterResponseSerializer(serializers.Serializer):
     id = serializers.IntegerField()
@@ -369,6 +369,13 @@ class CustomTokenRefreshSerializer(TokenRefreshSerializer):
             settings.SIMPLE_JWT["REFRESH_TOKEN_NAME"]
         )
         if attrs["refresh"]:
-            return super().validate(attrs)
+            try:
+                return super().validate(attrs)
+            except CustomUser.DoesNotExist:
+                raise AuthenticationFailed(
+                    "Your account is no longer available.",
+                    code="user_not_found",
+                )
+
         else:
             raise InvalidToken("NO valid refresh token found")

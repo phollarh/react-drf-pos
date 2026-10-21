@@ -18,7 +18,7 @@ import base64
 import json
 from pathlib import Path
 from django.db import IntegrityError, transaction
-from rest_framework.exceptions import ValidationError,PermissionDenied
+from rest_framework.exceptions import AuthenticationFailed, ValidationError,PermissionDenied
 from django.conf import settings
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth import get_user_model
@@ -64,6 +64,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 import re
 # Create your views here.
+
 
 class QZSignAPIView(APIView):
     permission_classes = [IsAuthenticated, IsVerified, ASPermission]
@@ -122,8 +123,6 @@ def activateEmail(request, user, code):
 
         return True
     except Exception as e:
-        print("callllllelellelelle")
-        print("EMAIL ERROR:", str(e))
         print(repr(e), flush=True)
         raise
 
@@ -2122,3 +2121,25 @@ class JWTCookieTokenObtainPairView(JWTSetCookieMixin, TokenObtainPairView):
 
 class JWTCookieTokenRefreshView(JWTSetCookieMixin, TokenRefreshView):
     serializer_class = CustomTokenRefreshSerializer
+
+    def handle_exception(self, exc):
+        response = super().handle_exception(exc)
+
+        if (
+            isinstance(exc, AuthenticationFailed)
+            and exc.get_codes() == "user_not_found"
+        ):
+            response.delete_cookie(
+                settings.SIMPLE_JWT["REFRESH_TOKEN_NAME"],
+                path="/",
+            )
+            response.delete_cookie(
+                settings.SIMPLE_JWT["ACCESS_TOKEN_NAME"],
+                path="/",
+            )
+            response.delete_cookie("sessionid")
+            response.delete_cookie("active_outlet")
+            response.delete_cookie("assigned_staff")
+            response.delete_cookie("pass_token")
+            response.delete_cookie("pos_session")
+        return response
