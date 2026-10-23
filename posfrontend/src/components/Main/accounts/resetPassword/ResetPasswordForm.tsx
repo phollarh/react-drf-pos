@@ -26,24 +26,18 @@ const RestPasswordForm = () => {
         },
         validate: (values) => {
             const errors: Partial<typeof values> = {};
+            const strongPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
              if (!values.new_password) {
                 errors.new_password = "Required"
-            }else if (!values.confirm_password){
-                errors.confirm_password = "Required"
+            }else if (!strongPassword.test(values.new_password)){
+                 errors.new_password = "Use at least 8 characters, including an uppercase letter, " +
+            "a lowercase letter, a number and one of @$!%*#?&.";
             }
-            else {
-               const strongPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
-
-
+        
                
-                if (!strongPassword.test(values.new_password) ){
-                    errors.new_password = "Password must be at least 8 and include atleast one letters, numbers and character"
-                }
-                
-                
-
-            }
-            if (values.new_password !== values.confirm_password) {
+            if (!values.confirm_password ){
+                    errors.confirm_password = "Required"
+            }else if(values.new_password !== values.confirm_password) {
                 errors.new_password = "password does not match"
                 errors.confirm_password = "password does not match"
             }
