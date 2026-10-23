@@ -51,7 +51,7 @@ const ForgotPassword = () => {
          }
 
         try{
-            const response = await jwtAxios.post(`${BASE_URL_ACCOUNT}/api/user/reset_password/`,
+            const response = await jwtAxios.post(`${BASE_URL_ACCOUNT}/user/reset_password/`,
                              payload,
                 )
                 if(response.status === 200){
@@ -60,13 +60,11 @@ const ForgotPassword = () => {
                     setSucessMessage(response.data.message)
                     setOpen(true)
                          }
-                         console.log(response.data)
-                         return (response.data)
+                         return response.data
                      }catch(err:any){
                         setIsloading(false)
                         setErrorA(err.response.data.error)
-                         console.log(err)
-                         throw err
+                         throw err.response
                      }
          
     }
@@ -144,14 +142,14 @@ const ForgotPassword = () => {
                     // }, 6000)
                     
                 }
-                console.log(response.data)
+                
                 return (response.data)
             }catch(err:any){
-                console.log(err)
+                
                  formik.setErrors({
                     email: err.response.data.error, 
                 });
-                throw err
+                throw err.response
             }
             // const status = await login(email, password);
           
