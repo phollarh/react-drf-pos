@@ -81,7 +81,6 @@ const ForgotPassword = () => {
        newCode[index] = value.slice(-1);
        setCode(newCode)
         if (event.target.value && index < code.length - 1) {
-            console.log(inputRefs.current)
             inputRefs.current[index + 1]?.focus();
         }
         if(newCode.every(value=>value !== "")){
