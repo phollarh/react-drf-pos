@@ -47,7 +47,7 @@ const RestPasswordForm = () => {
                 errors.new_password = "password does not match"
                 errors.confirm_password = "password does not match"
             }
-            if
+            
   
              return errors;
         },
