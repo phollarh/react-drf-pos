@@ -5,6 +5,7 @@ import { Box, Button, Container, Paper, TextField, Typography, useTheme } from "
 import "../ProfileForm.css"
 import { useState } from "react";
 import useAxiosWithInterceptor from "../../../../helper/jwtinterceptor";
+import { BASE_URL_ACCOUNT } from "../../../../congif";
 
 
 
@@ -42,7 +43,7 @@ const RestPasswordForm = () => {
                 "token": localStorage.getItem("rst")
                 }
             try{
-                const response = await jwtAxios.patch('http://127.0.0.1:8000/accounts/api/user/reset_password/',
+                const response = await jwtAxios.patch(`${BASE_URL_ACCOUNT}/user/reset_password/`,
                     apiValues,
                     
                 
@@ -60,17 +61,17 @@ const RestPasswordForm = () => {
                     // }, 6000)
                     
                 }
-                console.log(response.data)
+                
                 return (response.data)
             }catch(err:any){
-                console.log(err)
+                
                 setErrMessage(err.response.data.error)
                  formik.setErrors({
                     new_password: err.response.data.new_password, 
 
                     
                 });
-                throw err
+                throw err.response
             }
          },
     })
