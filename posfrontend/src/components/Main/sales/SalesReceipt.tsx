@@ -218,7 +218,7 @@ useEffect(() => {
                         orders:item.orders.map((orderItem)=>
                         orderItem.id === id?{
                             ...orderItem, 
-                            quantity:newQuantity,
+                            quantity:Number(newQuantity.toFixed(3)),
                             quantityInput:String(newQuantity),
                             sub_total:newSubTotal,
                             sub_totalInput:value
