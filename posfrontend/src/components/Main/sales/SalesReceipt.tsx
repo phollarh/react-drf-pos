@@ -583,8 +583,12 @@ useEffect(() => {
                                                 }} />
                                 </Box>
                                 <Box sx={{m:0, p:2, textAlign:'center', borderTop:`1px solid ${theme.palette.divider}`}}>
-                                    <Button sx={{textTransform:"none"}} onClick={()=>{handleReceiptSubmit?.(false,dataCRUD?.[0].id)}} color="success" variant="contained">Issue Receipt</Button>
-                                   {!dataCRUD?.[0].hold&&<Button sx={{m:1, textTransform:"none"}} onClick={()=>{handleReceiptSubmit?.(true, dataCRUD?.[0].id)}} color="error" variant="contained">hold Receipt</Button>} 
+                                    <Button sx={{textTransform:"none"}} 
+                                    onClick={ 
+                                        ()=>{handleReceiptSubmit?.(false,dataCRUD?.[0].id); setBalance(0);}
+                                    } 
+                                    color="success" variant="contained">Issue Receipt</Button>
+                                   {!dataCRUD?.[0].hold&&<Button sx={{m:1, textTransform:"none"}} onClick={()=>{ handleReceiptSubmit?.(true, dataCRUD?.[0].id)}} color="error" variant="contained">hold Receipt</Button>} 
                                 </Box>
             
                             </>
