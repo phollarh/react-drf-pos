@@ -16,6 +16,7 @@ import { Dayjs } from 'dayjs';
 
 
 
+
 interface ProductProps{
     id:number;
     product_name:string;
@@ -91,15 +92,9 @@ export default function PastReceiptView({
   // const handlePrint = useReactToPrint({
   //   contentRef: receiptRef,
   // });
-  const style = {
-                py: 0,
-                width: '100%',
-                // maxWidth: 360,
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: 'divider',
-                backgroundColor: 'background.paper',
-                };
+//   const style = {
+               
+//                 };
   const handleClickOpen = (scrollType: DialogProps['scroll'], itemId:number, ) => {
     const found =data?.find((item)=>item.id === itemId)
     if(found){
@@ -171,7 +166,19 @@ export default function PastReceiptView({
             </Box>
 
     
-        <List sx={style}>
+        <List 
+        sx={{
+             py: 0,
+                width: '100%',
+                // maxWidth: 360,
+                height:"100%",
+                overflowY:"auto"            ,
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: 'divider',
+                backgroundColor: 'background.paper',
+        }}
+        >
           <Toolbar sx={{display:isMobile?"block":"flex",justifyContent:"space-between"}}>
             <Box >
                 <FilterDateForm filterOption={filterOption} handleChange={handleFilterChange}/>
