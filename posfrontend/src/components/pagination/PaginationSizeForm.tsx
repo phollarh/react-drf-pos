@@ -13,7 +13,7 @@ export default function PaginationSizeForm({handleChange, size}:PaginationSizeFo
 
 
   return (
-    <FormControl sx={{ m: 4, fontFamily:"sans-serif", minWidth: 150 }} size="small">
+    <FormControl sx={{ m:1, fontFamily:"sans-serif", minWidth: 150 }} size="small">
       <InputLabel id="demo-select-small-label">filter size</InputLabel>
       <Select
         labelId="demo-select-small-label"

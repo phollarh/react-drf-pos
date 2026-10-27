@@ -208,9 +208,9 @@ useEffect(() => {
                 }
                 const newSubTotal=value === ""? 0 : Number(value);
                 // const newQuantity =  Math.trunc((newSubTotal / sellingPrice)* 100)/100
-                const newQuantity =  newSubTotal / (sellingPrice * soldIn)
+                const newQuantity =  (newSubTotal / (sellingPrice * soldIn)).toFixed(8)
 
-            
+                console.log(newQuantity)
                 setDataCRUDReceipt((prevData)=>
                     prevData.map((item)=>
                     ({
@@ -218,7 +218,7 @@ useEffect(() => {
                         orders:item.orders.map((orderItem)=>
                         orderItem.id === id?{
                             ...orderItem, 
-                            quantity:Number(newQuantity.toFixed(3)),
+                            quantity:Number(newQuantity),
                             quantityInput:String(newQuantity),
                             sub_total:newSubTotal,
                             sub_totalInput:value
@@ -437,7 +437,7 @@ useEffect(() => {
                                                                                 border:`1px solid ${theme.palette.divider}`,
                                                                                 borderRadius:'10px'
                                                                                 }} 
-                                                                        value={Number(orderItem.sub_totalInput).toFixed(2)}
+                                                                        value={orderItem.sub_totalInput ?? ""}
                                                                         margin="dense" 
                                                                         // type="number" 
                                                                         // value={orderItem.quantity}

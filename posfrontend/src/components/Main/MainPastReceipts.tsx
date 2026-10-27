@@ -105,7 +105,7 @@ const MainPastReceipts = () => {
             fetchData();
         }, [url]);
 
-    console.log(dataCRUD)
+    
     const handleChangePagination =(_event: React.ChangeEvent<unknown>, value: number) => {
         setPage(value);      
       };
@@ -154,7 +154,7 @@ const MainPastReceipts = () => {
 
     return (
         <>
-            <Container  sx={{
+            <Container  sx={{ height:"100%", p:0 , m:0, position:"relative"
 
                  }}>
                 {error&&
@@ -166,10 +166,12 @@ const MainPastReceipts = () => {
                     </Box>
                 </Paper>
                 }
-                <Box sx={{ pt: 2, textAlign:"center", display:"block" ,}}>
+                <Box sx={{p:0, m:0, textAlign:"center", display:"block" ,}}>
                     <PaginationSizeForm size={size} handleChange={handlePaginationSize}/>
                 </Box>
                 <Box sx={{
+                    height:"80%",
+                    overflow:"auto",
                     display:"block",
                     '& > :not(style)': {
                     m: 1,
@@ -189,8 +191,8 @@ const MainPastReceipts = () => {
                 </Box>
 
 
-            <Box sx={{position:"sticky", bottom:0, backgroundColor:theme.palette.primary.light, borderRadius:"20px",width:{lg:"70%",md:"80%", xs:"100%", sm:"100%"},
-                    margin:"10px auto",}}>
+            <Box sx={{position:"static", backgroundColor:theme.palette.primary.light, borderRadius:"20px",width:{lg:"70%",md:"80%", xs:"100%", sm:"100%"},
+                    margin:"5px auto",}}>
                     <PaginationControlled 
                         totalPages={dataCRUDPaginate?.total_pages} 
                         page={page} 

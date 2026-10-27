@@ -102,9 +102,7 @@ export default function CreateSalesTable({dataCRUD,handleClick,handleSearchClick
     </Box>
         
         <TableContainer  component={Paper} sx={{
-          margin:"1px auto",p:0,width:below1200?
-          below550?250:350
-          :500, 
+          margin:"1px auto",p:0,width:below550?250:"100%", 
           border:"none", borderRadius:5,maxHeight: 300, overflowY:"auto", overflowX:"hidden"}}>
         <Table  stickyHeader style={{backgroundColor:isDarkMode?theme.palette.primary.main:theme.palette.primary.light, margin:0}}>
           <TableHead >

@@ -5,22 +5,31 @@ import { ReactNode } from "react";
 type Props = {
     children: ReactNode;
     showReceiptDetaills?:boolean;
+    layout: "main" | "secondary";
 }
 
 
-const Main: React.FC<Props> = ({ children,showReceiptDetaills }) => {
+const Main: React.FC<Props> = ({ children,showReceiptDetaills , layout}) => {
     const theme = useTheme()
     const below720 = useMediaQuery("(max-width:720px)")
+    const below500 = useMediaQuery("(max-width:500px)")
     const above720 = useMediaQuery("(min-width:720px)")
     const isOnSalesReceipt = location.pathname === "/sales_receipts";
     let width;
 
-    if (below720 && !isOnSalesReceipt) {
+    if(below500 && isOnSalesReceipt){
+        width='100%'
+    }else if
+    (below720 && !isOnSalesReceipt) {
         width = "100%";
     }else if(above720 && isOnSalesReceipt){
         width = "60%"
     
-    } else if (!showReceiptDetaills && isOnSalesReceipt) {
+    }
+    // else if(below500 && isOnSalesReceipt){
+    //     width='100%'
+    // }
+     else if (!showReceiptDetaills && isOnSalesReceipt) {
         width="15%"
     } 
     else {
@@ -29,6 +38,7 @@ const Main: React.FC<Props> = ({ children,showReceiptDetaills }) => {
     
     return (
         <Box sx={{
+            display:(isOnSalesReceipt && below500 && layout === "secondary")?"none":"auto",
             flexGrow: 1,
             transition:"width 0.3s ease-in-out",
             mt: `${theme.primaryAppBar.height}px`,

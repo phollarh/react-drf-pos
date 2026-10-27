@@ -142,7 +142,7 @@ class Order(models.Model):
         "Product", related_name="products", on_delete=models.PROTECT
     )
     quantity = models.DecimalField(
-        max_digits=12, decimal_places=3, validators=[order_quantity_validation]
+        max_digits=20, decimal_places=8, validators=[order_quantity_validation]
     )
     description = models.CharField(max_length=300, null=True, blank=True)
     date = models.DateTimeField(default=timezone.now)
@@ -177,7 +177,7 @@ class Order(models.Model):
             if self.product.sold_In:
                 self.measurement_type_at_sale = self.product.sold_In.measurement_type
                 self.measurement_value_at_sale = self.product.sold_In.value
-        self.sub_total = (self.quantity * self.product.sold_In.value) * self.product.selling_price
+        self.sub_total = Decimal((self.quantity * self.product.sold_In.value) * self.product.selling_price).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         super().save(*args, **kwargs)
 

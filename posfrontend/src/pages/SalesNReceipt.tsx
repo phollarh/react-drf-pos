@@ -1,5 +1,5 @@
 import {Box, CssBaseline, Divider, Paper,Tooltip, Typography, useMediaQuery, useTheme} from "@mui/material"
-
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import CreateSales from "../components/Main/sales/CreateSales";
 import SalesReceipt from "../components/Main/sales/SalesReceipt";
 import useAxiosWithInterceptor from "../helper/jwtinterceptor";
@@ -10,7 +10,7 @@ import SideMenu from "../components/PrimaryDraw/SideMenu";
 import SecondaryDraw from "./templates/SecondaryDraw";
 import Main from "./templates/Main";
 import useCrud from "../hooks/useCrud";
-
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import MenuIcon from '@mui/icons-material/Menu';
 import Alert from "../components/Alert";
 import { Server } from "../@types/server";
@@ -63,34 +63,45 @@ interface receiptStatusDataProps{
 }
 
 const SalesNReceipt = () => {
-  const theme=useTheme()
-  const jwtAxios = useAxiosWithInterceptor();
-  const [loading, setLoading] = useState(false);
-  const below850 = useMediaQuery("(max-width:1000px)");
-  const below720 = useMediaQuery("(max-width:720px)");
-  const [, setDrawerOpen] = React.useState(true);
-  const [receiptStatusData, setReceiptStatusData] = React.useState<null | receiptStatusDataProps[]>(null)
-  const [receiptStatus, setReceiptStatus] = React.useState<null | boolean>(null)
-  const [, setReceiptId] = React.useState<number| null>(null)
-  const [, setOpen] = React.useState(false);
-  const [errorOrder,setErrorOrder] = React.useState<null|string>(null);
+    const theme=useTheme()
+    const jwtAxios = useAxiosWithInterceptor();
+    const [loading, setLoading] = useState(false);
+    const below850 = useMediaQuery("(max-width:1000px)");
+    const below720 = useMediaQuery("(max-width:720px)");
+    const below500 = useMediaQuery("(max-width:500px)");
+    const [, setDrawerOpen] = React.useState(true);
+    const [receiptStatusData, setReceiptStatusData] = React.useState<null | receiptStatusDataProps[]>(null)
+    const [receiptStatus, setReceiptStatus] = React.useState<null | boolean>(null)
+    const [, setReceiptId] = React.useState<number| null>(null)
+    const [, setOpen] = React.useState(false);
+    const [errorOrder,setErrorOrder] = React.useState<null|string>(null);
 //   const outlet_id =localStorage.getItem("outlet_id") || "" 
-  const [paymentOption, setPaymentOption] = React.useState('');
-  const [remarks, setRemarks] = React.useState('');
-  const [amountTendered, setAmountTendered] = React.useState<number>(0)
-  const [showReceiptDetaills, setShowReceiptDetaills] = React.useState<boolean>(false)
-  const [assignMess, setAssignMess] = useState<null|string>(null)
-  const [printerMess, setPrinterMess] = useState<null|string>(null)
-  const [assignedStaff, setAssignedStaff]  = React.useState<outletStaffDataProps | null >(null)
-  const {getStaffStatus, setStaffStatus,staffData} = UseoutletNstaffContext();
-  const [searchByproductName, setSearchByproductName] = React.useState<string>("");
-  const [inventoryError,setInventoryError] = useState<{inventory_error:string; product_id:string}|null>(null)
-  const [soldInError,setSoldInError] = useState<{sold_in_error:string ; product_id:string ; order_id :string}|null>(null)
+    const[layout, setLayout] = useState<"secondary" | "main">("secondary")
+    const [paymentOption, setPaymentOption] = React.useState('');
+    const [remarks, setRemarks] = React.useState('');
+    const [amountTendered, setAmountTendered] = React.useState<number>(0)
+    const [showReceiptDetaills, setShowReceiptDetaills] = React.useState<boolean>(false)
+    const [assignMess, setAssignMess] = useState<null|string>(null)
+    const [printerMess, setPrinterMess] = useState<null|string>(null)
+    const [assignedStaff, setAssignedStaff]  = React.useState<outletStaffDataProps | null >(null)
+    const {getStaffStatus, setStaffStatus,staffData} = UseoutletNstaffContext();
+    const [searchByproductName, setSearchByproductName] = React.useState<string>("");
+    const [inventoryError,setInventoryError] = useState<{inventory_error:string; product_id:string}|null>(null)
+    const [soldInError,setSoldInError] = useState<{sold_in_error:string ; product_id:string ; order_id :string}|null>(null)
     const {activeOutletId, userId} = useAuthServiceContext();
     const [, setUserId] = useState("")
     const [outlet_id, setOutletId] = useState("")
     const [filterOption, setFilterOption] = React.useState("" );
-      
+    
+    const switchPageLayout = ()=>{
+        setLayout((prevLayout)=>{
+            if(prevLayout === "main"){
+                return "secondary"
+            }else{
+                return "main"
+            }
+        })
+    }
     useEffect(()=>{
                   if(activeOutletId){
                       setOutletId(String(activeOutletId))
@@ -316,8 +327,20 @@ const SalesNReceipt = () => {
         const getReceiptStatusOnRefresh = receiptStatusData?.filter((item)=>String(id)===String(item.id) )
         
         const newValue = !getReceiptStatusOnRefresh?.[0].hold
-        
-        if(below720 && newValue !== true ){
+        if(getReceiptStatusOnRefresh?.[0].hold === false && below500){
+            setLayout("main")
+            setLoading(false)
+            return;
+        }
+        if(below500){
+             setLayout((prevLayout)=>{
+                if(prevLayout === "main"){
+                    return "secondary"
+                }else{
+                    return "main"
+                }
+            })
+        }else if(below720 && newValue !== true ){
             setShowReceiptDetaills((prevValue)=>!prevValue)
         }
         setReceiptStatus(newValue)
@@ -359,7 +382,7 @@ const SalesNReceipt = () => {
             if (err.response?.status === 400) {
                 new Error("400");
             }
-            throw err;
+            throw err.response;
         }finally{
             setLoading(false);
         }
@@ -405,8 +428,15 @@ const SalesNReceipt = () => {
     const handleClick = async (id:number )=>{
         setErrorOrder(null);
         const receipt_id =localStorage.getItem("receipt_id") || ""
-        
-        if(below720){
+        if(below500){
+             setLayout((prevLayout)=>{
+            if(prevLayout === "main"){
+                return "secondary"
+            }else{
+                return "main"
+            }
+        })
+        }else if(below720){
             setShowReceiptDetaills((prevValue)=>!prevValue)
         }
         const payload =
@@ -492,79 +522,105 @@ const SalesNReceipt = () => {
            
             
             </Box>
-                <SecondaryDraw showReceiptDetaills={showReceiptDetaills}>
+              {(below500) &&
+                                 <Box display="flex" sx={{position:"sticky", top:0,mt:2,zIndex:1998,justifyContent:"flex-end", backgroundColor:theme.palette.primary.light}}>
+                                    <Tooltip title="back" placement="top">
+                                <Box 
+                                sx={{
+                                    border:"none", backgroundColor:"transparent", 
+                                    // borderRadius:"50%",
+                                    p:0.5,
+                                    cursor:"pointer",
+                                    ":hover":{backgroundColor:theme.palette.primary.main, color:"#fff"}}} component="button" 
+                                    onClick={switchPageLayout}
+                                    >
+                                        {layout === "secondary" ? 
+                                        (
+                                            <ArrowForwardIosIcon/>  
+                                        ):(
+                                            <ArrowBackIosNewIcon/>
+                                        )
+                                        }
+                                    
+                                    
+                                </Box>
+                                </Tooltip>
+                            </Box>
+                             }
+                <SecondaryDraw layout={layout} showReceiptDetaills={showReceiptDetaills}>
                     {below720?
                     (
                         <Box sx={{position:"relative"}}>
-                        {showReceiptDetaills&&
-                            <Box sx={{height:"5%"}}>
-                                <MenuIcon fontSize="medium" sx={{display:"block",margin:"1px auto",transform:"rotate(90deg)"}}/>
-                            </Box>
-                        }
-                        
-                        
-                        <Box display={!showReceiptDetaills?"none":"block"} component="button" onClick={onSmallScreenClick}
-                                    sx={{
-                                        height:"100vh",
-                                        border:"none",
-                                        position: "absolute",
-                                        cursor:"pointer",
-                                        inset: 0,
-                                        backgroundColor: "#aba1a180",
-                                        zIndex: 2000
-                                    }}
-                        />
-                    
-                    
-                            <Box>
-                                 {printerMess && 
-                                    <Box sx={{width : "100%", display:"block", backgroundColor:"#6feca3"}}>
-                                        <Typography color="white" sx={{display:"block", margin:"1px auto"}}>
-                                            {printerMess}
-                                        </Typography>
-                                    </Box>
-                                    }
-                                
-                                <OutletStaffSession setDataCRUDReceipt={setDataCRUDReceipt} fetchReceipt={fetchReceipt} assignMess={assignMess} setAssignMess={setAssignMess}  assignedStaff={assignedStaff} setAssignedStaff={setAssignedStaff} staffData={staffData}/>
-                                <Paper sx={{height:"7%", backgroundColor:theme.palette.primary.contrastText}}>
+                            {(showReceiptDetaills && !below500)&&
+                                <Box sx={{height:"5%"}}>
+                                    <MenuIcon fontSize="medium" sx={{display:"block",margin:"1px auto",transform:"rotate(90deg)"}}/>
                                     
-                                    <Box sx={{display:"flex",justifyContent:"center",alignContent:"center" }}>
+                                </Box>
+                            }
+                        
+                        
+                            <Box display={below500? "none": !showReceiptDetaills ? "none" :"block"} component="button" onClick={onSmallScreenClick}
+                                        sx={{
+                                            height:"100vh",
+                                            border:"none",
+                                            position: "absolute",
+                                            cursor:"pointer",
+                                            inset: 0,
+                                            backgroundColor: "#aba1a180",
+                                            zIndex: 2000
+                                        }}
+                            />
+                        
+                        
+                                <Box>
+                                    {printerMess && 
+                                        <Box sx={{width : "100%", display:"block", backgroundColor:"#6feca3"}}>
+                                            <Typography color="white" sx={{display:"block", margin:"1px auto"}}>
+                                                {printerMess}
+                                            </Typography>
+                                        </Box>
+                                        }
+                                    
+                                    <OutletStaffSession setDataCRUDReceipt={setDataCRUDReceipt} fetchReceipt={fetchReceipt} assignMess={assignMess} setAssignMess={setAssignMess}  assignedStaff={assignedStaff} setAssignedStaff={setAssignedStaff} staffData={staffData}/>
+                                    <Paper sx={{height:"7%", backgroundColor:theme.palette.primary.contrastText}}>
                                         
-                                        {receiptStatusData?.map((receiptItem)=>{
-                                    return(
-                                            <React.Fragment key={receiptItem.id}>
-                                                <Tooltip key={receiptItem.id} arrow placement="bottom-end" title={receiptItem.hold === true?"On hold": "Active"}>
-                                                    <Box disabled={loading?true:false}  key={receiptItem.id} 
-                                                        sx={{m:1,p:0.5,minWidth:"50px",
-                                                            position:"relative" ,
-                                                            height:"35px", 
-                                                            backgroundColor:receiptItem.hold===true?"#eed0d0":"#ee7e7e",color:"#fff", 
-                                                            border:"none", 
-                                                            borderRadius:"20%", 
-                                                            cursor:loading?"not-allowed":"pointer"}} 
-                                                            component="button"  onClick={()=>{handleSetReceipt(Number(receiptItem.id))}}  
-                                                    >
-                                                        {!receiptItem.hold&&
-                                                        <Box component="span" key={receiptItem.id}
-                                                            sx={{
-                                                                position:"absolute", 
-                                                                width:"12px", 
-                                                                height:"12px",
-                                                                borderRadius:"25px", 
-                                                                top:-5, left:-3, 
-                                                                backgroundColor:"#90b5e2"}}
-                                                        >
-
-                                                        </Box>}
-                                                        {receiptItem.id}
-                                                </Box>
-                                                </Tooltip>
+                                        <Box sx={{display:"flex",justifyContent:"center",alignContent:"center" }}>
                                             
-                                            </React.Fragment>
-                                        )
-                                        })}
-                                    </Box>
-                                </Paper>
+                                            {receiptStatusData?.map((receiptItem)=>{
+                                        return(
+                                                <React.Fragment key={receiptItem.id}>
+                                                    <Tooltip key={receiptItem.id} arrow placement="bottom-end" title={receiptItem.hold === true?"On hold": "Active"}>
+                                                        <Box disabled={loading?true:false}  key={receiptItem.id} 
+                                                            sx={{m:1,p:0.5,minWidth:"50px",
+                                                                position:"relative" ,
+                                                                height:"35px", 
+                                                                backgroundColor:receiptItem.hold===true?"#eed0d0":"#ee7e7e",color:"#fff", 
+                                                                border:"none", 
+                                                                borderRadius:"20%", 
+                                                                cursor:loading?"not-allowed":"pointer"}} 
+                                                                component="button"  onClick={()=>{handleSetReceipt(Number(receiptItem.id))}}  
+                                                        >
+                                                            {!receiptItem.hold&&
+                                                            <Box component="span" key={receiptItem.id}
+                                                                sx={{
+                                                                    position:"absolute", 
+                                                                    width:"12px", 
+                                                                    height:"12px",
+                                                                    borderRadius:"25px", 
+                                                                    top:-5, left:-3, 
+                                                                    backgroundColor:"#90b5e2"}}
+                                                            >
+
+                                                            </Box>}
+                                                            {receiptItem.id}
+                                                    </Box>
+                                                    </Tooltip>
+                                                
+                                                </React.Fragment>
+                                            )
+                                            })}
+                                        </Box>
+                                    </Paper>
                             </Box>
                             <Box sx={{maxWidth:theme.MainDrawWidth.width, whiteSpace:"wrap"}}>
                                             {receiptError &&
@@ -651,11 +707,11 @@ const SalesNReceipt = () => {
             
             
             {/* <Box sx={{display:below900?"none":"flex"}}> */}
-                <Main showReceiptDetaills={showReceiptDetaills} >
+                <Main showReceiptDetaills={showReceiptDetaills} layout={layout}>
                     {below720?
                     (    <>
                             <Box  sx={{position:"relative"}}>
-                                    {!showReceiptDetaills&&
+                                    {(!showReceiptDetaills && !below500) &&
                                     <Box sx={{height:"5%"}}>
                                         <MenuIcon fontSize="medium" sx={{display:"block",margin:"1px auto",transform:"rotate(90deg)"}}/>
                                     </Box>
@@ -671,7 +727,7 @@ const SalesNReceipt = () => {
                                       remarks={remarks} setRemarks={setRemarks}
                                       handleReceiptSubmit={handleReceiptSubmit} handleClick={handleClick} dataCRUD={receiptData} setDataCRUDReceipt={setDataCRUDReceipt} showReceiptDetaills={false}/>
                             </Box>
-                                <Box display={showReceiptDetaills?"none":"block"} component="button" onClick={onSmallScreenClick}
+                                <Box display={below500 ? "none":showReceiptDetaills?"none":"block"} component="button" onClick={onSmallScreenClick}
                                     sx={{
                                         height:"100vh",
                                         border:"none",

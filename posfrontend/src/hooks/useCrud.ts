@@ -36,7 +36,7 @@ const useCrud = <T>(initialData: T[], apiURL: string|null): IuseCrud<T> => {
 
      const fetchData =React.useCallback( async () => {
         if (!apiURL) return;
-        setIsloading(true)
+        // setIsloading(true)
         try {
             const response = await jwtAxios.get(`${BASE_URL}${apiURL}`, {
              
