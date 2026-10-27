@@ -16,16 +16,23 @@ export default function DateRangePicker({startDate, endDate, onStartDateChange,o
   const IsMoobile = useMediaQuery("(max-width: 500px)")
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box display={IsMoobile?"block":"flex"}  gap={2}>
+    <LocalizationProvider  dateAdapter={AdapterDayjs} >
+      <Box sx={{zIndex:2005}} display={IsMoobile?"block":"flex"}  gap={2}>
         {/* Start Date */}
         <DatePicker
           
           label="Start"
           value={startDate}
           onChange={(value)=>onStartDateChange(value)}
-          slotProps={{ textField: { variant: "outlined", 
-              sx: { "& .MuiPickersOutlinedInput-root":{fontSize:IsMoobile?"0.5rem !important":"0.8rem important", marginBottom:IsMoobile?"6px !important":"0px !important"},
+          slotProps={{
+              popper: {
+                  sx: { zIndex: 2010 },
+              },
+              dialog: {
+                  sx: { zIndex: 2010,},
+              },
+             textField: { variant: "outlined", 
+              sx: { "& .MuiPickersOutlinedInput-root":{fontSize:IsMoobile?"0.9rem !important":"1rem important", marginBottom:IsMoobile?"6px !important":"0px !important"},
                     
         }
                 }  
@@ -34,11 +41,19 @@ export default function DateRangePicker({startDate, endDate, onStartDateChange,o
 
   
         <DatePicker
+        
           label="End"
           value={endDate}
         onChange={onEndDateChange}
-          slotProps={{ textField: { variant: "outlined", 
-              sx: { "& .MuiPickersOutlinedInput-root": {fontSize:IsMoobile?"0.5rem !important":"0.8rem important"}
+          slotProps={{ 
+            popper: {
+                  sx: { zIndex: 2010 },
+              },
+            dialog: {
+                  sx: { zIndex: 2010,  },
+              },
+            textField: { variant: "outlined", 
+              sx: { "& .MuiPickersOutlinedInput-root": {fontSize:IsMoobile?"0.9rem !important":"1rem important"}
         }
                                   }  
                       }}
