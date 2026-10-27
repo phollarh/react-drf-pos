@@ -5,7 +5,7 @@ import { useTheme } from "@mui/material/styles";
 type SecondaryDrawProps = {
     children: React.ReactNode;
     showReceiptDetaills:boolean;
-    layout: "main" | "secondary"
+    layout?: "main" | "secondary"
 };
 const SecondaryDraw = ({layout, children,showReceiptDetaills }: SecondaryDrawProps) => {
     const theme = useTheme()

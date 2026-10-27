@@ -5,7 +5,7 @@ import { ReactNode } from "react";
 type Props = {
     children: ReactNode;
     showReceiptDetaills?:boolean;
-    layout: "main" | "secondary";
+    layout?: "main" | "secondary";
 }
 
 
