@@ -35,15 +35,16 @@ export default function DialogForCustomDate({ open,onClickReceipt, handleCloseDi
         open={open}
         onClose={handleCloseDialog}
         aria-labelledby="responsive-dialog-title"
+        sx={{zIndex:2002}}
         PaperProps={{
-    sx: {
-      width:"50%",
-      position: 'absolute',
-      top: 24,  
-      left:"40%",       
-      margin: 0,
-    },
-  }}
+        sx: {
+          width:"50%",
+          position: 'absolute',
+          top: 24,  
+          left:"40%",       
+          margin: 0,
+        },
+      }}
       >
         <DialogContent sx={{width:"100%"}}>
           <DateRangePicker 
