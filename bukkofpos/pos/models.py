@@ -205,6 +205,9 @@ class SalesReceipt(models.Model):
     date = models.DateTimeField(default=timezone.now)
     issued = models.BooleanField(default=False)
     issued_at = models.DateTimeField(null=True, blank=True)
+    is_void = models.BooleanField(default=False)
+    void_reason = models.CharField(max_length=255, blank=True, null=True)
+    voided_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Receipt id {self.id} - {self.date}"
@@ -219,7 +222,14 @@ class SalesReceipt(models.Model):
         )
 
         return receipt_order
+    
+    def void_receipt(self, reason):
+        self.is_void = True
+        self.void_reason = reason
+        self.voided_at = timezone.now()
 
+        self.save(update_fields=["is_void", "void_reason", "voided_at"])
+              
 
 class SalesReceiptOrder(models.Model):
     class Paymentchoices(models.TextChoices):
@@ -240,7 +250,7 @@ class SalesReceiptOrder(models.Model):
     # amount = models.DecimalField(decimal_places=2, max_digits=8)
 
     def __str__(self):
-        return f"{self.order}"
+        return f"{self.id}"
 
     class Meta:
         constraints = [

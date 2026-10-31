@@ -2,6 +2,8 @@ import {
     useTheme,
     Container,
     useMediaQuery,
+    Alert,
+    Box,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import useAxiosWithInterceptor from "../../helper/jwtinterceptor";
@@ -35,6 +37,7 @@ const MainSalesByProduct = () => {
     const [drawerOpen, setDrawerOpen] = React.useState(true);
     const [salesProductData, setSalesProductData] = useState<SalesByProductProps | null>(null)
     const below750 = useMediaQuery("(max-width : 750px)");
+    const below450 = useMediaQuery("(max-width : 450px)");
     const {activeOutletId} = useAuthServiceContext();
     const [outletId, setOutletId] = useState("")
     
@@ -62,15 +65,15 @@ const MainSalesByProduct = () => {
             `${BASE_URL}/products_info/?outlet_id=${outletId}`,{
                 withCredentials:true
             })
-            console.log(response.data)
+            
             setSalesProductData(response.data)
             return response.data
         }catch(err:any){
-            console.log(err.response)
+            
             if (err.response?.status === 400) {
                     throw new Error("400");
                 }
-            throw err;
+            throw err.response;
             
         }
     
@@ -89,7 +92,12 @@ const MainSalesByProduct = () => {
             <Container  
             sx={{width:below750?"100%":`calc(100vw - ${drawerWidth}px)`,mt:3, ml:below750?"5px":`${drawerWidth}px`,height:"100%", overflow:"hidden"}}
             >
-                
+               {
+                below450 && 
+                <Box>
+                    <Alert severity="error">for a more detailed report please view on web</Alert>
+                </Box>
+               }  
             
                  {salesProductData && <SalesByProductInfo salesProductData={salesProductData} />}
  

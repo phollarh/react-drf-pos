@@ -439,7 +439,7 @@ class InventoryViewset(viewsets.ViewSet):
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 
-def create_inventory_log(authorizer, product, quantity, action):
+def create_inventory_log(authorizer, product, quantity, action, note=None):
     User = get_user_model()
     product_instance = Product.objects.get(id=product)
     quantity_dec = Decimal(quantity)
@@ -624,6 +624,27 @@ class OrderViewSet(viewsets.ModelViewSet):
             return OrderSerializers
         return super().get_serializer_class()
 
+    def get_queryset(self):
+        outlet_id = get_active_outlet_id(self.request)
+        assigned_staff = self.request.COOKIES.get("assigned_staff")
+        if not assigned_staff or not outlet_id:
+            return super().get_queryset().none()
+        matching_order = SalesReceiptOrder.objects.filter(
+            sales_receipt__assigned__staff_id=assigned_staff,
+            sales_receipt__issued=False,
+            sales_receipt__user=self.request.user,
+            order_id=OuterRef("pk"),
+        )
+        return (
+            super()
+            .get_queryset()
+            .filter(
+                Exists(matching_order),
+                user=self.request.user,
+                product__outlet_id=outlet_id,
+            )
+        )
+
     def create(self, request, *args, **kwargs):
         outlet_id = get_active_outlet_id(request)
         if not outlet_id:
@@ -632,7 +653,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         receipt_id = request.data.get("receipt_id")
-
+        assigned_staff = request.COOKIES.get("assigned_staff")
+        if not assigned_staff:
+            return Response(
+                {"error": "please assigned to continue"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         mixed_outlet = False
 
         with transaction.atomic():
@@ -640,7 +666,10 @@ class OrderViewSet(viewsets.ModelViewSet):
             if receipt_id not in (None, "", "undefined", "null"):
                 try:
                     receipt_obj = SalesReceipt.objects.get(
-                        id=receipt_id, issued=False, user=self.request.user
+                        id=receipt_id,
+                        issued=False,
+                        user=self.request.user,
+                        assigned_staff=assigned_staff,
                     )
                 except SalesReceipt.DoesNotExist:
                     return Response(
@@ -650,6 +679,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             else:
                 receipts = SalesReceipt.objects.filter(
                     sales_receipt_order__order__product__outlet__id=outlet_id,
+                    assigned_staff_id=assigned_staff,
                     issued=False,
                     hold=False,
                     user=self.request.user,
@@ -664,6 +694,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 if receipt_obj is None:
                     get_false_receipts = SalesReceipt.objects.filter(
                         sales_receipt_order__order__product__outlet__id=outlet_id,
+                        assigned_staff_id=assigned_staff,
                         issued=False,
                         user=self.request.user,
                     ).distinct()
@@ -678,6 +709,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                         )
 
                     receipt_obj = SalesReceipt.objects.create(
+                        assigned_staff_id=assigned_staff,
                         issued=False,
                         hold=False,
                         user=request.user,
@@ -701,7 +733,10 @@ class OrderViewSet(viewsets.ModelViewSet):
                 receipt_obj.hold = True
                 receipt_obj.save()
                 receipt_obj = SalesReceipt.objects.create(
-                    issued=False, hold=False, user=self.request.user
+                    issued=False,
+                    hold=False,
+                    user=self.request.user,
+                    assigned_staff_id=assigned_staff,
                 )
 
             receipt_obj.add_order(
@@ -899,13 +934,19 @@ class CheckSalesReceiptStatus(viewsets.ViewSet):
 
     def list(self, request):
         outlet_id = get_active_outlet_id(request)
+        assigned_staff = request.COOKIES.get("assigned_staff")
+
         if not outlet_id:
             return Response(
                 {"error": "Add/activate an outlet to continue"},
                 status=status.HTTP_403_FORBIDDEN,
             )
-
+        if not assigned_staff:
+            return Response(
+                {"error": "assigned a staff"}, status=status.HTTP_403_FORBIDDEN
+            )
         queryset = SalesReceipt.objects.filter(
+            assigned_staff_id=assigned_staff,
             user=request.user,
             issued=False,
             sales_receipt_order__order__product__outlet=outlet_id,
@@ -943,7 +984,13 @@ class CheckSalesReceiptStatus(viewsets.ViewSet):
 
             receipt = (
                 SalesReceipt.objects.select_for_update()
-                .filter(Exists(matching_orders), id=pk, issued=False)
+                .filter(
+                    Exists(matching_orders),
+                    id=pk,
+                    user=request.user,
+                    issued=False,
+                    assigned_staff_id=get_assign_staff,
+                )
                 .first()
             )
             if not receipt:
@@ -960,6 +1007,8 @@ class CheckSalesReceiptStatus(viewsets.ViewSet):
             new_receipt = serializer.save()
             if new_receipt.hold is False:
                 SalesReceipt.objects.filter(
+                    user=request.user,
+                    assigned_staff_id=get_assign_staff,
                     issued=False,
                     sales_receipt_order__order__product__outlet=outlet_id,
                 ).exclude(id=new_receipt.id).update(hold=True)
@@ -1009,6 +1058,11 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
             return Response(
                 {"error": "Invalid staff details"}, status=status.HTTP_404_NOT_FOUND
             )
+        if str(instance.assigned_staff_id) != get_staff:
+            return Response(
+                {"error": "This receipt belongs to another staff member"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         with transaction.atomic():
             serializer.is_valid(raise_exception=True)
             instance = serializer.save(assigned_staff=assigned_staff)
@@ -1038,11 +1092,91 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
             )
             return Response(response, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=["POST"], url_path="void_receipt")
+    def void_receipt(self, request):
+        token = request.headers.get("X-Pass-Token")
+        receipt_id = request.data.get("receipt_id")
+        reason = request.data.get("reason")
+        if not token:
+            token = request.COOKIES.get("pass_token")
+
+            if not token:
+                return Response(
+                    {"error_token": "Admin/Supervisor Passcode required"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        try:
+            payload = signing.loads(token, salt="user_pass", max_age=15 * 60)
+
+        except SignatureExpired:
+            return Response(
+                {"error": "token expired, try later"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except BadSignature:
+            return Response(
+                {"error": "Invalid token"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if payload["user_id"] != request.user.id:
+            return Response(
+                {"error": "Invalid token"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        nonce = payload["nonce"]
+        with transaction.atomic():
+            if not payload["lag_time_check"]:
+                try:
+                    verify_nonce = AuthorizationNonce.objects.select_for_update().get(
+                        user=request.user,
+                        # purpose=purpose,
+                        nonce=nonce,
+                    )
+                    if verify_nonce.created_at < timezone.now() - timedelta(minutes=3):
+                        verify_nonce.delete()
+                        return Response(
+                            {
+                                "error": "Authorization has expired. Please authenticate again."
+                            },
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
+                except AuthorizationNonce.DoesNotExist:
+                    return Response(
+                        {"error": "Invalid or expired authorization token"},
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+            try:
+                instance = SalesReceipt.objects.select_for_update().get(
+                    id=receipt_id, issued=True, user=request.user, is_void=False
+                )
+                for order in instance.sales_receipt_order.select_related("order"):
+                    value_to_return = order.order.quantity * Decimal(
+                        order.order.measurement_value_at_sale
+                    )
+                    Product.objects.filter(id=order.order.product_id).update(
+                        stock_inventory=F("stock_inventory") + value_to_return
+                    )
+                instance.void_receipt(reason=reason)
+            except SalesReceipt.DoesNotExist:
+                return Response(
+                    {"error": "invalid receipt"}, status=status.HTTP_400_BAD_REQUEST
+                )
+            verify_nonce.delete()
+
+            # serializer = self.get_serializer(data=request.data)
+            # serializer.is_valid(raise_exception=True)
+            # serializer.save(outlet=outlet_instance)
+
+            # # verify_nonce.delete()
+            return Response(
+                {"message": "receipt voided"},
+                status=status.HTTP_200_OK,
+            )
+
     @action(detail=False, methods=["GET"], url_path="issued_receipt_pdf_regenerate")
     def issued_receipt_pdf_regenerate(self, request):
         receipt_id = request.query_params.get("receipt_id")
         outlet_id = request.query_params.get("outlet_id")
-
         if not receipt_id and not outlet_id:
             return Response(
                 {"error": "receipt id and outet id is required"},
@@ -1064,6 +1198,15 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
             return Response(
                 {"error": "receipt not found"}, status=status.HTTP_404_NOT_FOUND
             )
+        if request.pos_authorization.get("role") == "staff":
+            assigned_staff = request.COOKIES.get("assigned_staff")
+
+            if not assigned_staff or str(instance.assigned_staff_id) != assigned_staff:
+                return Response(
+                    {"error": "This receipt belongs to another staff member"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
         token = signing.dumps(
             {
                 "receipt_id": instance.id,
@@ -1083,6 +1226,9 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         get_assigned_staff = self.request.COOKIES.get("assigned_staff")
         issued_receipt = self.request.query_params.get("issued")
+        authorization = request.pos_authorization
+        get_role = authorization.get("role")
+        qs = self.get_queryset()
 
         if not issued_receipt or issued_receipt.lower() == "false":
             if not get_assigned_staff:
@@ -1090,7 +1236,29 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
                     {"error": "Assign a staff to perform action"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-        return super().list(request, *args, **kwargs)
+            qs = self.get_queryset().filter(assigned_staff_id=get_assigned_staff)
+            serializer = SalesReceiptSerializer(qs, many=True)
+            return Response(serializer.data)
+        if get_role == "staff":
+            if not get_assigned_staff:
+                return Response(
+                    {"error": "Assign a staff to perform action"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            qs = qs.filter(assigned_staff_id=get_assigned_staff)
+        elif get_role not in {"admin", "supervisor"}:
+            return Response(
+                {"error": "Access denied"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        qs = self.filter_queryset(qs)
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(self.get_serializer(qs, many=True).data)
 
     def get_queryset(self):
         get_dates = get_current_dates(self.request)
@@ -1250,9 +1418,7 @@ class SalesInfoViewSet(viewsets.ViewSet):
         start_date_range=None,
         end_date_range=None,
     ):
-        base_filter = {
-            "sales_receipt__in": receipts,
-        }
+        base_filter = {"sales_receipt__in": receipts, "sales_receipt__is_void": False}
 
         if outlet_id:
             base_filter["order__product__outlet"] = outlet_id
@@ -1385,6 +1551,7 @@ class ProductsInfoViewset(viewsets.ViewSet):
         queryset = Product.objects.filter(outlet__id=outlet_id)
         sales_filter = Q(
             products__order_salesreceipt__sales_receipt__issued=True,
+            products__order_salesreceipt__sales_receipt__is_void=False,
             products__order_salesreceipt__sales_receipt__issued_at__date__gte=start_date,
         )
         if end_date:
@@ -1560,6 +1727,7 @@ class WeeklyProductSalesChartInfoAPIView(APIView):
         sales = (
             Product.objects.filter(
                 products__order_salesreceipt__sales_receipt__issued=True,
+                products__order_salesreceipt__sales_receipt__is_void=False,
                 products__order_salesreceipt__sales_receipt__issued_at__date__gte=start_of_week,
                 products__order_salesreceipt__sales_receipt__issued_at__date__lte=end_of_week,
                 outlet=outlet_id,

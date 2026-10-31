@@ -49,11 +49,11 @@ export default function DialogForCustomDate({ open,onClickReceipt, handleCloseDi
         <DialogContent sx={{width:"100%"}}>
           <DateRangePicker 
             
-          startDate={startDate} 
-          endDate={endDate} 
-          // onClose={onClose}
-          onEndDateChange={onEndDateChange} 
-          onStartDateChange={onStartDateChange}
+            startDate={startDate} 
+            endDate={endDate} 
+            // onClose={onClose}
+            onEndDateChange={onEndDateChange} 
+            onStartDateChange={onStartDateChange}
           />
         </DialogContent>
         <DialogActions sx={{m:0, p:0}}>

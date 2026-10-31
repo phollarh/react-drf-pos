@@ -3,8 +3,8 @@ from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
-from rest_framework.exceptions import APIException
-
+from rest_framework.exceptions import APIException, AuthenticationFailed
+from rest_framework_simplejwt.tokens import AccessToken
 from .models import OutletStaff, OutletStaffLogin
 
 
@@ -24,6 +24,10 @@ def get_assignment_expiry():
 def ensure_staff_assigned(request, staff: OutletStaff) -> OutletStaffLogin:
     now = timezone.now()
     locked_staff = OutletStaff.objects.select_for_update().get(pk=staff.pk)
+   
+    session_id = request.auth.get("session_id")
+    if not session_id:
+        raise AuthenticationFailed("Please log in again.")
     active_login = (
         OutletStaffLogin.objects.select_for_update()
         .filter(outlet_staff=locked_staff, is_active=True, logout_date__isnull=True)
@@ -42,10 +46,7 @@ def ensure_staff_assigned(request, staff: OutletStaff) -> OutletStaffLogin:
     expires_at = now + timedelta(seconds=settings.STAFF_ASSIGNMENT_MAX_AGE)
 
     if active_login is None:
-        get_contrainst = OutletStaffLogin.objects.filter(
-            Q(is_active=True, outlet_staff=locked_staff)
-            | Q(assigned=True, outlet_staff=locked_staff)
-        ).exists()
+        get_contrainst = OutletStaffLogin.objects.filter(Q(is_active=True, outlet_staff=locked_staff) | Q(assigned=True, outlet_staff=locked_staff)).exists()
         if get_contrainst:
             raise StaffConflict
 
@@ -56,20 +57,28 @@ def ensure_staff_assigned(request, staff: OutletStaff) -> OutletStaffLogin:
             last_activity=now,
             assigned=True,
             is_active=True,
+            session_id=session_id
         )
-    active_login.assignment_expires_at = min(expires_at, expires_at_session)
-    active_login.last_activity = now
-    update_fields = ["last_activity", "assignment_expires_at"]
+    
+
+    
     assignment_was_expired = (
         active_login.assignment_expires_at is None
         or active_login.assignment_expires_at <= now
     )
-
+    
+    if active_login.assigned and not assignment_was_expired:
+        if str(active_login.session_id) != session_id:
+            raise StaffConflict
+    update_fields = ["last_activity", "assignment_expires_at"]
     if not active_login.assigned or assignment_was_expired:
         active_login.assigned = True
         active_login.assigned_at = now
-        update_fields.extend(["assigned", "assigned_at"])
+        active_login.session_id = session_id
+        update_fields.extend(["assigned", "assigned_at", "session_id"])
 
+    active_login.assignment_expires_at = min(expires_at, expires_at_session)
+    active_login.last_activity = now
     active_login.save(update_fields=update_fields)
 
     return active_login

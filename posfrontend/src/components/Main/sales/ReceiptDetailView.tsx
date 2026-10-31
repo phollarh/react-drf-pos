@@ -1,4 +1,4 @@
-import { Box, Button, Card, CardActions, CardContent, Container, Divider, List, ListItem, ListItemText, Typography, useTheme } from '@mui/material';
+import { Box, Button, Card, CardActions, CardContent, Container, Divider, List, ListItem, ListItemText, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { format } from 'date-fns';
 import React, { useState } from 'react';
 import useAxiosWithInterceptor from '../../../helper/jwtinterceptor';
@@ -13,6 +13,11 @@ import { OrderProps } from '../../../@types/server';
 interface Server {
     id: number;
     date: string;
+     is_void?: {
+            "is_void": boolean,
+            "void_reason": string,
+            "void_at": string,
+        },
     amount_tenderd:number
     balance_due: number;
     payment_option:string;
@@ -27,6 +32,11 @@ interface Server {
 interface ReceiptDialogueProps {
   data: Server[];
   receiptId:number;
+  isVoid: {
+ is_void: boolean;
+    void_reason: string;
+    void_at: string;
+    } | undefined
   date:string;
   amountTenderd:number;
   balance_due:number;
@@ -40,6 +50,7 @@ interface ReceiptDialogueProps {
 
 const ReceiptDetailView = (
         {
+            isVoid,
             receiptId,
             date,
             balance_due,
@@ -51,6 +62,7 @@ const ReceiptDetailView = (
     
     ) => {
             const jwtAxios = useAxiosWithInterceptor();
+            const isBelow450 = useMediaQuery("(max-width : 450px)")
           const theme = useTheme();
           const {activeOutletId} = useAuthServiceContext();
           const [,setPrinterMess] = useState<string | null>(null) 
@@ -88,7 +100,7 @@ const ReceiptDetailView = (
             
     const handlePrint =async () =>{
         if(!activeOutletId) return
-        console.log(activeOutletId, receiptId)
+        
         try{
             const response = await jwtAxios.get(`${BASE_URL}/sales_receipt/issued_receipt_pdf_regenerate/`,
                  { params:{"outlet_id":activeOutletId, "receipt_id":receiptId, "issued":true}
@@ -126,7 +138,8 @@ const ReceiptDetailView = (
             sx={{
                 height: "100%",
                 width:"100%",
-                padding:1,
+                padding:isBelow450?0:1,
+                m:0,
                 '&:hover':{
                         backgroundColor:theme.palette.action.hover,
                      }
@@ -134,8 +147,17 @@ const ReceiptDetailView = (
                                         
                 }}
             >
-            <CardContent sx={{height:'100%', p: 2 }}>
+            <CardContent sx={{height:'100%', p:isBelow450?0: 1 }}>
                 <>
+                {
+                isVoid !==undefined  &&
+                    <Box sx={{backgroundColor:"red", color:"#fff", m:1, p:1, textAlign:"center"}}>
+                    <Typography textAlign={"center"}>VOIDED RECEIPT</Typography>
+                    <Typography>REASON : {isVoid?.void_reason}</Typography>
+                    {isVoid && `${formatDate(isVoid?.void_at).fullDate} ${formatDate(isVoid?.void_at).hour}:${formatDate(isVoid?.void_at).minutes}  ${formatDate(isVoid?.void_at).period}` }
+                </Box>
+                }
+                
                 <Box>
                     <Typography>
                         Issued by : Admin
@@ -173,7 +195,7 @@ const ReceiptDetailView = (
 
                                             }}>
                                             {item.product_name_at_sale}
-                                            <Typography component="span" display="block">{item.quantity} X {item.unit_selling_price}</Typography>
+                                            <Typography component="span" display="block">{Number(item.quantity).toFixed(3)} X {item.unit_selling_price}</Typography>
                                             
                                             
                                             </Typography>

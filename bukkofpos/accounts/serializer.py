@@ -1,3 +1,5 @@
+import uuid
+
 from .models import OutletStaff, OutletStaffLogin, Profile
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -347,11 +349,12 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
 
 class CustomTokenObtainPiarSerializer(TokenObtainPairSerializer):
+    @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
         token["is_verified"] = user.email_verified
         token["email"] = user.email
-
+        token["session_id"] = str(uuid.uuid4())
         return token
 
     def validate(self, attrs):

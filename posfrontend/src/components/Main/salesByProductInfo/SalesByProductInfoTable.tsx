@@ -145,7 +145,7 @@ export default function SalesByProductInfoTable({salesProductData, filterOption,
                     if (err.response?.status === 400) {
                             throw new Error("400");
                         }
-                    throw err;
+                    throw err.response;
                 
                 }
             
@@ -183,7 +183,7 @@ export default function SalesByProductInfoTable({salesProductData, filterOption,
   };
 
   return (
-    <Paper sx={{ width:below450?280:'100%',m:0,p:0, overflowX: 'hidden' }}>
+    <Paper sx={{ width:below450?"100%":'100%',m:0,p:0, overflowX: 'hidden' }}>
         {showDialogForCustom && 
         <DialogForCustomDate 
         startDate={startDate}

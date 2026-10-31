@@ -315,6 +315,7 @@ class OutletStaffLogin(models.Model):
     is_active = models.BooleanField(default=False)
     assigned_at = models.DateTimeField(null=True, blank=True)
     last_activity = models.DateTimeField(null=True, blank=True)
+    session_id = models.UUIDField(null=True)
 
     class Meta:
         constraints = [

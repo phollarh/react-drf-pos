@@ -113,7 +113,11 @@ const SalesNReceipt = () => {
                           
       },[activeOutletId,userId])
           
-  
+    useEffect(()=>{
+        if(assignedStaff === null){
+            setReceiptStatusData(null)
+        }
+    },[assignedStaff])
   
 
 
@@ -411,7 +415,7 @@ const SalesNReceipt = () => {
         }
     }
 
-
+    
     const {dataCRUD: productData,fetchData: fetchProducts,error:productError} = useCrud<Server>([], url_product);
 
     const { dataCRUD: receiptData,fetchData: fetchReceipt, setDataCRUD:setDataCRUDReceipt, error:receiptError} = useCrud<ServerReceipt>([], url_receipt);
@@ -428,17 +432,7 @@ const SalesNReceipt = () => {
     const handleClick = async (id:number )=>{
         setErrorOrder(null);
         const receipt_id =localStorage.getItem("receipt_id") || ""
-        if(below500){
-             setLayout((prevLayout)=>{
-            if(prevLayout === "main"){
-                return "secondary"
-            }else{
-                return "main"
-            }
-        })
-        }else if(below720){
-            setShowReceiptDetaills((prevValue)=>!prevValue)
-        }
+       
         const payload =
              {
                     "receipt_id":receipt_id,
@@ -464,6 +458,18 @@ const SalesNReceipt = () => {
             );
             const data = response.data;
             if (response.status === 201){
+                if(below500){
+                    setLayout((prevLayout)=>{
+                        if(prevLayout === "main"){
+                            return "secondary"
+                        }else{
+                            return "main"
+                            }
+                        })
+                }else if(below720){
+                    setShowReceiptDetaills((prevValue)=>!prevValue)
+                }
+
                 setErrorOrder(null)
                 setOpen(true);
                 if(receiptData.length != 0){

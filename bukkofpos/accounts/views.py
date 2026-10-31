@@ -837,18 +837,6 @@ class AccountViewSet(viewsets.ViewSet):
             authorizer = {"id": request.user.id, "authorize": "admin"}
         elif session_role == "supervisor":
 
-            # if outlet_id is None:
-            #     return Response(
-            #         {"error": "Activate an out to use Supervisor passcode "},
-            #         status=status.HTTP_400_BAD_REQUEST,
-            #     )
-            # try:
-            #     outlet_supervisor = Outlets.objects.get(user=request.user, id=outlet_id)
-            # except Outlets.DoesNotExist:
-            #     return Response(
-            #         {"error": "Invalid user Outlet "},
-            #         status=status.HTTP_400_BAD_REQUEST,
-            #     )
             try:
                 supervisor = OutletStaff.objects.get(
                     outlet__user=request.user,
@@ -861,9 +849,6 @@ class AccountViewSet(viewsets.ViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # for staff in supervisor:
-            #     if str(request.pos_authorization['employee_id']) != str(staff.Employee_id):
-            #         return Response({"error":"You can not perform this action"}, status=status.HTTP_400_BAD_REQUEST)
             if check_password(user_passcode, supervisor.pin):
                 authorizer = {
                     "id": str(supervisor.Employee_id),
@@ -1156,7 +1141,7 @@ class AccountViewSet(viewsets.ViewSet):
             verification_instance.code = code
             verification_instance.created_at = timezone.now()
             verification_instance.save()
-            print("calledjshhsgdg herererere")
+            
             activateEmail(request, code=code, user=user)
             return Response(
                 {

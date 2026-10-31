@@ -299,6 +299,7 @@ class SalesReceiptSerializer(serializers.ModelSerializer):
     payment_option = serializers.SerializerMethodField()
     amount_tenderd = serializers.SerializerMethodField()
     date = serializers.SerializerMethodField()
+    is_void = serializers.SerializerMethodField()
 
     class Meta:
         model = SalesReceipt
@@ -309,6 +310,7 @@ class SalesReceiptSerializer(serializers.ModelSerializer):
             "remarks",
             "payment_option",
             "date",
+            "is_void",
             "issued",
             "total",
             "amount_tenderd",
@@ -316,6 +318,21 @@ class SalesReceiptSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id",)
 
+    def get_is_void(self, obj):
+        if obj.is_void is False:
+            return None
+        return {
+            "is_void": obj.is_void,
+            "void_reason": obj.void_reason,
+            "void_at": obj.voided_at,
+        }
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if data.get("is_void") is None:
+            data.pop("is_void", None)
+        return data
+    
     def get_total(self, obj):
         total_sales_amount = obj.orders.all()
 
@@ -397,9 +414,7 @@ class SalesReceiptCreateSerializer(serializers.ModelSerializer):
             if orderItem_data is not None:
 
                 #  = SalesReceipt.objects.get(id=instance.id)
-                receipt = SalesReceipt.objects.select_for_update().get(
-                    id=instance.id
-                 )
+                receipt = SalesReceipt.objects.select_for_update().get(id=instance.id)
                 receipt.orders.all().delete()
 
                 # order_items = [
@@ -415,7 +430,7 @@ class SalesReceiptCreateSerializer(serializers.ModelSerializer):
 
                 # new_order_item = Order.objects.bulk_create(order_items)
                 new_order_items = []
-                
+
                 new_order_item_list = [item.copy() for item in orderItem_data]
 
                 for item in new_order_item_list:
@@ -430,7 +445,6 @@ class SalesReceiptCreateSerializer(serializers.ModelSerializer):
                     new_order.save()
                     new_order_items.append(new_order)
 
-                
                 for new_order in new_order_items:
                     receipt.add_order(
                         order=new_order,
@@ -450,9 +464,9 @@ class SalesReceiptCreateSerializer(serializers.ModelSerializer):
                     receipt.payment.save()
                     receipt.full_clean()
                     receipt.save()
-                    
+
                     for x in orderItem_data:
-                    
+
                         product = x["product"]
                         quantity = Decimal(str(x["quantity"]))
                         sold_in = product.sold_In
@@ -484,7 +498,7 @@ class SalesReceiptCreateSerializer(serializers.ModelSerializer):
                                             "Choose a quantity that gives whole items."
                                         ),
                                         "product_id": product.id,
-                                        "order_id": x["order_id"]
+                                        "order_id": x["order_id"],
                                     }
                                 )
 
