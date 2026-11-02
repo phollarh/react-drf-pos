@@ -18,7 +18,11 @@ import base64
 import json
 from pathlib import Path
 from django.db import IntegrityError, transaction
-from rest_framework.exceptions import AuthenticationFailed, ValidationError,PermissionDenied
+from rest_framework.exceptions import (
+    AuthenticationFailed,
+    ValidationError,
+    PermissionDenied,
+)
 from django.conf import settings
 from django.shortcuts import get_object_or_404, render
 from django.contrib.auth import get_user_model
@@ -63,6 +67,7 @@ from accounts.session_permisson import (
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 import re
+
 # Create your views here.
 
 
@@ -70,7 +75,7 @@ class QZSignAPIView(APIView):
     permission_classes = [IsAuthenticated, IsVerified, ASPermission]
 
     def post(self, request):
-        
+
         origin = request.headers.get("Origin")
 
         if origin not in settings.QZ_ALLOWED_ORIGINS:
@@ -97,9 +102,11 @@ class QZSignAPIView(APIView):
             hashes.SHA512(),
         )
 
-        response = Response({
-            "signature": base64.b64encode(signature).decode("ascii"),
-        })
+        response = Response(
+            {
+                "signature": base64.b64encode(signature).decode("ascii"),
+            }
+        )
         response["Cache-Control"] = "no-store"
         return response
 
@@ -579,7 +586,7 @@ class AccountViewSet(viewsets.ViewSet):
                     {"error_passcode": "Invalid password"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            supervisor_session(get_staff)
+            ensure_staff_assigned(request, get_staff)
             session_auth = signing.dumps(
                 {
                     "outlet_id": get_staff.outlet.id,
@@ -1141,7 +1148,7 @@ class AccountViewSet(viewsets.ViewSet):
             verification_instance.code = code
             verification_instance.created_at = timezone.now()
             verification_instance.save()
-            
+
             activateEmail(request, code=code, user=user)
             return Response(
                 {
@@ -1228,7 +1235,7 @@ class AccountViewSet(viewsets.ViewSet):
             return Response(
                 {"error": "Invalid User"}, status=status.HTTP_400_BAD_REQUEST
             )
-    
+
         if not user.email_verified:
             return Response(
                 {
@@ -1561,18 +1568,21 @@ class OuletStaffViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # outlet_id = self.request.query_params.get("outlet_id")
         outlet_id = get_active_outlet_id(self.request)
-
-        if not outlet_id:
-            raise ValidationError({"error": "Outlet Details are required"})
         qs = super().get_queryset().filter(outlet__user=self.request.user)
-
-        if self.action == "list":
-            outlet_id = self.request.query_params.get("outlet_id")
-        else:
-            outlet_id = get_active_outlet_id(self.request)
-
         if not outlet_id:
-            raise ValidationError({"error": "Outlet details are required"})
+            if self.action == "list":
+                outlet_id = self.request.query_params.get("outlet_id")
+                return qs.filter(outlet_id=outlet_id)
+            raise ValidationError({"error": "Outlet Details are required"})
+
+        # if self.action == "list":
+        #     outlet_id = self.request.query_params.get("outlet_id")
+        #     print(outlet_id, "listlllll")
+        # else:
+        #     outlet_id = get_active_outlet_id(self.request)
+
+        # if not outlet_id:
+        #     raise ValidationError({"error": "Outlet details are required"})
 
         return qs.filter(outlet_id=outlet_id)
 
