@@ -88,8 +88,9 @@ const AuthorizationPage = () => {
                             const activateOutletOnAuth = await jwtAxios.post(`${BASE_URL_ACCOUNT}/verify_outlet/`,payLoad,{withCredentials:true} )
                             window.location.href=("/");
                             // navigate("/")
-                             activateOutletOnAuth.data
+                            activateOutletOnAuth.data
                         }catch(err:any){
+                            window.location.href=("/settings");
                             throw err.activateOutletOnAuth
                         }
                     
