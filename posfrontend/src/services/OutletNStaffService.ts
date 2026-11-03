@@ -78,6 +78,7 @@ export const OutletNstaffService = () =>{
                setStaffData(response.data)
                return response.data
           }catch(err:any){
+            
             if( err.response.status === 403 && err.response.data?.error){
                 setStaffData([])
             }

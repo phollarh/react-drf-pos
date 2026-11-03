@@ -3,7 +3,7 @@ import { UseoutletNstaffContext } from "../context/OutletNStaffsContext";
 import { useEffect, useMemo, useState } from "react";
 import useAxiosWithInterceptor from "../helper/jwtinterceptor";
 import { BASE_URL_ACCOUNT } from "../congif";
-import { useNavigate } from "react-router-dom";
+
 import { useAuthServiceContext } from "../context/AuthContext";
 import PrimaryAppBar from "./templates/PrimaryAppBar";
 import {
@@ -23,11 +23,12 @@ type AuthorizerProps = 'admin'|'supervisor'|'staff'
 
 const AuthorizationPage = () => {
     const jwtAxios = useAxiosWithInterceptor()
-    const navigate = useNavigate()
+    
     const {outletsData, staffData, getOutletStaff} =  UseoutletNstaffContext()
     const {activeOutletId} = useAuthServiceContext();
     const [staffSelect,setStaffSelect] = useState("")
     const [getoutlet, setGetOutlet] =useState("")
+    const [isLoading , setIsloading] = useState(false)
     // const [outletId, setOutletId] = useState(getoutlet)
     const [passCode,setPassCode] = useState("")
     const [passCodeErr,setPassCodeErr] = useState<null | string>(null)
@@ -57,6 +58,7 @@ const AuthorizationPage = () => {
     const selectOption = selectedOutletExists ? getoutlet : ""
     
     const handleAuthorize =async (event:React.FormEvent<HTMLFormElement>)=>{
+        setIsloading(true)
         event.preventDefault();
         setError(null)
         setErr(null)
@@ -77,11 +79,27 @@ const AuthorizationPage = () => {
             )
             console.log(response.data)
             if(response.status === 200 && response.data.role === "admin" || response.data.role === "supervisor"){
+                if(response.data.role == "supervisor" && !activeOutletId){
+                    const payLoad = {
+                        "desired_status":true,
+                        "activate_oulet_on_auth_seesion":true
+                        }
+                        try{
+                            const activateOutletOnAuth = await jwtAxios.post(`${BASE_URL_ACCOUNT}/verify_outlet/`,payLoad,{withCredentials:true} )
+                            window.location.href=("/");
+                            // navigate("/")
+                             activateOutletOnAuth.data
+                        }catch(err:any){
+                            throw err.activateOutletOnAuth
+                        }
+                    
+                }
                 // localStorage.setItem("auth_session", response.data.authSession)
                 // localStorage.setItem("role", response.data.role)
-                navigate("/")
+                window.location.href=("/");
             }else{
-                navigate("/sales_receipts")
+                window.location.href=("/sales_receipts");
+                
             }
             return response.data
         }catch(err:any){
@@ -93,8 +111,12 @@ const AuthorizationPage = () => {
             if(err.response.status === 409){
                 setError(err.response?.data.error)
             }
+            if(err.response.status === 400){
+                setError(err.response?.data.error)
+            }
             throw err.response
         }finally{
+            setIsloading(false)
             setTimeout(() => {
                 setError(null)
             }, 100 * 100);
@@ -207,6 +229,7 @@ const AuthorizationPage = () => {
                         error={Boolean(err)}
                         helperText={err}
                         onChange={(event) => {
+                            setPassCode("")
                             setError(null);
                             setErr(null);
                             setStaffSelect("");
@@ -250,6 +273,7 @@ const AuthorizationPage = () => {
                                 // error={Boolean(passCodeErr)}
                                 // helperText={passCodeErr}
                                 onChange={(event) => {
+                                    setPassCode("")
                                     if(activeOutletId){
 
                                     }
@@ -300,6 +324,7 @@ const AuthorizationPage = () => {
                                         authroizerSelect === "admin"
                                     }
                                     onChange={(event) => {
+                                        setPassCode("")
                                         setStaffSelect(event.target.value);
                                     }}
                                     sx={{
@@ -374,13 +399,14 @@ const AuthorizationPage = () => {
                     )}
 
                     <Button
+
                         fullWidth
                         type="submit"
                         variant="contained"
                         size="large"
                         disabled={
                             !authroizerSelect ||
-                            // !getoutlet ||
+                            isLoading ||
                             !passCode ||
                             (authroizerSelect !== "admin" &&
                                 !staffSelect)

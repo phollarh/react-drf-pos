@@ -282,16 +282,43 @@ class AuthenticateOutletView(APIView):
         outlet_id = request.data.get("outlet_id")
         outlet_pin = request.data.get("outlet_pin")
         active_outlet = get_active_outlet_id(request)
+        pos_auth = request.pos_authorization
+        active_status = request.data.get("desired_status")
+        activate_on_auth = (
+            request.data.get("activate_oulet_on_auth_seesion") is True
+        )
+        
+        # if not outlet_id or not outlet_pin:
+        #     if activate_on_auth is False:
+        #         return Response(
+        #             {"error": "Outlet ID and PIN are required"},
+        #             status=status.HTTP_400_BAD_REQUEST,
+        #         )
+            
+        if not isinstance(active_status, bool):
+            return Response(
+                {"error": "A valid outlet status is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        bypass_pin = (activate_on_auth and pos_auth.get("role") == "supervisor" and active_status is True and not active_outlet)
+        if activate_on_auth and not bypass_pin:
+            return Response(
+                {"error": "Automatic outlet activation not permitted"},
+                status=403
+            )
+        if bypass_pin:
+            outlet_id = pos_auth.get("outlet_id")
+        if not outlet_id:
+            return Response(
+                {"error": "Outlet ID is required"},
+                status=400
+            )
         if active_outlet and str(active_outlet) != str(outlet_id):
             return Response(
                 {"error": "deactive active outlet to proceed"},
-                status=status.HTTP_400_BAD_REQUEST,
+                    status=status.HTTP_400_BAD_REQUEST,
             )
-        if not outlet_id or not outlet_pin:
-            return Response(
-                {"error": "Outlet ID and PIN are required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+
         try:
             outlet = Outlets.objects.get(id=outlet_id, user=request.user)
         except Outlets.DoesNotExist:
@@ -299,24 +326,18 @@ class AuthenticateOutletView(APIView):
                 {"error": "Outlet not found"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        if request.pos_authorization.get("role") == "supervisor":
-            if str(request.pos_authorization.get("outlet_id")) != str(outlet_id):
+        if pos_auth.get("role") == "supervisor":
+            if str(pos_auth.get("outlet_id")) != str(outlet_id):
                 return Response(
                     {"error": "You're not a member of this outlet..."},
                     status=status.HTTP_403_FORBIDDEN,
                 )
-
-        if not check_password(outlet_pin, outlet.pin):
-            return Response(
-                {"error": "Invalid outlet PIN"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        active_status = request.data.get("desired_status")
-        if not isinstance(active_status, bool):
-            return Response(
-                {"error": "A valid outlet status is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if bypass_pin is False:
+            if not outlet_pin or not check_password(outlet_pin, outlet.pin):
+                return Response(
+                    {"error": "Invalid outlet PIN"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )    
         if active_status:
             active_outlet = signing.dumps(
                 {
@@ -357,14 +378,17 @@ class AuthenticateOutletView(APIView):
             assigned_staff = request.COOKIES.get("assigned_staff")
 
             if assigned_staff:
-
                 OutletStaffLogin.objects.filter(
-                    outlet_staff__Employee_id=assigned_staff, assigned=True
-                ).update(
-                    assigned=False,
-                    last_activity=timezone.now(),
-                    assignment_expires_at=None,
-                )
+                        outlet_staff__Employee_id=assigned_staff,
+                        outlet_staff__outlet=outlet,
+                        assigned=True
+                    ).update(
+                        assigned=False,
+                        assigned_at=None,
+                        assignment_expires_at=None,
+                        session_id=None,
+                        last_activity=timezone.now(),
+                    )
                 response.delete_cookie("assigned_staff")
             response.delete_cookie("active_outlet")
             return response
@@ -598,9 +622,13 @@ class AccountViewSet(viewsets.ViewSet):
                 salt="user_pass_session",
             )
         elif role == "staff":
-            if not outlet_id:
+            if not active_auth_outlet:
                 return Response(
-                    {"error": "outlet is required"}, status=status.HTTP_400_BAD_REQUEST
+                    {
+                        "error": "please authenticate as admin/supervisor"
+                        " and activate an outlet, before you can authenticate as a staff"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
             try:
                 get_staff = OutletStaff.objects.get(
@@ -1571,7 +1599,12 @@ class OuletStaffViewSet(viewsets.ModelViewSet):
         qs = super().get_queryset().filter(outlet__user=self.request.user)
         if not outlet_id:
             if self.action == "list":
-                outlet_id = self.request.query_params.get("outlet_id")
+                outlet_id = (
+                    self.request.query_params.get("outlet_id", "").strip() or None
+                )
+                if outlet_id is None:
+                    raise ValidationError({"error": "Outlet Details are required"})
+
                 return qs.filter(outlet_id=outlet_id)
             raise ValidationError({"error": "Outlet Details are required"})
 
