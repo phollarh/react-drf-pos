@@ -64,6 +64,7 @@ interface Server {
 }
 interface UpdateProductDialogueProps {
   data: Server[];
+  setData:React.Dispatch<React.SetStateAction<Server[]>>
   filterOption:string;
   tempEndDate:Dayjs | null;
   tempStartDate:Dayjs | null
@@ -81,7 +82,7 @@ interface UpdateProductDialogueProps {
 }
 
 export default function PastReceiptView({
-  filterOption,handleFilterChange,handleCloseDialog,showDialogForCustom,
+  filterOption,handleFilterChange,handleCloseDialog,showDialogForCustom,setData,
   setTempEndDate,setTempStartDate,
   tempEndDate, tempStartDate,handleApplyCustomDate,data,handleChange, inputValue}:UpdateProductDialogueProps) {
   const theme = useTheme();
@@ -217,7 +218,20 @@ export default function PastReceiptView({
                     withCredentials: true}
             
             )
+            setData((prevData)=>
+              prevData.map((data)=>
+                data.id === receiptId ?
+                {
+                  ...data,
+                  is_void: response.data?.data
+                  
+                } : data 
+              )
+            )
+            setOpen(false)
+            setOpenVoid(false)
             console.log(response.data)
+            setIsVoid
               return response.data
           }catch(err:any){
               if(err.response?.status === 403 && err.response?.data.error_token){
@@ -225,6 +239,7 @@ export default function PastReceiptView({
             }
               throw err.response
           }finally{
+            
             setShowReasonToVoid(false)
           }
         }

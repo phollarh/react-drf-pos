@@ -5,11 +5,13 @@ import { Box, Divider, List, ListItem, ListItemText, useMediaQuery } from '@mui/
 
 import { formatDistance } from "date-fns";
 import useWebSocket from 'react-use-websocket';
+import { useNavigate } from 'react-router-dom';
 
 type SendJsonMessage = ReturnType<typeof useWebSocket>["sendJsonMessage"];
 
 interface NewMessageType {
     id?: string;
+    search_related_pk: string | null;
     message: string
     is_read: boolean;
     title:string;
@@ -36,6 +38,7 @@ export default function NotificationsPop({anchorEl,handleClose,
     getNotification
     }:PopProps) {
     const isBelow500 = useMediaQuery("(max-width : 500px)")
+    const navigate = useNavigate();
   const id = open ? 'simple-popover' : undefined;
 
   
@@ -50,7 +53,16 @@ export default function NotificationsPop({anchorEl,handleClose,
                                 "is_read":item.is_read? true: !item.is_read,
                                 "notification_id":item.id
                             }
+                            console.log(item.title.toLowerCase().trim() )
+                            if(item.title.toLowerCase().trim() === "inventory update" || item.title.toLowerCase().trim() === "create_or_update product"){
+                                navigate("/products",{replace:true,state:{"search_related_pk":item?.search_related_pk}})
+                            }else if (item.title.toLowerCase().trim() === "receipt voided"){
+                                navigate("/past_receipts",{replace:true,state:{"search_related_pk":item?.search_related_pk}})
+                            }else if (item.title.toLowerCase().trim() === "low stock"){
+                                navigate("/products",{replace:true,state:{"search_related_pk":item?.search_related_pk}})
+                            }
                             sendJsonMessage(sendMessage)
+                            
                         }}
                         key={index} 
                         component="button" 

@@ -327,10 +327,6 @@ const ProductUpdateForm = ({
             if(error.response?.status === 403 && error.response?.data.error_token){
                 setOpen(true)
             }
-             if (error.response?.status === 400) {
-                new Error("400");
-                
-            }
             if(error.response?.data){
                 const backError = error.response?.data
                 const formattedErrors: any = {};
@@ -483,7 +479,7 @@ const ProductUpdateForm = ({
                             value={ measuredData.some(item=>item.id === formik.values.sold_In)? formik.values.sold_In :""
                             }
                             onChange={(e)=>{
-                                console.log(e.target.value)
+                                
                                 if(e.target.value === "create_sold"){
                                     navigate("/measurements")
                                     return;
@@ -502,7 +498,7 @@ const ProductUpdateForm = ({
                              <Divider/>
                            {measuredData.map((item) => (
                                 <MenuItem key={item.id} value={item.id}>
-                                    {item.measurement_type} of {item.value}
+                                    {item.measurement_type} of {Number(item.value).toFixed(2)}
                                 </MenuItem>
                             ))}
                         </TextField>

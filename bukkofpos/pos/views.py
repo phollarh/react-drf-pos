@@ -1,5 +1,5 @@
 from datetime import date, datetime, timedelta
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from django.shortcuts import get_object_or_404, render
 from django.http import Http404
 from rest_framework import viewsets, status
@@ -9,7 +9,7 @@ from django.core import signing
 from django.core.signing import BadSignature, SignatureExpired
 from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view, action
-
+from django.core.exceptions import ValidationError as DjangoValidationError
 from accounts.views import get_active_outlet_id
 from .models import (
     Category,
@@ -199,15 +199,26 @@ class ProductListViewSet(viewsets.ModelViewSet):
             outlet = get_object_or_404(Outlets, id=outlet_id, user=request.user)
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            serializer.save(user=request.user, outlet=outlet)
+            new_product = serializer.save(user=request.user, outlet=outlet)
             quantity = serializer.data["stock_inventory"]
             action = "add"
+            just_created = True
 
             if quantity is not None and action is not None:
                 create_inventory_log(
-                    authorizer, serializer.data["id"], quantity, action
+                    authorizer, serializer.data["id"], quantity, action, just_created
                 )
-                # verify_nonce.delete()
+            message_title = "Product Added"
+            message = f"New product {new_product.product_name} was Added "
+            create_notification(
+                request.user,
+                "create_or_update.product",
+                message_title,
+                message,
+                str(new_product.id),
+                get_active_outlet_id(request),
+            )
+            # verify_nonce.delete()
             return Response(
                 {"data": serializer.data, "message": "created successful"},
                 status=status.HTTP_200_OK,
@@ -283,11 +294,21 @@ class ProductListViewSet(viewsets.ModelViewSet):
 
             serializer = self.get_serializer(instance, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
-
             product_instance = serializer.save(user=request.user)
             quantity = request.data.get("quantity")
             action = request.data.get("action")
 
+            # if get_initial_selling_price != product_instance.selling_price:
+            #     message_title = "Price Update"
+            #     message = "price for {product_instance.product_name} was updated"
+            #     create_notification(
+            #                         request.user,
+            #                         "create_or_update.product",
+            #                         message_title,
+            #                         message,
+            #                         str(product_instance.id),
+            #                         get_active_outlet_id(request),
+            #                     )
             if quantity is not None and action is not None:
                 message_title = "Inventory Update"
                 message = (
@@ -295,7 +316,12 @@ class ProductListViewSet(viewsets.ModelViewSet):
                 )
                 create_inventory_log(authorizer, instance.id, quantity, action)
                 create_notification(
-                    request.user, "inventory.update", message_title, message
+                    request.user,
+                    "inventory.update",
+                    message_title,
+                    message,
+                    str(product_instance.id),
+                    get_active_outlet_id(request),
                 )
             # verify_nonce.delete()
             return Response(
@@ -370,13 +396,14 @@ class ProductListViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_403_FORBIDDEN,
                     )
                 verify_nonce.delete()
-            # self.perform_destroy(instance)
-            instance.is_active = False
-            instance.save(
-                update_fields=[
-                    "is_active",
-                ]
-            )
+
+            if instance.products.exists():
+                instance.is_active = False
+                instance.save(update_fields=["is_active"])
+
+            else:
+                self.perform_destroy(instance)
+
             return Response({"message": "Product deleted"}, status=status.HTTP_200_OK)
 
 
@@ -436,29 +463,43 @@ class InventoryViewset(viewsets.ViewSet):
         )
 
 
-from django.core.exceptions import ValidationError as DjangoValidationError
-
-
-def create_inventory_log(authorizer, product, quantity, action, note=None):
+def create_inventory_log(
+    authorizer, product, quantity, action, just_created=False, note=None
+):
     User = get_user_model()
     product_instance = Product.objects.get(id=product)
     quantity_dec = Decimal(quantity)
+
     if quantity_dec <= 0.00:
         raise ValueError("Invalid quantity action")
-    if action == "add":
+    if product_instance.sold_In.value > 1:
+        quantity_dec = (
+            quantity_dec * Decimal(product_instance.sold_In.value)
+        ).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+    if action == "add" and just_created:
+        product_instance.stock_inventory = quantity_dec
+        product_instance.low_stock_threshold = (
+            quantity_dec * Decimal("0.20")
+        ).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
+
+    elif action == "add":
         product_instance.stock_inventory += quantity_dec
+        product_instance.low_stock_threshold = (
+            Decimal(product_instance.stock_inventory) * Decimal("0.20")
+        ).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
     elif action == "subtract":
         product_instance.stock_inventory -= quantity_dec
+        product_instance.low_stock_threshold = (
+            Decimal(product_instance.stock_inventory) * Decimal("0.20")
+        ).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
     else:
         raise ValueError("Invalid action")
     try:
         product_instance.full_clean()
         product_instance.save()
-    except DjangoValidationError:
+    except DjangoValidationError as exc:
 
-        raise ValidationError(
-            {"stock_inventory": ["stock_inventory cannot be negative"]}
-        )
+        raise ValidationError(exc.message_dict)
 
     log = {
         "product": product_instance,
@@ -630,7 +671,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         if not assigned_staff or not outlet_id:
             return super().get_queryset().none()
         matching_order = SalesReceiptOrder.objects.filter(
-            sales_receipt__assigned__staff_id=assigned_staff,
+            sales_receipt__assigned_staff_id=assigned_staff,
             sales_receipt__issued=False,
             sales_receipt__user=self.request.user,
             order_id=OuterRef("pk"),
@@ -1163,13 +1204,31 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
                 )
             verify_nonce.delete()
 
+            message_title = "Receipt Voided"
+            message = f"receipt id  #00-{instance.id} was voided"
+            create_notification(
+                request.user,
+                "void.receipt",
+                message_title,
+                message,
+                str(instance.id),
+                get_active_outlet_id(request),
+            )
+
             # serializer = self.get_serializer(data=request.data)
             # serializer.is_valid(raise_exception=True)
             # serializer.save(outlet=outlet_instance)
 
             # # verify_nonce.delete()
             return Response(
-                {"message": "receipt voided"},
+                {
+                    "message": "receipt voided",
+                    "data": {
+                        "is_void": instance.is_void,
+                        "void_reason": instance.void_reason,
+                        "void_at": instance.voided_at,
+                    },
+                },
                 status=status.HTTP_200_OK,
             )
 
@@ -1314,6 +1373,7 @@ class SalesReceiptViewSet(viewsets.ModelViewSet):
             date_range = self.request.query_params.get("dateRange")
             start_date = self.request.query_params.get("startDate")
             end_date = self.request.query_params.get("endDate")
+            # serch_receipt=self.request.query_params.get()
 
             if start_date and end_date:
                 queryset = queryset.filter(

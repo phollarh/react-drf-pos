@@ -8,10 +8,11 @@ import useAxiosWithInterceptor from "../helper/jwtinterceptor";
 
 interface NewMessageType {
     id?: string;
-    message: string
+    search_related_pk: string | null;
+    message: string;
     is_read: boolean;
     title:string;
-    created_at?: string
+    created_at?: string;
 }
 
 
@@ -51,6 +52,7 @@ const useChatWebSocket = (userId: string | null) => {
                 if(response.status === 200){
                     setNewMessage(Array.isArray(data)? data : []  )
                 }
+                console.log(data)
                 return response.data["data"]
             }
             
@@ -59,12 +61,16 @@ const useChatWebSocket = (userId: string | null) => {
             if (err.response?.status === 400) {
                 throw new Error("400");
             }
-            throw err;
+            throw err.response;
         
         }
     }
     useEffect(()=>{
-        getNotification()
+        if(!userId) return;
+        
+            getNotification();
+        
+        
     }, [userId])
 
     // useEffect(()=>{
@@ -97,10 +103,25 @@ const useChatWebSocket = (userId: string | null) => {
             console.log("Error")
         },
         onMessage: (msg) => {
-            console.log("im called")
+            
             const data = JSON.parse(msg.data);
             console.log(data)
             if(data.type === "inventory.update"){
+                setNewMessage((prevMessage) => {
+                    return ([data.notification,...prevMessage ])
+                });
+            }
+            if(data.type === "create_or_update.product"){
+                setNewMessage((prevMessage) => {
+                    return ([data.notification,...prevMessage ])
+                });
+            }
+            if(data.type === "void.receipt"){
+                setNewMessage((prevMessage) => {
+                    return ([data.notification,...prevMessage ])
+                });
+            }
+            if(data.type === "low.stock"){
                 setNewMessage((prevMessage) => {
                     return ([data.notification,...prevMessage ])
                 });

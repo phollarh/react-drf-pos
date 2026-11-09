@@ -14,6 +14,7 @@ import PaginationSizeForm from "../pagination/PaginationSizeForm";
 import { Dayjs } from "dayjs";
 import { useAuthServiceContext } from "../../context/AuthContext";
 import { OrderProps } from "../../@types/server";
+import { useLocation } from "react-router-dom";
 
 
 
@@ -52,6 +53,17 @@ const MainPastReceipts = () => {
     const [searchById, setSearchById] = React.useState<string>("");
     const {activeOutletId} = useAuthServiceContext();
     const [outletId, setOutletId] = useState("")
+    const {state} = useLocation();
+    const searchRelatedPk = state?.search_related_pk ?? null
+          
+    
+            useEffect(()=>{
+                
+                if(searchRelatedPk !== null ){
+                    setSearchById(state?.search_related_pk)
+                }
+            },[state])
+    
     
     useEffect(()=>{
                 if(activeOutletId){
@@ -90,15 +102,22 @@ const MainPastReceipts = () => {
         }
 
         if (searchById) {
-            params.append("search", searchById);
+            const searchParam = new URLSearchParams();
+            searchParam.append("issued", "true");
+            searchParam.append("search", searchById);
+            if(outletId){
+                searchParam.append("outlet_id", outletId);
+            }
+            return `/sales_receipt/?${searchParam.toString()}`
+        
         }
         
         return `/sales_receipt/?${params.toString()}`
     
     }, [outletId,page,filterOption, startDate,endDate,size, searchById]);
 
-
-    const { dataCRUD,dataCRUDPaginate, fetchData, error } = useCrud<Server>([], url )
+    
+    const { dataCRUD,dataCRUDPaginate,setDataCRUD, fetchData, error } = useCrud<Server>([], url )
     useEffect(() => {
             if (!url) return; 
 
@@ -186,7 +205,7 @@ const MainPastReceipts = () => {
                     handleFilterChange={handleFilterChange} handleApplyCustomDate={handleApplyCustomDate} handleCloseDialog={handleCloseDialog}
                      tempEndDate={tempEndDate} tempStartDate={tempStartDate} setTempStartDate={setTempStartDate} setTempEndDate={setTempEndDate}
                      showDialogForCustom={showDialogForCustom}
-                    filterOption={filterOption} data={dataCRUD} handleChange={handleSearchClick} inputValue={searchById}/>   
+                    filterOption={filterOption} setData={setDataCRUD} data={dataCRUD} handleChange={handleSearchClick} inputValue={searchById}/>   
                      
                 </Box>
 

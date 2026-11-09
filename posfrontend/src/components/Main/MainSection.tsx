@@ -15,6 +15,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ProductListTable from "./ProductLists/ProductListTable";
 import { Server } from "../../@types/server";
 import { useAuthServiceContext } from "../../context/AuthContext";
+import { useLocation } from "react-router-dom";
 
 
 
@@ -69,7 +70,7 @@ const MainSection = () => {
         if(filterOption === "")return null;
         let base = `/products/`;
         const params = new URLSearchParams();
-
+        
         if (filterOption !== "") {
             params.append("outlet_id", filterOption);
         }
@@ -108,7 +109,16 @@ const MainSection = () => {
           const inputId = event.target.value.trim()
           setSearchByproductName(inputId)
       }
+      const {state} = useLocation();
+      const searchRelatedPk = state?.search_related_pk ?? null
       
+
+        useEffect(()=>{
+            
+            if(searchRelatedPk !== null ){
+                setSearchByproductName(state?.search_related_pk)
+            }
+        },[state])
     return (
         <>
             <Container  sx={{width:below750?"100%":`calc(100vw - ${drawerWidth}px)`,mb:4,pb:4,height:`calc(100vh - ${theme.primaryAppBar.height}px)`, overflowX:"hidden", overflowY:"hidden", ml:below750?"0px":`${drawerWidth}px`}}>

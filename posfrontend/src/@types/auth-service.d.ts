@@ -2,7 +2,16 @@ export interface requestIdProps {
     object_details:string,
     id:string
 }
+interface ActiveSession {
+    role: "admin" | "supervisor" | "staff";
+    user_session_id: string;
+    user_session_name: string;
+    username?: string;
+    avatar:string;
+}
 export interface AuthServiceProps {
+    activeSession: ActiveSession | null;
+    getSession: () => Promise<any>;
     login: (
         username: string,
         password: string

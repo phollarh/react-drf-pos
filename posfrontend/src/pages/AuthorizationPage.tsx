@@ -18,6 +18,7 @@ import {
 } from "@mui/material";
 
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import { useNavigate } from "react-router-dom";
 
 type AuthorizerProps = 'admin'|'supervisor'|'staff'
 
@@ -25,7 +26,7 @@ const AuthorizationPage = () => {
     const jwtAxios = useAxiosWithInterceptor()
     
     const {outletsData, staffData, getOutletStaff} =  UseoutletNstaffContext()
-    const {activeOutletId} = useAuthServiceContext();
+    const {activeOutletId, activeSession} = useAuthServiceContext();
     const [staffSelect,setStaffSelect] = useState("")
     const [getoutlet, setGetOutlet] =useState("")
     const [isLoading , setIsloading] = useState(false)
@@ -35,6 +36,7 @@ const AuthorizationPage = () => {
     const [err,setErr] = useState<null | string>(null)
     const [error, setError] = useState<null | string>(null)
     const [authroizerSelect, setAuthroizerSelect] = useState<AuthorizerProps | "">("")
+    const navigate = useNavigate()
     
     
     // const getSession = localStorage.getItem("auth_session") || ""
@@ -45,6 +47,13 @@ const AuthorizationPage = () => {
     //         navigate("/")
     //     }
     // },[getSession,getRole])
+
+    useEffect(()=>{
+        if(activeSession){
+            navigate(-1)
+        }
+    }, [activeSession])
+    
     
     useEffect(()=>{
         if(activeOutletId){
@@ -117,6 +126,7 @@ const AuthorizationPage = () => {
             }
             throw err.response
         }finally{
+            setPassCode("")
             setIsloading(false)
             setTimeout(() => {
                 setError(null)
@@ -406,7 +416,7 @@ const AuthorizationPage = () => {
                         variant="contained"
                         size="large"
                         disabled={
-                            !authroizerSelect ||
+                            !authroizerSelect || Boolean(activeSession) ||
                             isLoading ||
                             !passCode ||
                             (authroizerSelect !== "admin" &&

@@ -87,6 +87,7 @@ const SalesNReceipt = () => {
     const {getStaffStatus, setStaffStatus,staffData} = UseoutletNstaffContext();
     const [searchByproductName, setSearchByproductName] = React.useState<string>("");
     const [inventoryError,setInventoryError] = useState<{inventory_error:string; product_id:string}|null>(null)
+    const [amountTenderdErr,setAmountTenderdErr] = useState<null | string>(null)
     const [soldInError,setSoldInError] = useState<{sold_in_error:string ; product_id:string ; order_id :string}|null>(null)
     const {activeOutletId, userId} = useAuthServiceContext();
     const [, setUserId] = useState("")
@@ -292,6 +293,9 @@ const SalesNReceipt = () => {
             }catch(error:any){
                 if(error.response?.status === 400 && error.response?.data?.inventory_error){
                     setInventoryError(error.response?.data)
+                }
+                if(error.response?.status === 400 && error.response?.data?.amount_tenderd){
+                    setAmountTenderdErr(error.response?.data.amount_tenderd?.[0])
                 }
                 if(error.response?.status === 400 && error.response?.data?.sold_in_error){
                     setSoldInError(error.response?.data)
@@ -724,6 +728,8 @@ const SalesNReceipt = () => {
                                     }  
                                     <Box flexGrow={1} sx={{height:"95%",m:0.5, overflowY:"auto", overflowX:"hidden"}}>
                                         <SalesReceipt 
+                                        amountTenderdErr={amountTenderdErr}
+                                        setAmountTenderdErr={setAmountTenderdErr}
                                         soldInError={soldInError}
                                         setSoldInError={setSoldInError}
                                         setInventoryError={setInventoryError}
@@ -754,6 +760,8 @@ const SalesNReceipt = () => {
                     (
                         <Box flexGrow={1} sx={{width:{lg:"100%",md:"100%", sm:"100%" }, height:"100%",m:0.5 ,overflow:"auto"}}>
                             <SalesReceipt
+                            amountTenderdErr={amountTenderdErr}
+                            setAmountTenderdErr={setAmountTenderdErr}
                             soldInError={soldInError}
                             setSoldInError={setSoldInError} 
                             inventoryError={inventoryError}

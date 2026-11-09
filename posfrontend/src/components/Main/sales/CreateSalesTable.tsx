@@ -82,7 +82,7 @@ export default function CreateSalesTable({dataCRUD,handleClick,handleSearchClick
 
   return true;
   });
-  console.log(columns)
+  
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
   };

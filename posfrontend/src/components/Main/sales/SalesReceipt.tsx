@@ -73,6 +73,8 @@ interface SalesProps{
     setPaymentOption?: React.Dispatch<React.SetStateAction<string>>;
     showReceiptDetaills: boolean;
     inventoryError: {inventory_error: string;product_id: string;} | null;
+    setAmountTenderdErr: React.Dispatch<React.SetStateAction<string | null>>
+    amountTenderdErr: string | null
     setInventoryError: React.Dispatch<React.SetStateAction<{
     inventory_error: string;
     product_id: string;
@@ -89,7 +91,7 @@ interface SalesProps{
     } | null>>
 }
 
-const SalesReceipt = ({inventoryError,setInventoryError,soldInError, setSoldInError,dataCRUD,paymentOption,setPaymentOption,amountTendered,setAmountTendered,remarks,setRemarks,setDataCRUDReceipt, handleReceiptSubmit}:SalesProps) => {
+const SalesReceipt = ({setAmountTenderdErr, amountTenderdErr,inventoryError,setInventoryError,soldInError, setSoldInError,dataCRUD,paymentOption,setPaymentOption,amountTendered,setAmountTendered,remarks,setRemarks,setDataCRUDReceipt, handleReceiptSubmit}:SalesProps) => {
     const theme = useTheme();
     const jwtAxios = useAxiosWithInterceptor();
     const [editingField, setEditingField] = useState<"quantity" | "subtotal">("quantity");
@@ -522,14 +524,21 @@ useEffect(() => {
                                 <Box sx={{m:0, p:1, textAlign:'center', borderTop:`1px solid ${theme.palette.divider}`}}>
                                      <Tooltip title='Amount Tendered' arrow placement="top-start">
                                         <TextField
+                                        error = {Boolean(amountTenderdErr)}
+                                        helperText={amountTenderdErr}
                                                 size="small"
                                                 type="number"
                                                 label='Amount Tendered'
                                                 value={amountTendered}
-                                                onChange={(e)=>handleBalChange(e)}
+                                                onChange={
+                                                    (e)=>{
+                                                        setAmountTenderdErr(null); 
+                                                        handleBalChange(e)}
+                                                    }
+                                                
                                                 sx={{
                                                     fontSize:"15px",
-                                                    width:'20%',
+                                                    
                                                     '& input':{
                                                         textAlign:"center",
                                                         p:0.2,

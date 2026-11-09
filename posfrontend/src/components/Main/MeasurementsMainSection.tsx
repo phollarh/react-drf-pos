@@ -218,7 +218,7 @@ const MeasurementsMainSection = () => {
                                                                 overflow: "hidden",
                                                                 whiteSpace: "nowrap"
                                                             }}>
-                                                             {item.value}
+                                                             {Number(item.value).toFixed(2)}
                                                         </Typography>
                                                         </Box>
                                                         

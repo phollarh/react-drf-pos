@@ -51,6 +51,14 @@ class Product(models.Model):
         null=True,
         validators=[stock_inventory_validation],
     )
+    low_stock_threshold = models.DecimalField(
+        default=0,
+        decimal_places=3,
+        max_digits=50,
+        blank=True,
+        null=True,
+        validators=[stock_inventory_validation],
+    )
     category = models.ForeignKey(
         "Category",
         on_delete=models.SET_NULL,
@@ -177,7 +185,9 @@ class Order(models.Model):
             if self.product.sold_In:
                 self.measurement_type_at_sale = self.product.sold_In.measurement_type
                 self.measurement_value_at_sale = self.product.sold_In.value
-        self.sub_total = Decimal((self.quantity * self.product.sold_In.value) * self.product.selling_price).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        self.sub_total = Decimal(
+            (self.quantity * self.product.sold_In.value) * self.product.selling_price
+        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         super().save(*args, **kwargs)
 
@@ -222,14 +232,14 @@ class SalesReceipt(models.Model):
         )
 
         return receipt_order
-    
+
     def void_receipt(self, reason):
         self.is_void = True
         self.void_reason = reason
         self.voided_at = timezone.now()
 
         self.save(update_fields=["is_void", "void_reason", "voided_at"])
-              
+
 
 class SalesReceiptOrder(models.Model):
     class Paymentchoices(models.TextChoices):

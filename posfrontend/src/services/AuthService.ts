@@ -6,6 +6,13 @@ import { useNavigate } from "react-router-dom";
 
 import useAxiosWithInterceptor from "../helper/jwtinterceptor";
 
+interface ActiveSession {
+    role: "admin" | "supervisor" | "staff";
+    user_session_id: string;
+    user_session_name: string;
+    username?: string;
+    avatar:string;
+}
 
 
 export function useAuthService(): AuthServiceProps {
@@ -18,7 +25,7 @@ export function useAuthService(): AuthServiceProps {
     const jwtAxios = useAxiosWithInterceptor()
     const [isLoggedIn, setIsloggedIn] = useState<boolean>((false))
     const [authLoading, setAuthLoading] = useState<boolean>((true))
-
+    const [activeSession, setActiveSession] =useState<ActiveSession | null>(null);
     const getInitialLoggedInValue =async () => {
         // const loggedIn = localStorage.getItem("isLoggedIn");
         // return loggedIn !== null && loggedIn === "true";
@@ -217,6 +224,33 @@ export function useAuthService(): AuthServiceProps {
 
     }
 
+    const getSession = async ()=>  {
+                try{
+                    const response = await jwtAxios.get(`${BASE_URL_ACCOUNT}/user/check_user_session/`,
+                    {withCredentials:true}
+                )
+                if(response.status === 200){
+                
+                    setActiveSession(response.data)
+                }
+                    
+                    return response.data
+                }catch(err:any){
+                    
+                    
+                    throw err.response
+                }
+            
+                
+                }
+    
+    useEffect(()=>{
+                
+        getSession()
+                 
+        
+    },[])
+
     const refreshAccessToken = async () => {
         setAuthError(null)
         try {
@@ -264,6 +298,8 @@ export function useAuthService(): AuthServiceProps {
 
     }
     return {
+        activeSession,
+        getSession,
         userId,
         authLoading, 
         login, 

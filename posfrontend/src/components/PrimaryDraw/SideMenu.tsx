@@ -17,21 +17,16 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import HistoryIcon from '@mui/icons-material/History';
 import InfoIcon from '@mui/icons-material/Info';
 import FeedbackIcon from '@mui/icons-material/Feedback';
-import React, { useEffect, useState } from "react";
+import React from "react";
 import useAxiosWithInterceptor from "../../helper/jwtinterceptor";
 import { BASE_URL_ACCOUNT } from "../../congif";
 import { deepOrange } from "@mui/material/colors";
 import { useNavigate } from "react-router-dom";
 import { UseoutletNstaffContext } from "../../context/OutletNStaffsContext";
 import LogoutIcon from '@mui/icons-material/Logout';
+import { useAuthServiceContext } from "../../context/AuthContext";
 
-interface ActiveSession {
-    role: "admin" | "supervisor" | "staff";
-    user_session_id: string;
-    user_session_name: string;
-    username?: string;
-    avatar:string;
-}
+
 
 const sideMenu = [
  { label: 'Create Receipt',link:"sales_receipts", icon: <ReceiptIcon /> },
@@ -63,45 +58,40 @@ const SideMenu: React.FC<Props> = ({ open }: Props) => {
     const theme = useTheme()
     const jwtAxios = useAxiosWithInterceptor();
     const {setEmployeeId, setStaffStatus}=UseoutletNstaffContext()
-    const [activeSession, setActiveSession] =useState<ActiveSession | null>(null);
+    const {activeSession} = useAuthServiceContext()
     const below600 = useMediaQuery("(max-width:750px)")
     const below500 = useMediaQuery("(max-width:500px)")
     const isDarkMode = theme.palette.mode === "dark"
     const navigate = useNavigate();
-    const getSession = async ()=>  {
-            try{
-                const response = await jwtAxios.get(`${BASE_URL_ACCOUNT}/user/check_user_session/`,
-                {withCredentials:true}
-            )
-            if(response.status === 200){
+    // const getSession = async ()=>  {
+    //         try{
+    //             const response = await jwtAxios.get(`${BASE_URL_ACCOUNT}/user/check_user_session/`,
+    //             {withCredentials:true}
+    //         )
+    //         if(response.status === 200){
             
-                setActiveSession(response.data)
-            }
+    //             setActiveSession(response.data)
+    //         }
                 
-                return response.data
-            }catch(err:any){
+    //             return response.data
+    //         }catch(err:any){
                 
                 
-                throw err.response
-            }
+    //             throw err.response
+    //         }
         
             
-            }
+    //         }
 
-    useEffect(()=>{
-            
-             getSession()
-             
-    
-    },[])
+ 
    
         const handleEndSession = async ()=>{
+            if(!activeSession) return
         try{
             const response = await jwtAxios.post(`${BASE_URL_ACCOUNT}/user/end_user_session/`,{},
                 {withCredentials:true}
 
             )
-            console.log(response.data)
             if(response.status === 200){
                 if(response.data.unassigned_staff_id){
                     setStaffStatus(undefined)
@@ -113,8 +103,8 @@ const SideMenu: React.FC<Props> = ({ open }: Props) => {
             }
             return response.data
         }catch(err:any){
-            console.log(err.response.data)
-            throw err
+            
+            throw err.response
         }
     }
         

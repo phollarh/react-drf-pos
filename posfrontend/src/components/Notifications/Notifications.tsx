@@ -5,6 +5,7 @@ import IconButton from '@mui/material/IconButton';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import NotificationsPop from "./NotificationPopover";
 import NotifyService from "../../services/NotifyService";
+import { useAuthServiceContext } from "../../context/AuthContext";
 
 
 // const socketUrl = "ws://127.0.0.1:8000/ws/notifications/"
@@ -12,8 +13,9 @@ import NotifyService from "../../services/NotifyService";
 export default function Notifications() {
     const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
     const open = Boolean(anchorEl);
-    const user_id = localStorage.getItem("user_id")
-    const { sendJsonMessage,  newMessage, notificationShownMessage, disableButton,getNotification} = NotifyService(user_id)
+    // const user_id = localStorage.getItem("user_id")
+    const {userId} = useAuthServiceContext();
+    const { sendJsonMessage,  newMessage, notificationShownMessage, disableButton,getNotification} = NotifyService(userId !== null? String(userId) : null)
 
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
         setAnchorEl(event.currentTarget);

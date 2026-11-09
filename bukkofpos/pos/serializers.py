@@ -5,6 +5,8 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from django.db.models import F
 from accounts.models import OutletStaff, Outlets
+from accounts.views import get_active_outlet_id
+from notifications.notification_helper import create_notification
 from .models import (
     Category,
     InventoryLog,
@@ -501,6 +503,19 @@ class SalesReceiptCreateSerializer(serializers.ModelSerializer):
                                         "order_id": x["order_id"],
                                     }
                                 )
+                        product.refresh_from_db(fields=["stock_inventory", "low_stock_threshold"])
+                        low_stock =Decimal(product.low_stock_threshold) >= Decimal(product.stock_inventory)
+                        if low_stock :
+                            message_title = "Low Stock"
+                            message = f"{product.product_name} stock is running low"
+                            create_notification(
+                                self.context["request"].user,
+                                "low.stock",
+                                message_title,
+                                message,
+                                str(product.id),
+                                get_active_outlet_id(self.context["request"]),
+                            )
 
         return instance
 

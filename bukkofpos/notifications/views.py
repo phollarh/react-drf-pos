@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from .models import Notification
 from accounts.session_permisson import ASPermission, IsAdminOrSupervisor
 from .serializer import notificationSerializer
+from accounts.views import get_active_outlet_id
 
 # Create your views here.
 
@@ -13,11 +14,16 @@ class NotificationsViewSet(viewsets.ViewSet):
     # permission_classes = [ASPermission, IsAdminOrSupervisor]
 
     def list(self, request):
-        current_count = int(request.headers.get("X-Count-Header"))
+        try:
+            current_count = max(0, int(request.headers.get("X-Count-Header"), "0"))
+        except (TypeError, ValueError):
+            current_count = 0
         get_list = current_count + 10
-        user_id = request.query_params.get("user_id")
+        user = request.user
         notify = Notification.objects.filter(
-            Q(user_id=user_id) | Q(user__isnull=True)
+            Q(user_id=user.id, active_outlet_id=get_active_outlet_id(request))
+            | Q(user__isnull=True, active_outlet__isnull=True)
+            | Q(user_id=user.id, active_outlet__isnull=True)
         ).order_by("-created_at")
 
         if get_list >= notify.count():
