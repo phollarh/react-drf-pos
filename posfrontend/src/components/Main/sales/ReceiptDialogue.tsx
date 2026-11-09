@@ -98,7 +98,9 @@ export default function ReceiptDialogue( {handleClose,open,receiptData,handleCli
               throw new Error('Function not implemented.');
             } } soldInError={null} setSoldInError={function (): void {
               throw new Error('Function not implemented.');
-            } }/>
+            } } setAmountTenderdErr={function (): void {
+              throw new Error('Function not implemented.');
+            } } amountTenderdErr={null}/>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Back</Button>
