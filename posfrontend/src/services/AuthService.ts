@@ -236,7 +236,9 @@ export function useAuthService(): AuthServiceProps {
                     
                     return response.data
                 }catch(err:any){
-                    
+                    if(err.response.status === 404){
+                        setActiveSession(null)
+                    }
                     
                     throw err.response
                 }

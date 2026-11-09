@@ -49,6 +49,7 @@ const AuthorizationPage = () => {
     // },[getSession,getRole])
 
     useEffect(()=>{
+        
         if(activeSession){
             navigate(-1)
         }
