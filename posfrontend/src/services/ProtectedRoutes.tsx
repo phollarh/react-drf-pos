@@ -127,6 +127,7 @@ const ProtectedRoute = ({
                 setSession(currentSession);
                 setCheckingSession(false);
             } catch (err: any) {
+                console.log(err.response)
                 if (
                     ignoreResult ||
                     hasRedirected.current
@@ -145,6 +146,7 @@ const ProtectedRoute = ({
                 navigate("/authorization", {
                     replace: true,
                 });
+                throw err.response
             }
         };
         if(isLoggedIn){
