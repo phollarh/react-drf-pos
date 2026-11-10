@@ -146,7 +146,7 @@ const ProtectedRoute = ({
                 // navigate("/authorization", {
                 //     replace: true,
                 // });
-                throw err.response
+                // throw err.response
             }
         };
         if(isLoggedIn){
