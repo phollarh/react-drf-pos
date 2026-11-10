@@ -143,9 +143,9 @@ const ProtectedRoute = ({
                 setStaffStatus(undefined);
                 setEmployeeId("");
 
-                navigate("/authorization", {
-                    replace: true,
-                });
+                // navigate("/authorization", {
+                //     replace: true,
+                // });
                 throw err.response
             }
         };
