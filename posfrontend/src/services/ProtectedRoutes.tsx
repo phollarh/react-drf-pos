@@ -10,7 +10,7 @@ import {
 } from "react-router-dom";
 
 import useAxiosWithInterceptor from "../helper/jwtinterceptor";
-import { BASE_URL_ACCOUNT } from "../congif";
+
 import { UseoutletNstaffContext } from "../context/OutletNStaffsContext";
 import { useAuthServiceContext } from "../context/AuthContext";
 
@@ -61,7 +61,7 @@ const ProtectedRoute = ({
     const navigate = useNavigate();
     const location = useLocation();
     const jwtAxios = useAxiosWithInterceptor();
-    const {isLoggedIn} = useAuthServiceContext()
+    const {isLoggedIn, getSession} = useAuthServiceContext()
 
     const {
         setStaffStatus,
@@ -84,14 +84,15 @@ const ProtectedRoute = ({
         setCheckingSession(true);
         setSession(null);
 
-        const getSession = async () => {
+        const getSessionP = async () => {
             try {
-                const response = await jwtAxios.get(
-                    `${BASE_URL_ACCOUNT}/user/check_user_session/`,
-                    {
-                        withCredentials: true,
-                    }
-                );
+                // const response = await jwtAxios.get(
+                //     `${BASE_URL_ACCOUNT}/user/check_user_session/`,
+                //     {
+                //         withCredentials: true,
+                //     }
+                // );
+                const response = await getSession()
 
                 if (ignoreResult) {
                     return;
@@ -147,7 +148,7 @@ const ProtectedRoute = ({
             }
         };
         if(isLoggedIn){
-            getSession();
+            getSessionP();
             return () => {
                 ignoreResult = true;
             };
