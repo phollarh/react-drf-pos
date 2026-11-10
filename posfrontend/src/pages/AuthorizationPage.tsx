@@ -26,7 +26,7 @@ const AuthorizationPage = () => {
     const jwtAxios = useAxiosWithInterceptor()
     
     const {outletsData, staffData, getOutletStaff} =  UseoutletNstaffContext()
-    const {activeOutletId, activeSession} = useAuthServiceContext();
+    const {activeOutletId, activeSession, getSession} = useAuthServiceContext();
     const [staffSelect,setStaffSelect] = useState("")
     const [getoutlet, setGetOutlet] =useState("")
     const [isLoading , setIsloading] = useState(false)
@@ -89,6 +89,7 @@ const AuthorizationPage = () => {
             )
             console.log(response.data)
             if(response.status === 200 && response.data.role === "admin" || response.data.role === "supervisor"){
+                await getSession()
                 if(response.data.role == "supervisor" && !activeOutletId){
                     const payLoad = {
                         "desired_status":true,
@@ -96,6 +97,7 @@ const AuthorizationPage = () => {
                         }
                         try{
                             const activateOutletOnAuth = await jwtAxios.post(`${BASE_URL_ACCOUNT}/verify_outlet/`,payLoad,{withCredentials:true} )
+                            
                             window.location.href=("/");
                             // navigate("/")
                             activateOutletOnAuth.data
