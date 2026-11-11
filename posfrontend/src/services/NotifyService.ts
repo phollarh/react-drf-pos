@@ -52,15 +52,11 @@ const useChatWebSocket = (userId: string | null) => {
                 if(response.status === 200){
                     setNewMessage(Array.isArray(data)? data : []  )
                 }
-                console.log(data)
+                
                 return response.data["data"]
             }
             
         catch(err:any){
-            console.log(err.response)
-            if (err.response?.status === 400) {
-                throw new Error("400");
-            }
             throw err.response;
         
         }
@@ -105,7 +101,6 @@ const useChatWebSocket = (userId: string | null) => {
         onMessage: (msg) => {
             
             const data = JSON.parse(msg.data);
-            console.log(data)
             if(data.type === "inventory.update"){
                 setNewMessage((prevMessage) => {
                     return ([data.notification,...prevMessage ])

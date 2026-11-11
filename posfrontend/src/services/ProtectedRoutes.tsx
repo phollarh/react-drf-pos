@@ -61,7 +61,7 @@ const ProtectedRoute = ({
     const navigate = useNavigate();
     const location = useLocation();
     const jwtAxios = useAxiosWithInterceptor();
-    const {isLoggedIn, getSession} = useAuthServiceContext()
+    const {isLoggedIn, getSession,setActiveSession} = useAuthServiceContext()
 
     const {
         setStaffStatus,
@@ -127,7 +127,7 @@ const ProtectedRoute = ({
                 setSession(currentSession);
                 setCheckingSession(false);
             } catch (err: any) {
-                console.log(err.response)
+                
                 if (
                     ignoreResult ||
                     hasRedirected.current
@@ -138,7 +138,7 @@ const ProtectedRoute = ({
                 
 
                 hasRedirected.current = true;
-
+                setActiveSession(null)
                 setSession(null);
                 setStaffStatus(undefined);
                 setEmployeeId("");
@@ -146,6 +146,7 @@ const ProtectedRoute = ({
                 navigate("/authorization", {
                     replace: true,
                 });
+                // window.location.href ="/authorization"
                 // throw err.response
             }
         };

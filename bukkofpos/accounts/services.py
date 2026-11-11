@@ -4,6 +4,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework.exceptions import APIException, AuthenticationFailed
+from rest_framework.exceptions import PermissionDenied
 from rest_framework_simplejwt.tokens import AccessToken
 from .models import OutletStaff, OutletStaffLogin
 
@@ -27,7 +28,12 @@ def ensure_staff_assigned(request, staff: OutletStaff) -> OutletStaffLogin:
 
     session_id = request.auth.get("session_id")
     if not session_id:
-        raise AuthenticationFailed("Please log in again.")
+        raise PermissionDenied(
+            {
+                "detail": "POS session expired. Please authorize again.",
+                "code": "session_expired_please_reauthenticate",
+            }
+        )
     active_login = (
         OutletStaffLogin.objects.select_for_update()
         .filter(outlet_staff=locked_staff, is_active=True, logout_date__isnull=True)

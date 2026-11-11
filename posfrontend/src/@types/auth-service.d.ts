@@ -11,6 +11,7 @@ interface ActiveSession {
 }
 export interface AuthServiceProps {
     activeSession: ActiveSession | null;
+    setActiveSession: React.Dispatch<React.SetStateAction<ActiveSession | null>>
     getSession: () => Promise<any>;
     login: (
         username: string,

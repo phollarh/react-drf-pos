@@ -1,4 +1,4 @@
-import {Box, CssBaseline, Divider, Paper,Tooltip, Typography, useMediaQuery, useTheme} from "@mui/material"
+import {Box, Button, CssBaseline, Divider, Paper,Tooltip, Typography, useMediaQuery, useTheme} from "@mui/material"
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import CreateSales from "../components/Main/sales/CreateSales";
 import SalesReceipt from "../components/Main/sales/SalesReceipt";
@@ -93,6 +93,7 @@ const SalesNReceipt = () => {
     const [, setUserId] = useState("")
     const [outlet_id, setOutletId] = useState("")
     const [filterOption, setFilterOption] = React.useState("" );
+    const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
     
     const switchPageLayout = ()=>{
         setLayout((prevLayout)=>{
@@ -274,7 +275,7 @@ const SalesNReceipt = () => {
                                 ] as any);
                             }else{
                                 setPrinterMess("for a more robust printing experience, please setup Printer in setting");
-                                window.open(response.data.pdf_url, "_blank")
+                                setReceiptUrl(response.data.pdf_url);
                             }
                         
                             setTimeout(()=>{
@@ -302,9 +303,6 @@ const SalesNReceipt = () => {
                 }
                 if (error.response?.status === 404) {
                 setErrorOrder(error.response?.data.detail)
-                }
-                 if (error.response?.status === 400) {
-                    new Error("400");
                 }
                 if(error.response?.status === 400){
                     setAssignMess(error.response.data?.error)
@@ -387,9 +385,6 @@ const SalesNReceipt = () => {
                 }, 100 * 100);
             }
 
-            if (err.response?.status === 400) {
-                new Error("400");
-            }
             throw err.response;
         }finally{
             setLoading(false);
@@ -412,9 +407,7 @@ const SalesNReceipt = () => {
             
             return response.data
         }catch(err:any){
-            if (err.response?.status === 400) {
-                new Error("400");
-            }
+
             throw err.response;
         }
     }
@@ -726,6 +719,25 @@ const SalesNReceipt = () => {
                                         <MenuIcon fontSize="medium" sx={{display:"block",margin:"1px auto",transform:"rotate(90deg)"}}/>
                                     </Box>
                                     }  
+                                    {receiptUrl && (
+                                        
+                                    <Box display="flex" sx={{ justifyContent:"center"}}>
+                                    <Button
+                                        sx={{textTransform:"none", textAlign:"center"}}
+                                        onClick={()=>{
+                                            setReceiptUrl(null)
+                                        }}
+                                        size="small"
+                                        component="a"
+                                        href={receiptUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        variant="contained"
+                                    >
+                                        Open receipt
+                                    </Button>
+                                    </Box>
+                                )}
                                     <Box flexGrow={1} sx={{height:"95%",m:0.5, overflowY:"auto", overflowX:"hidden"}}>
                                         <SalesReceipt 
                                         amountTenderdErr={amountTenderdErr}
@@ -759,6 +771,17 @@ const SalesNReceipt = () => {
                     ):
                     (
                         <Box flexGrow={1} sx={{width:{lg:"100%",md:"100%", sm:"100%" }, height:"100%",m:0.5 ,overflow:"auto"}}>
+                            {receiptUrl && (
+                                <Button
+                                    component="a"
+                                    href={receiptUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    variant="contained"
+                                >
+                                    Open receipt
+                                </Button>
+                            )}
                             <SalesReceipt
                             amountTenderdErr={amountTenderdErr}
                             setAmountTenderdErr={setAmountTenderdErr}

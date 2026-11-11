@@ -2087,10 +2087,27 @@ def sales_receipt_pdf(request, pk):
     try:
         payload = signing.loads(request.GET["token"], max_age=60)
     except (BadSignature, SignatureExpired):
-        return Response(status=403)
-
+        return HttpResponse(
+            """
+            <h2>Receipt link expired</h2>
+            <p>Return to Past Receipts and open the receipt again
+            to generate a new link.</p>
+            """,
+            status=403,
+            content_type="text/html",
+        )
+        
     if payload["receipt_id"] != pk:
-        return Response(status=403)
+        return HttpResponse(
+            """
+            <h2>Receipt link Invalid</h2>
+            <p>Return to Past Receipts and open the receipt again
+            to generate a new link.</p>
+            """,
+            status=403,
+            content_type="text/html",
+        )
+        
     with timezone.override(ZoneInfo(payload.get("timezone", settings.TIME_ZONE))):
         receipt = SalesReceipt.objects.get(pk=pk)
         serializer = SalesReceiptSerializer(receipt)

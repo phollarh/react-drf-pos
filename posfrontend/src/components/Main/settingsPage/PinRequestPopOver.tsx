@@ -36,7 +36,7 @@ export default function PinRequestPopOver({fetchReceipt,Employee_id,outletStaff,
   const jwtAxios = useAxiosWithInterceptor()
   const {activeOutletId, isOutletActive,getInitialLoggedInValue} = useAuthServiceContext();
   const [outletId, setOutletId] = React.useState("")
-  const {LogStaffOut,getStaffStatus,employeeId,setStaffStatus,staffData} = UseoutletNstaffContext();
+  const {LogStaffOut,getStaffStatus,setStaffStatus,staffData} = UseoutletNstaffContext();
 
   React.useEffect(()=>{
                     if(activeOutletId){
@@ -134,59 +134,54 @@ export default function PinRequestPopOver({fetchReceipt,Employee_id,outletStaff,
                   "outlet_id":outletId
                   
                   }
-                  console.log(payLoad)
+                  
               try{
             
-            const response = await jwtAxios.post(`${BASE_URL_ACCOUNT}/staffs-login/assign_staff_session/`, payLoad,
-                {withCredentials:true}
-            )
-            
-                if(response.status === 200){
+                  const response = await jwtAxios.post(`${BASE_URL_ACCOUNT}/staffs-login/assign_staff_session/`, payLoad,
+                      {withCredentials:true}
+                  )
                   
-                  const staff_status=await getStaffStatus(response.data.employee_id)
+                      if(response.status === 200){
+                        
+                        const staff_status=await getStaffStatus(response.data.employee_id)
 
-                  
-                  if(staff_status?.is_active === true && response.data?.assigned_status === true){
-                      
-                      const assigned_staff : outletStaffDataProps | null  = staffData.find((item)=>String(response.data?.employee_id) === String(item.Employee_id)) ?? null
-                      
-                      setAssignedStaff?.(assigned_staff)
-                      await fetchReceipt?.()
+                        
+                        if(staff_status?.is_active === true && response.data?.assigned_status === true){
+                            
+                            const assigned_staff : outletStaffDataProps | null  = staffData.find((item)=>String(response.data?.employee_id) === String(item.Employee_id)) ?? null
+                            
+                            setAssignedStaff?.(assigned_staff)
+                            await fetchReceipt?.()
 
+                          
+                        }
+                        
+                        if(response.data?.assigned_status === false){
+                            setAssignedStaff?.(null)
+                            
+                            setStaffStatus(undefined)
+                            await fetchReceipt?.()
+                          
+                        }
+                          handleClose()
+                          setIsLoading(false)
+                          setPin("")
+                          
+                      }
+                      
+                      return response.data
+              }catch(error:any){
                     
-                  }
-                  
-                  if(response.data?.assigned_status === false){
-                      
-                      const assigned_staff : outletStaffDataProps | null  = staffData.find((item)=>String(response.data?.employee_id) === String(item.Employee_id)) ?? null
-                      console.log(assigned_staff)
-                      setAssignedStaff?.(null)
-                      
-                      setStaffStatus(undefined)
-                      await fetchReceipt?.()
-                    
-                  }
-
-                     
-
-
-                    handleClose()
                     setIsLoading(false)
-                    setPin("")
-                    
-                }
+                      setPin("")
+                      if(error.response?.data){
+                        setPin("")
+                        setErrorHandling(error.response.data.error)
+                        
+                      }
+              }finally{
                 setIsLoading(false)
-                return response.data
-        }catch(error:any){
-          
-          setIsLoading(false)
-            setPin("")
-            if(error.response?.data){
-              setPin("")
-              setErrorHandling(error.response.data.error)
-              
-            }
-        }
+              }
               
             
         
@@ -241,19 +236,16 @@ export default function PinRequestPopOver({fetchReceipt,Employee_id,outletStaff,
         
     //  }
     if(!outlet){
-        if(staffStatus?.is_active === true && employeeId !== ""){
+        if(staffStatus?.is_active === true && staffStatus?.staff_id){
         
           
-           const response=await LogStaffOut(pinState,employeeId,staffStatus.session_id)
-           console.log(response)
+           const response=await LogStaffOut(pinState,staffStatus?.staff_id,staffStatus.session_id)
          if(response.status === 200){
-            console.log('it worked')
-            
             setPin("")
             handleClose()
             setIsLoading(false)
          }else{
-            console.log(response)
+            
             setIsLoading(false)
             setPin("")
             setErrorHandling(response)
@@ -277,24 +269,27 @@ export default function PinRequestPopOver({fetchReceipt,Employee_id,outletStaff,
                 {withCredentials:true}
             )
             
+            
                 if(response.status === 201){
+                  if(staffStatus?.staff_id){
+                    await getStaffStatus(staffStatus?.staff_id)
+                  }
                   
-                  await getStaffStatus(employeeId)
                     handleClose()
                     setIsLoading(false)
                     setPin("")
-                    console.log(response.data)
                 }
-                setIsLoading(false)
                 return response.data
         }catch(error:any){
-          setIsLoading(false)
+          
             setPin("")
             if(error.response?.data){
               setPin("")
               setErrorHandling(error.response.data.non_field_errors[0])
-              console.log(error.response.data.non_field_errors[0])
             }
+            throw error.response
+        }finally{
+          setIsLoading(false)
         }
       }
     }
@@ -306,7 +301,6 @@ export default function PinRequestPopOver({fetchReceipt,Employee_id,outletStaff,
     // console.log(outlet.id, filterOption)
 
     const outletChecked = outlet !== null && activeOutletId
-    console.log(staffStatus?.assigned, staffStatus?.staff_id ,staffStatus)
     const derChecked=React.useMemo(()=>{
       let checked=false
       if(outletChecked){

@@ -100,13 +100,22 @@ const ReceiptDetailView = (
             
     const handlePrint =async () =>{
         if(!activeOutletId) return
+         const printerName = localStorage.getItem("selectedPrinter") || ""
+         const receiptTab = !printerName
+        ? window.open("about:blank", "_blank")
+        : null;
         
         try{
             const response = await jwtAxios.get(`${BASE_URL}/sales_receipt/issued_receipt_pdf_regenerate/`,
                  { params:{"outlet_id":activeOutletId, "receipt_id":receiptId, "issued":true}
                     ,withCredentials:true})
                     if(response.status === 200){
-                        const printerName = localStorage.getItem("selectedPrinter") || ""
+                          const pdfUrl = response.data.pdf_url;
+
+                            if (!pdfUrl) {
+                                throw new Error("No receipt PDF URL was returned.");
+                            }
+                       
                             if(printerName !== ""){
                             const config = qz.configs.create(printerName);
                             await qz.print(config, [
@@ -115,7 +124,9 @@ const ReceiptDetailView = (
                                         data:  response.data.pdf_url
                                     },
                                     ] as any);
-                                    }else{
+                                    }else if (receiptTab && !receiptTab.closed) {
+                                        receiptTab.location.replace(pdfUrl)}
+                                    else{
                                         setPrinterMess("for a more robust printing experience, please setup Printer in setting");
                                         window.open(response.data.pdf_url, "_blank")
                                     }
@@ -125,6 +136,8 @@ const ReceiptDetailView = (
                                     }, 100 * 150)
                     }
         }catch(err:any){
+            receiptTab?.close();
+            setPrinterMess("Unable to open the receipt. Please try again.");
             throw err.response
         }
         

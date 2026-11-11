@@ -300,6 +300,7 @@ export function useAuthService(): AuthServiceProps {
 
     }
     return {
+        setActiveSession,
         activeSession,
         getSession,
         userId,
