@@ -71,6 +71,19 @@ const MainUserGuide = () => {
             description: "Set up BUKKOF POS and prepare your outlet for everyday use.",
             icon: <RocketLaunchOutlinedIcon />,
             items: [
+{
+    "title": "Verify your email",
+    "description": "Complete email verification when prompted before using protected features.",
+    "steps": [
+        "Enter the verification code sent to your registered email.",
+        "Check your spam folder if the message has not arrived.",
+        "Wait for the resend countdown before requesting another code."
+    ]
+},
+{
+    "title": "Forgot your password?",
+    "description": "Use Forgot Password on the sign-in page and follow the reset instructions. After changing your password, sign in again. If the reset link expires, request a new one."
+},
                 {
                     title: "Create your account",
                     description:
@@ -233,6 +246,16 @@ const MainUserGuide = () => {
             description: "Manage staff activity and understand staff assignment.",
             icon: <GroupsOutlinedIcon />,
             items: [
+{
+    "title": "Using another browser or computer",
+    "description": "A staff assignment belongs to a particular browser login. The same staff member cannot hold an active assignment in two browser logins at once.",
+    "steps": [
+        "Finish the current transaction before changing devices.",
+        "Release the existing assignment using the staff controls, or ask an authorized manager for help.",
+        "Sign in and authorize the correct staff member on the new device."
+    ],
+    "note": "A supervisor may authorize on more than one computer, but can still hold only one active staff assignment. Being authorized and being assigned are separate states."
+},
                 {
                     title: "Adding staff",
                     description:
@@ -279,6 +302,17 @@ const MainUserGuide = () => {
             description: "Create and manage the products sold by your outlet.",
             icon: <Inventory2OutlinedIcon />,
             items: [
+{
+    "title": "Sold In: cartons, packs and measurements",
+    "description": "The selling price is per individual item or base measurement unit. Sold In describes how many base units are included in the selected selling unit.",
+    "steps": [
+        "For a carton of 10 bottles, set the carton value to 10.",
+        "Selling 2 cartons removes 20 bottles from inventory.",
+        "Half a carton of 10 bottles represents 5 bottles; half a carton of 5 bottles would represent 2.5 bottles and is rejected.",
+        "For a measurement such as kilograms with value 1, the entered quantity is the number of kilograms."
+    ],
+    "note": "Check the selling price, Sold In value and receipt total before issuing. Carton and pack quantities must result in whole individual items."
+},
                 {
                     title: "Adding a product",
                     description:
@@ -314,6 +348,26 @@ const MainUserGuide = () => {
             description: "Track stock quantities and review inventory activity.",
             icon: <Inventory2OutlinedIcon />,
             items: [
+{
+    "title": "Adding stock and correcting mistakes",
+    "description": "Use Add to increase the remaining inventory and Subtract to correct an overstated quantity. Check the product's Sold In setting so the entered quantity represents the intended number of units.",
+    "note": "Sales deduct inventory when the receipt is issued. Do not also subtract the same sale manually."
+},
+{
+    "title": "Low-stock alerts",
+    "description": "The low-stock threshold is 20% of the stock balance after the latest manual addition or subtraction. It stays unchanged while sales reduce the stock.",
+    "steps": [
+        "If the stock balance after an adjustment is 100, the threshold is 20.",
+        "An alert is created when a sale leaves 20 or fewer units.",
+        "If 10 units remain and you add 40, the new balance is 50 and the threshold becomes 10."
+    ],
+    "note": "Further sales while stock remains low can generate additional alerts."
+},
+{
+    "title": "Inventory logs and voided sales",
+    "description": "Inventory logs show manual additions and subtractions, including the quantity, time and person responsible. Voiding a receipt restores the sold stock separately; use the voided receipt and its reason to review that return.",
+    "note": "Do not manually add the same stock again after voiding."
+},
                 {
                     title: "Inventory management",
                     description:
@@ -351,6 +405,38 @@ const MainUserGuide = () => {
             description: "Process customer sales and issue receipts.",
             icon: <PointOfSaleOutlinedIcon />,
             items: [
+{
+    "title": "Holding a receipt",
+    "description": "Use Hold when a sale needs to be continued later. Resume the correct held receipt, review its products and quantities, then issue it when ready.",
+    "note": "If the app reports that the hold limit has been reached, resolve an existing held receipt before starting another."
+},
+{
+    "title": "Receipts and assigned staff",
+    "description": "Unissued receipts are associated with the assigned staff member. If an expected receipt is missing, confirm the active outlet and staff assignment before creating a replacement."
+},
+{
+    "title": "Finding past receipts",
+    "description": "Open Past Receipts to find issued sales. Use the receipt search, date filter, custom date range and pagination controls.",
+    "steps": [
+        "Confirm the active outlet.",
+        "Choose a date range, or select Custom and apply the start and end dates.",
+        "Search for the receipt and open its details.",
+        "Use the reprint action if another copy is needed."
+    ],
+    "note": "Staff visibility is restricted to their assigned receipts. Administrators and supervisors can review issued receipts across the authorized outlet."
+},
+{
+    "title": "Voiding a mistaken receipt",
+    "description": "Use Void on an issued receipt when the completed sale must be cancelled. Voiding keeps the receipt record and restores the quantities sold to inventory.",
+    "steps": [
+        "Open the receipt in Past Receipts.",
+        "Confirm that this is the receipt you intend to cancel.",
+        "Choose Void and provide the reason.",
+        "Complete the required administrator or supervisor authorization.",
+        "Check the resulting void status before entering a corrected sale."
+    ],
+    "note": "Void restores the entire receipt's stock, not just one incorrect line. A receipt cannot restore stock a second time by being voided again. Voiding the record does not itself return cash or reverse a card or bank payment; handle any refund separately."
+},
                 {
                     title: "Typical sales flow",
                     description:
@@ -445,6 +531,11 @@ const MainUserGuide = () => {
             description: "Stay informed about important outlet and system activity.",
             icon: <NotificationsNoneOutlinedIcon />,
             items: [
+{
+    "title": "Inventory and receipt notifications",
+    "description": "Notifications can report inventory updates, low stock and a successful receipt void. Open the notification list to review the message.",
+    "note": "An inventory-update notification can link to its related product. Confirm the active outlet if the product is not shown."
+},
                 {
                     title: "Real-time notifications",
                     description:
@@ -474,6 +565,33 @@ const MainUserGuide = () => {
             description: "Prepare and use receipt printing.",
             icon: <PrintOutlinedIcon />,
             items: [
+{
+    "title": "Selecting a receipt printer",
+    "description": "Choose the printer on each computer and browser used for direct printing.",
+    "steps": [
+        "Start QZ Tray and ensure the printer is available on the computer.",
+        "Open Settings and select Search for Printer.",
+        "Choose the printer from the list.",
+        "Select the receipt paper size for the outlet.",
+        "Reprint an existing receipt to check the result."
+    ],
+    "note": "The selected printer is remembered in this browser. Another browser or computer needs its own selection; clearing browser storage can remove it."
+},
+{
+    "title": "PDF receipts and mobile printing",
+    "description": "When no direct printer is selected, the app opens the receipt PDF in the browser. Use the PDF viewer or the device's Share/Print controls to print or save it.",
+    "note": "If Safari stays on the same page, the receipt tab may have been blocked. Allow pop-ups for the site where available and try reprinting. Reprint the existing receipt instead of issuing the sale again."
+},
+{
+    "title": "Expired receipt links",
+    "description": "Receipt PDF links expire. If a link shows an expired, invalid or forbidden message, return to Past Receipts and use Reprint to request a fresh link.",
+    "note": "If a fresh link still fails, confirm your login, POS authorization and outlet, then contact support."
+},
+{
+    "title": "QZ permission prompts",
+    "description": "A successful QZ connection does not by itself confirm that printer access has been trusted. If permission prompts keep appearing, ask the administrator to check the approved certificate setup on that printing computer.",
+    "note": "Only approve a printer-access request you initiated from your trusted POS site."
+},
                 {
                     title: "Receipt printing",
                     description:
@@ -501,7 +619,7 @@ const MainUserGuide = () => {
                         "Print a test receipt and confirm that no text is cut off.",
                     ],
                     note:
-                        "Printer settings belong to the selected outlet and may be different for another outlet.",
+                        "Receipt paper size belongs to the selected outlet. The chosen printer is remembered separately in the current browser.",
                 },
             ],
         },
